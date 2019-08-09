@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<title>NF Videos</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="http://www.w3schools.com/lib/w3.css">
+<link rel="stylesheet" href="http://www.w3schools.com/lib/w3-theme-red.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
+<style>
+    .pad16 { padding: 16px; }
+    .pad16t20 { }
+    .navHt { }
+    .navHt a { text-decoration: underline!important; }
+    .darkBar { }
+    @media screen and (min-width: 601px) {
+        .darkBar { height: 16px; }
+        .navHt { height: 84px; }
+        .pad16t20 { padding: 20px 16px 16px 16px; }
+    }
+    .accBtn { border-radius: 12px; white-space: normal; }
+    .accBtn:not(:first-of-type) {
+        margin-top: 16px;
+    }
+    .accPanel {
+        text-align: left;
+        border-style: double; border-radius: 12px;
+    }
+    .accPanel a {
+        text-decoration: underline!important;
+        padding:0px 0px; display:inline;
+    }
+    .imgFitWidth { width: 100%; }
+    .marginTopIfSmall { }
+    @media screen and (max-width: 600px) {
+        .marginTopIfSmall { margin-top: 16px; }
+    }
+
+    button.accBtn:before {
+        content: '\25B6';
+        color: white;
+        margin-right: 5px;
+    }
+    button.accBtn.active:before {
+        content: "\25C0";
+    }
+</style>
+<body>
+
+<!-- Header -->
+<ul class="w3-navbar w3-theme">
+  <li class="w3-xxlarge navHt pad16">Nova Fusion Videos</li>
+  <li class="w3-large navHt pad16t20 w3-theme-dark w3-right"><a href="VidIndex.html">More Videos</a></li>
+</ul><div class="w3-theme-dark darkBar"></div>
+
+<div class="w3-row-padding w3-center w3-margin-top">
+    <div class="w3-half">
+        <h1>2015 - 14A Summer</h1>
+    <div class="w3-accordion">
+      <button class="w3-padding-16 w3-theme w3-btn-block w3-left-align accBtn">July 26-29, ASA Western Nationals @ Boise</button>
+      <div class="w3-accordion-content accPanel">
+        <ul>
+            <li><a href="https://www.youtube.com/watch?v=O0dTX0yULRI">Opening Ceremonies</a></li>
+        </ul>
+      </div>
+      <button class="w3-padding-16 w3-theme w3-btn-block w3-left-align accBtn">June 19-21, ASA Nor Cal Championships @ Twin Creeks</button>
+      <div class="w3-accordion-content accPanel">
+        <ul>
+            <li><a href="https://www.youtube.com/watch?v=0xqqEK80g04">Ellie's double</a></li>
+        </ul>
+      </div>
+      <button class="w3-padding-16 w3-theme w3-btn-block w3-left-align accBtn">June 13-14, @ Napa / Suisun</button>
+      <div class="w3-accordion-content accPanel">
+        <ul>
+            <li><a href="https://www.youtube.com/watch?v=bcXc1i1K0XQ">Sat G1 vs. Easton Elite</a></li>
+            <li><a href="https://www.youtube.com/watch?v=1SdpouUQrvA">Sat G2 vs. SF Waves</a></li>
+            <li><a href="https://www.youtube.com/watch?v=HIAF-wllC0A">Sat G3 vs. Miken Elite</a></li>
+            <li><a href="https://www.youtube.com/watch?v=oOBTpbQ2H1I">Sun G4 vs. Firecrackers</a></li>
+        </ul>
+      </div>
+      <button class="w3-padding-16 w3-theme w3-btn-block w3-left-align accBtn">May 30-31, @ Salinas</button>
+      <div class="w3-accordion-content accPanel">
+        <ul>
+            <li><a href="https://www.youtube.com/watch?v=2d5Np1P4lGA">Sat G1 vs. Mize Diamonds</a></li>
+            <li><a href="https://www.youtube.com/watch?v=CEFSccDlIXo">Sat G3 vs. Cal Nuggets Blue</a></li>
+        </ul>
+      </div>
+    </div>
+    </div>
+
+    <div class="w3-half">
+      <div class="w3-card-2 w3-padding-top w3-theme-dark marginTopIfSmall">
+        <h4>The 2015 14A Summer team:</h4>
+        <a href="https://photos.google.com/album/AF1QipOlB7qS_dS9wHUBwW5dBKiGfi7o6jxYYHNyG-Cv">
+            <img alt="Boise team photo" class="imgFitWidth"
+                 src="http://www.pizzamonster.org/pics/2015/07-26_Boise/P1010617x800.jpg"/></a>
+      </div>
+    </div>
+</div>
+
+<footer>
+    <div class="w3-theme-dark darkBar"></div><div class="w3-theme pad16">
+        <p><i>All videos are in HD (1080p)</i></p>
+        <p><i>Author: Marcel LeBlanc</i></p>
+    </div>
+</footer>
+<script>
+
+// Accordions
+var acc = document.getElementsByClassName("accBtn");
+var i;
+
+for (i = 0; i < acc.length; i++) {
+    acc[i].onclick = function(){
+        this.classList.toggle("active");
+        this.nextElementSibling.classList.toggle("w3-show");
+  }
+}
+
+</script>
+    
+</body>
+</html>

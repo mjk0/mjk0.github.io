@@ -1,0 +1,10 @@
+# Ignore everything in these directories:
+pics/**
+old/**
+web_dev/**
+
+#ignore these files:
+.DS_Store
+.htaccess
+.picasa.ini
+Thumbs.db
