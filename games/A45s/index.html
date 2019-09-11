@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auction 45s Card Game</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="css/materialize.css" media="screen,projection"/>
+    <link type="text/css" rel="stylesheet" href="css/animate.min.css">
+    <link type="text/css" rel="stylesheet" href="css/index.css">
+    <style>
+        html, body {
+            height: 90vh;
+            min-height: 90vh;
+        }
+    </style>
+</head>
+<body>
+    <nav><div class="nav-wrapper">
+            <a class="brand-logo left">Auction 45s</a>
+            <ul class="right">
+                <li><a onclick="$('.sidenav').sidenav('open')">Lobby</a></li>
+                <li><a href="rules.html" target="_blank">Rules</a></li>
+                <li id="logi-name">not connected</li>
+            </ul>
+        </div>
+    </nav>
+    <div id="slide-out" class="sidenav">
+        <div class="row">
+            <div class="col s12">
+                <ul class="tabs tabs-fixed-width">
+                    <li class="tab col s6"><a href="#tab-games">Games</a></li>
+                    <li class="tab col s6"><a href="#tab-users">Users</a></li>
+                </ul>
+            </div>
+            <div id="tab-games" class="col s12">
+                <table class="gameTable"><thead><tr><th>Game</th>
+                    <th>East</th><th>South</th><th>West</th><th>North</th>
+                    <th>Status</th></tr></thead>
+                    <tbody id="gtable"></tbody>
+                </table>
+            </div>
+            <div id="tab-users" class="col s12"><ul id="uList" class="collection"></ul></div>
+        </div>
+    </div>
+
+    <div class="flex-container greenStripes">
+        <div class="box box-2 row w100p">
+            <!-- Left column -->
+            <div class="col s4">
+                <div class="flex-container">
+                    <div class="box top-info mt1p">Dealer: <span id='curDealer'>E/ TBD</span></div>
+                    <div class="box box-2"></div>
+                    <div class="box box-svg-m">
+                        <table id="ttricks" class="table-svg-k"><tr><td>
+                            <div class="card-4stack-m">
+                                <svg id="oldTricks" viewBox="0 0 240 90">
+                                    <use class="tt-stack" xlink:href="cards0.svg#cshoriz" width="86" height="86" x="0" y="0" />
+                                    <use class="tt-stack" xlink:href="cards0.svg#csvert" width="86" height="86" x="51" y="4" />
+                                    <use class="tt-stack" xlink:href="cards0.svg#cshoriz" width="86" height="86" x="102" y="0" />
+                                    <use class="tt-stack" xlink:href="cards0.svg#csvert" width="86" height="86" x="153" y="4" />
+                                </svg>
+                            </div>
+                        </td></tr>
+                        <tr><td class="namebar nb-kitty"><!--
+                            --><span class="seatdir"><i class="material-icons">assignment_turned_in</i></span>
+                               <span class="seatname">Past tricks</span><!--
+                            --></td></tr>
+                        </table>
+
+                        <table id="khand" class="table-svg-k"><tr>
+                            <td class="card-m"><svg><use xlink:href="cards0.svg#cbcatsil" width="100%" height="100%" /></svg></td>
+                            <td class="card-m"><svg><use xlink:href="cards0.svg#cbcatsil" width="100%" height="100%" /></svg></td>
+                            <td class="card-m"><svg><use xlink:href="cards0.svg#cbcatsil" width="100%" height="100%" /></svg></td>
+                            <td class="card-m"><svg><use xlink:href="cards0.svg#cbcatsil" width="100%" height="100%" /></svg></td>
+                        </tr><tr>
+                        <tr><td colspan="5" class="namebar nb-kitty"><!--
+                                --><span class="seatdir">K</span><span class="seatname">Kitty</span><!--
+                            --></td></tr>
+                        </table>
+                    </div>
+                    <div class="box box-svg-m">
+                        <table id="lhand" class="table-svg-m"><tr>
+                            <td class="card-fan-m"><svg><use xlink:href="cards0.svg#cbfan5" width="100%" height="100%" /></svg></td>
+                        </tr>
+                        <tr><td class="namebar nb-inactive"><span
+                            class="seatdir">L</span><span class="seatname">Robot</span><!--
+                            --></td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- Middle column -->
+            <div class="col s4">
+                <div class="flex-container">
+                    <div class="box box-svg-m mt1p">
+                            <table id="ohand" class="table-svg-m"><tr>
+                                <td class="card-fan-m"><svg><use xlink:href="cards0.svg#cbfan5" width="100%" height="100%" /></svg></td>
+                            </tr>
+                        </tr>
+                        <tr><td class="namebar nb-inactive"><span
+                            class="seatdir">O</span><span class="seatname">Robot</span><!--
+                            --></td></tr>
+                        </table>
+                    </div>
+                    <div class="box box-2"></div>
+                    <div class="box box-play">
+                        <table id="discards" class="hide-me"><tr>
+                            <th colspan="5">Select discards...
+                                <input id="b-done" class="btn-small" type="button" value="done" onclick="UI.handSelected()" /></th>
+                        </tr><tr>
+                            <td class="card-lg hide-me"><svg><use xlink:href="cards0.svg#cback" width="100%" height="100%" /></svg></td>
+                            <td class="card-lg hide-me"><svg><use xlink:href="cards0.svg#cback" width="100%" height="100%" /></svg></td>
+                            <td class="card-lg hide-me"><svg><use xlink:href="cards0.svg#cback" width="100%" height="100%" /></svg></td>
+                            <td class="card-lg hide-me"><svg><use xlink:href="cards0.svg#cback" width="100%" height="100%" /></svg></td>
+                            <td class="card-lg hide-me"><svg><use xlink:href="cards0.svg#cback" width="100%" height="100%" /></svg></td>
+                        </tr><tr>
+                            <td class="card-lg hide-me"><svg><use xlink:href="cards0.svg#cback" width="100%" height="100%" /></svg></td>
+                            <td class="card-lg hide-me"><svg><use xlink:href="cards0.svg#cback" width="100%" height="100%" /></svg></td>
+                            <td class="card-lg hide-me"><svg><use xlink:href="cards0.svg#cback" width="100%" height="100%" /></svg></td>
+                            <td class="card-lg hide-me"><svg><use xlink:href="cards0.svg#cback" width="100%" height="100%" /></svg></td>
+                            <td class="card-lg hide-me"><svg><use xlink:href="cards0.svg#cback" width="100%" height="100%" /></svg></td>
+                        </tr><tr><td colspan="5" class="svg-icon rdo-trump">
+                            <span class="rdo-trump-q">Trump? </span>
+                            <label><input type="radio" name="trumpSuit" value="cl" class="with-gap"><span>
+                                <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                                    version="1.1" preserveAspectRatio="xMidYMid meet">
+                                    <use xlink:href="cards0.svg#cl" /></svg></span></label>
+                            <label><input type="radio" name="trumpSuit" value="di" class="with-gap"><span>
+                                <svg><use xlink:href="cards0.svg#di" /></svg></span></label>
+                            <label><input type="radio" name="trumpSuit" value="he" class="with-gap"><span>
+                                <svg><use xlink:href="cards0.svg#he" /></svg></span></label>
+                            <label><input type="radio" name="trumpSuit" value="sp" class="with-gap"><span>
+                                <svg><use xlink:href="cards0.svg#sp" /></svg></span>&nbsp;</label>
+                        </td></tr>
+                        </table>
+
+                        <div id='play-div' class="play-area hide-me">
+                            <svg id="play-l" viewBox="0 0 136 182">
+                                <use xlink:href="cards0.svg#cback" width="60" height="80" x="0" y="60" />
+                                <use xlink:href="cards0.svg#cback" width="60" height="80" x="32" y="00" />
+                                <use xlink:href="cards0.svg#cback" width="60" height="80" x="76" y="42" />
+                                <use xlink:href="cards0.svg#cback" width="60" height="80" x="44" y="102" />
+                            </svg>
+                            <svg id="play-o" viewBox="0 0 136 182">
+                                <use xlink:href="cards0.svg#cback" width="60" height="80" x="32" y="00" />
+                                <use xlink:href="cards0.svg#cback" width="60" height="80" x="76" y="42" />
+                                <use xlink:href="cards0.svg#cback" width="60" height="80" x="44" y="102" />
+                                <use xlink:href="cards0.svg#cback" width="60" height="80" x="0" y="60" />
+                            </svg>
+                            <svg id="play-r" viewBox="0 0 136 182">
+                                <use xlink:href="cards0.svg#cback" width="60" height="80" x="76" y="42" />
+                                <use xlink:href="cards0.svg#cback" width="60" height="80" x="44" y="102" />
+                                <use xlink:href="cards0.svg#cback" width="60" height="80" x="0" y="60" />
+                                <use xlink:href="cards0.svg#cback" width="60" height="80" x="32" y="00" />
+                            </svg>
+                            <svg id="play-n" viewBox="0 0 136 182">
+                                <use xlink:href="cards0.svg#cback" width="60" height="80" x="44" y="102" />
+                                <use xlink:href="cards0.svg#cback" width="60" height="80" x="0" y="60" />
+                                <use xlink:href="cards0.svg#cback" width="60" height="80" x="32" y="00" />
+                                <use xlink:href="cards0.svg#cback" width="60" height="80" x="76" y="42" />
+                            </svg>
+                        </div>
+                        <table class="bid-table"><tr>
+                            <th class="pair-ew">E</th><th class="pair-ns">S</th>
+                            <th class="pair-ew">W</th><th class="pair-ns">N</th>
+                        </tr><tr><td>pass</td><td></td><td></td><td></td>
+                        </tr><tr><td></td><td>pass</td><td></td><td></td>
+                        </tr><tr><td></td><td></td><td></td><td></td>
+                        </tr><tr><td></td><td></td><td></td><td></td>
+                        </tr><tr><td></td><td></td><td></td><td></td>
+                        </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- Right column -->
+            <div class="col s4">
+                <div class="flex-container">
+                    <div class="box top-info mt1p aRight">Contract:
+                        <span id='contractWho'>TBD</span>
+                        <span id='contractSuit' class="svg-icon"><svg><use xlink:href="cards0.svg#cbcatsil" /></svg></span>
+                        <span id='contractBid'>99</span>
+                    </div>
+                    <div class="box box-2"></div>
+                    <div class="box box-svg-m">
+                        <table id="rhand" class="table-svg-m"><tr>
+                            <td class="card-fan-m"><svg><use xlink:href="cards0.svg#cbfan5" width="100%" height="100%" /></svg></td>
+                        </tr>
+                        <tr><td class="namebar nb-inactive"><span
+                            class="seatdir">R</span><span class="seatname">Robot</span><!--
+                            --></td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="box box-hand">
+            <div class="flex-container">
+                <div class="box box-2">
+                    <div class="bid-self">
+                        <button class="btn green" type="button" onclick="UI.enterBid('pass')">Pass</button>
+                        <button class="btn" type="button" onclick="UI.enterBid(15)">bid: 15</button>
+                        <button class="btn" type="button" onclick="UI.enterBid(20)">bid: 20</button>
+                        <button class="btn" type="button" onclick="UI.enterBid(25)">bid: 25</button>
+                        <button class="btn" type="button" onclick="UI.enterBid(30)">bid: 30/60</button>
+                    </div>
+                </div>
+                <div class="box box-svg-lg">
+                    <table id="hand" class="table-svg-lg"><tr>
+                        <td class="card-lg"><svg><use xlink:href="cards0.svg#cback" width="100%" height="100%" /></svg></td>
+                        <td class="card-lg"><svg><use xlink:href="cards0.svg#cback" width="100%" height="100%" /></svg></td>
+                        <td class="card-lg"><svg><use xlink:href="cards0.svg#cback" width="100%" height="100%" /></svg></td>
+                        <td class="card-lg"><svg><use xlink:href="cards0.svg#cback" width="100%" height="100%" /></svg></td>
+                        <td class="card-lg"><svg><use xlink:href="cards0.svg#cback" width="100%" height="100%" /></svg></td>
+                        <td class="card-lg hide-me"><svg><use xlink:href="cards0.svg#cback" width="100%" height="100%" /></svg></td>
+                        <td class="card-lg hide-me"><svg><use xlink:href="cards0.svg#cback" width="100%" height="100%" /></svg></td>
+                        <td class="card-lg hide-me"><svg><use xlink:href="cards0.svg#cback" width="100%" height="100%" /></svg></td>
+                        <td class="card-lg hide-me"><svg><use xlink:href="cards0.svg#cback" width="100%" height="100%" /></svg></td>
+                    </tr><tr><td colspan="9" class="playEnd hide-me"><div class="top-info"><table class='playEndInner'>
+                            <tr><th class="pair-ew">E - W</th><th class="pair-ns">N - S</th>
+                                <th class='bordleft'>Continue?</th></tr>
+                            <tr><td id="pointEW">0</td><td id="pointNS">0</td><td class='bordleft'>
+                                <button class="btn" type="button" onclick="UI.shuffleNextDealer()">Shuffle</button>
+                            </td></tr>
+                        </table></div></td>
+                    </tr><tr><td colspan="9" class="namebar nb-active"><!--
+                            --><span class="seatdir">H</span><span class="seatname">Human</span><!--
+                        --></td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal login dialog -->
+    <div id="login" class="modal">
+        <form class="modal-content">
+            <h4>Auction 45s</h4>
+            <div class="input-field">
+                <input type="text" id="mjk-username"/>
+                <label for="mjk-username">username</label>
+            </div>
+            <p>Currently, no registration is required.  Choose any username.</p>
+            <div>
+                <button class="modal-close btn" type="submit" id="loginButton" onclick="UI.login()">
+                Login</button>
+            </div>
+        </form>
+    </div>
+    <!-- Modal Structure -->
+    <div id="showATrick" class="modal">
+        <div class="play-trick"></div>
+        <div class="play-trick center">
+            <svg id="play-trick-svg" viewBox="0 0 196 262">
+                <use xlink:href="cards0.svg#cback" width="60" height="80" x="74" y="182" />
+                <use xlink:href="cards0.svg#cback" width="60" height="80" x="0" y="100" />
+                <use xlink:href="cards0.svg#cback" width="60" height="80" x="62" y="00" />
+                <use xlink:href="cards0.svg#cback" width="60" height="80" x="136" y="82" />
+            </svg>
+        </div>
+        <div class="modal-footer">
+            <a href="#!" class="modal-close btn">Close</a>
+        </div>
+    </div>
+    
+    <!--JavaScript at end of body for optimized loading-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script type="text/javascript" src="js/materialize.min.js"></script>
+    <script src="js/A45s.js"></script>
+    <script src="js/cards3.js"></script>
+    
+</body>

@@ -1,0 +1,161 @@
+.cards-grp, .card-lg { display: inline-block; }
+.card-lg, .card-lg svg { width: 9vh; height: 12vh; }
+.card-m, .card-m svg { width: 6.75vh; height: 9vh; }
+.card-fan-m, .card-fan-m svg { width: 22.5vh; height: 10.125vh; }
+.card-fan-m, .card-fan-m svg, .card-lg, .card-lg svg,
+.card-4stack-m, .card-4stack-m svg, #ttricks td,
+.card-m, .card-m svg { margin: 0px; padding: 0px; }
+.card-4stack-m { display: inline-block; }
+.card-4stack-m svg { width: 27vh; height: 10.125vh; }
+.tt-stack { fill: grey; cursor: pointer;}
+.tt-stack:hover { fill: lightsteelblue; cursor: pointer;}
+/* https://blog.prototypr.io/align-svg-icons-to-text-and-say-goodbye-to-font-icons-d44b3d7b26b4 */
+.svg-icon { display: inline-block; }
+.svg-icon svg { height:1em; width:1em; top: .125em; position: relative; }
+.rdo-trump label {
+    box-shadow: 0 0 3pt 1pt white; border-radius: 10px;
+    margin: 2px 0.2em; padding: 1px 4px 1px 4px;
+    display: inline-block; color: black;
+}
+.rdo-trump [type="radio"]+span { padding-left: 1.8em; }
+.rdo-trump-q { font-size: medium; }
+#showATrick {
+    vertical-align: middle; align-self: center;
+    border: white solid 2px; width: 30%; background-color: green;
+}
+#showATrick div.play-area { min-height: 30vh; }
+#showATrick div.modal-footer { width: fit-content; float: right; background-color: green; }
+.center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+#discards {
+    border: white solid 2px; background-color: burlywood;
+    width: fit-content; height: fit-content; font-size: 1.8vw;
+    align-self: center; padding: 0px;
+    border-collapse: separate; border-radius: 9px;
+}
+#discards th { padding: 0px 0px 0px 3px; border-bottom: white solid; }
+#discards td { padding: 0px; }
+#discards > tbody > tr > td:last-child { padding: 0px 3px 3px 3px; }
+#b-done {
+    height: 1.8em; line-height: 1; float: right;
+    margin: 0px 5px 5px 0px; padding: 0px 1em;
+}
+.flex-container {
+    height: 100%;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.greenStripes {
+    background: repeating-linear-gradient(
+        45deg, green, green 10px, #208020 10px, #208020 20px
+    );
+}
+.row .col { padding: 0px; }
+.box {
+    text-align: center;
+    color: white;
+    font-size: 36px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.box-1 {
+    background-color: blueviolet;
+    height: 10%;
+}
+.box-2 {
+    flex: 1;
+    flex-direction: row;
+}
+.box-3 {
+    min-height: 30%;
+}
+.box-svg-m {
+    min-height: 9vh;
+}
+.box-svg-lg {
+    min-height: 16vh;
+}
+.box-play {
+    min-height: 30%;
+}
+.box-hand {
+    min-height: 30vh;
+    padding-bottom: 0.3em;
+}
+.nav-wrapper { padding: 0px 0.3em; }
+#logi-name { font-style: italic; box-shadow: 0 0 1pt 0pt black; padding: 0px 0.3em; }
+.gameTable th {background-color: lightslategrey; color: white; }
+.gameTable table,
+.gameTable th,
+.gameTable td { border: 1px solid black; }
+.gameTable td,
+.gameTable th {
+    padding: 5px 5px;
+    border-radius: 0px;
+}
+.play-lg { font-size: xx-large !important; }
+#slide-out { width: 30em; }
+.top-info {
+    background-color: burlywood; color: black;
+    border: white solid 2px; border-radius: 10px;
+    width: fit-content; display: inline-block;
+    font-size: 2vw; line-height: 1.3; padding: 0px 0.3em 2px 0.3em;
+}
+#contractSuit { box-shadow: 0pt 0pt 1pt 0pt black; border-radius: 6px; }
+.aRight { align-self: flex-end; }
+.mt1p { margin: 1vh 1vh; }
+.h100p { height: 100%; }
+.w100p { width: 100%; }
+.row { margin-bottom: 0px; }
+.nb-active { background-color: yellow; }
+.nb-inactive { background-color: lightsteelblue; }
+.nb-kitty { background-color: burlywood; }
+.namebar {
+    font-size: 3vh; line-height: normal;
+    border: black solid 1px; text-align: left; padding: 0px;
+}
+.namebar i { font-size: 3vh; }
+.seatdir {background-color: teal; color: white; padding: 0px 0.2em; }
+.seatname { margin-left: 0.2em; color: black; }
+.table-svg-m, .table-svg-k {
+    width: fit-content; height: fit-content;
+    font-size: 0px; border: none;
+}
+.table-svg-m { align-self: center; }
+.table-svg-k { align-self: flex-end; margin-bottom: 5vh; }
+.table-svg-lg {
+    width: fit-content; height: fit-content;
+    align-self: center; font-size: 0px;
+    border: none;
+}
+.hide-me { display: none; }
+.bid-self {
+    background-color: bisque; border: white solid 2px; border-radius: 9px;
+    font-size: 5vh; height: 1.9em; padding: 0px 0.4em; margin-top: 0.2em;
+}
+.bid-table {
+    background-color: slategray; border: white ridge 2px;
+    width: fit-content; height: fit-content; align-self: center;
+    padding: 0px 0.4em;
+}
+.bid-table td, .playEnd th, .playEnd td,
+.bid-table th {
+    padding: 0px 5px; border-radius: 0px;
+    text-align: center; font-size: 2.8vw; min-width: 2.5em;
+}
+.pair-ew { background-color: white; color: black; }
+.pair-ns { background-color: darkred; color: white; }
+.play-area, .play-area svg { width: 20.4vh; height: 27.3vh; align-self: center; }
+.play-trick, .play-trick svg { width: 29.4vh; height: 39.3vh; align-self: center; }
+.playEndInner th.pair-ew, .playEndInner th.pair-ns { border-radius: 9px; }
+.playEndInner {
+    background-color: bisque; border-radius: 9px;
+    margin: 0.3em 0px 0.2em 0px;
+}
+.bordleft { border-left: black dashed 1px; }

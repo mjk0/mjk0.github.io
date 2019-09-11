@@ -1,0 +1,557 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     version="1.1" width="100%" height="100%" viewBox="60 0 780 320" preserveAspectRatio="xMinYMin meet">
+<defs>
+    <!-- to view: 'https://fonts.google.com/specimen/Gothic+A1?selection.family=Gothic+A1:400,700' -->
+    <!-- <style type="text/css">@import url('https://fonts.googleapis.com/css?family=Gothic+A1:400,700');</style>
+    <style>
+        text {
+            dominant-baseline: middle;
+            text-anchor: middle;
+            font-family: 'Gothic A1', sans-serif;
+        }
+    </style> -->
+    <symbol id="cl" viewBox="-10 0 1019 1024">
+        <g transform="matrix(1 0 0 -1 0 817)">
+         <path fill="black"
+        d="M386 -83v50q42 60 59.5 115t17.5 83q0 16 -5 16q-2 0 -10.5 -10t-22.5 -24t-33 -28t-50.5 -24t-68.5 -10q-89 0 -147.5 58t-58.5 145q0 91 54.5 153t145.5 62q56 0 114 -36q2 2 3 2q-85 79 -85 178q0 88 60 141.5t145 53.5q86 0 146 -53.5t60 -141.5q0 -99 -85 -178
+        q1 0 3 -2q58 36 114 36q91 0 145.5 -62t54.5 -153q0 -87 -58.5 -145t-147.5 -58q-37 0 -68.5 10t-50.5 24t-33 28t-22.5 24t-10.5 10q-5 0 -5 -16q0 -12 5 -36.5t24 -72t48 -89.5v-50h-237z" />
+        </g>
+    </symbol>
+    <symbol id="di" viewBox="-600 -600 1200 1200" preserveAspectRatio="xMinYMid">
+          <path fill="darkred" d="M-400 0C-350 0 0 -450 0 -500C0 -450 350 0 400 0C350 0 0 450 0 500C0 450 -350 0 -400 0Z"/>
+    </symbol>
+    <symbol id="he" viewBox="-10 0 979 1024">
+        <g transform="matrix(1 0 0 -1 0 817)">
+           <path fill="darkred"
+        d="M77 564q0 87 56 148.5t138 61.5q49 0 88 -18.5t63.5 -49.5t39 -62t23.5 -67q51 197 213 197q83 0 138.5 -62t55.5 -148q0 -39 -10.5 -80.5t-23.5 -76t-42.5 -80.5t-50.5 -76t-64 -82t-66.5 -78.5t-76 -85t-74.5 -83.5q-25 28 -80 90t-78.5 89t-67 79t-62.5 81t-47.5 74
+        t-40.5 78t-21.5 73t-9.5 78z" />
+        </g>
+    </symbol>
+    <symbol id="sp" viewBox="-10 0 922 1024">
+        <g transform="matrix(1 0 0 -1 0 817)">
+         <path fill="black"
+        d="M336 -83v49q29 43 50.5 94t21.5 75v5q0 42 -12 42q-8 0 -20.5 -14t-26 -31.5t-44.5 -31.5t-73 -14q-82 0 -124 50.5t-42 119.5q0 176 391 602q72 -81 121.5 -141t120 -153.5t109 -172.5t38.5 -135q0 -69 -42 -119.5t-124 -50.5q-34 0 -60.5 9.5t-42 23t-26.5 26.5
+        t-19.5 22.5t-15.5 9.5q-12 0 -12 -47q0 -22 22 -74.5t50 -94.5v-49h-240z" />
+        </g>
+    </symbol>
+    <symbol id="2n" viewBox="-10 0 610 1024">
+        <g transform="matrix(1 0 0 -1 0 817)">
+         <path
+        d="M45 596q23 99 86 156t165 57q107 0 175 -61.5t68 -166.5q0 -68 -31 -123.5t-90 -111.5q-11 -11 -57 -56t-62.5 -62.5t-43 -52t-42.5 -67.5h324v-108h-484q0 47 15.5 94.5t36 82.5t59 79.5t64 69.5t71.5 69q11 10 16 15q88 84 88 174q0 55 -30 86t-79 31q-105 0 -137 -138
+        z" />
+        </g>
+    </symbol>
+    <symbol id="3n" viewBox="-10 0 610 1024">
+        <g transform="matrix(1 0 0 -1 0 817)">
+         <path
+        d="M30 160l106 39q47 -109 152 -109q57 0 96 35.5t39 100.5q0 59 -43 96t-109 37q-36 0 -72 -4v108q26 -2 68 -2q53 0 90.5 33t37.5 91q0 51 -32 83.5t-81 32.5q-86 0 -126 -114l-108 34q21 83 84.5 135.5t157.5 52.5q110 0 175 -59.5t65 -151.5q0 -61 -31.5 -109t-77.5 -72
+        q55 -19 96.5 -67.5t41.5 -123.5q0 -115 -73.5 -179.5t-196.5 -64.5q-99 0 -167.5 52t-91.5 126z" />
+        </g>
+    </symbol>
+    <symbol id="4n" viewBox="-10 0 610 1024">
+        <g transform="matrix(1 0 0 -1 0 817)">
+         <path
+        d="M22 271l348 527h113v-525h98v-108h-98v-172h-130v172h-331v106zM146 273h207v222q0 54 4 105h-5q-22 -38 -54 -91z" />
+        </g>
+    </symbol>
+    <symbol id="5n" viewBox="-10 0 610 1024">
+        <g transform="matrix(1 0 0 -1 0 817)">
+         <path
+        d="M40 147l109 39q18 -42 53 -69t77 -27q63 0 99.5 42.5t36.5 113.5q0 69 -39 113t-99 44q-74 0 -129 -72l-83 32l42 428h400v-109h-279l-24 -207q49 35 119 35q101 0 164 -70.5t63 -190.5q0 -51 -15.5 -97t-46 -85t-83.5 -62t-121 -23q-91 0 -152 45.5t-92 119.5z" />
+        </g>
+    </symbol>
+    <symbol id="6n" viewBox="-10 0 610 1024">
+        <g transform="matrix(1 0 0 -1 0 817)">
+         <path
+        d="M181 252q0 -74 35 -118t90 -44q54 0 88 43.5t34 118.5q0 77 -34 120t-89 43q-54 0 -89 -45t-35 -118zM44 359q0 91 16.5 169.5t49.5 142.5t89.5 101t130.5 37q159 0 228 -163l-103 -36q-49 91 -124 91q-102 0 -139 -167q-9 -40 -14 -91q19 34 57 57t89 23
+        q105 0 171.5 -76.5t66.5 -193.5q0 -118 -67 -194.5t-185 -76.5q-124 0 -189 84q-77 95 -77 293z" />
+        </g>
+    </symbol>
+    <symbol id="7n" viewBox="-10 0 610 1024">
+        <g transform="matrix(1 0 0 -1 0 817)">
+         <path
+        d="M46 679v112h502v-89q-187 -298 -279 -709h-136q67 347 262 686h-349z" />
+        </g>
+    </symbol>
+    <symbol id="8n" viewBox="-10 0 610 1024">
+        <g transform="matrix(1 0 0 -1 0 817)">
+         <path
+        d="M195 585q0 -52 29.5 -84t75.5 -32t75 32.5t29 83.5q0 49 -28.5 82.5t-75.5 33.5t-76 -33.5t-29 -82.5zM35 217q0 79 41.5 128.5t96.5 71.5q-114 59 -114 174q0 95 69 156.5t172 61.5t171.5 -61.5t68.5 -156.5q0 -116 -114 -174q59 -24 99.5 -74t40.5 -126
+        q0 -105 -74.5 -170t-191.5 -65q-111 0 -188 62t-77 173zM171 224q0 -58 36 -96t93 -38t93 38t36 96q0 56 -36 97t-93 41q-56 0 -92.5 -40.5t-36.5 -97.5z" />
+        </g>
+    </symbol>
+    <symbol id="9n" viewBox="-10 0 610 1024">
+        <g transform="matrix(1 0 0 -1 0 817)">
+         <path
+        d="M170 541q0 -72 34.5 -116t87.5 -44q54 0 87.5 44.5t33.5 115.5q0 69 -32.5 114.5t-88.5 45.5q-54 0 -88 -45t-34 -115zM37 146l106 35q46 -91 124 -91q41 0 71.5 23t47.5 62t25 81.5t9 91.5q-49 -74 -147 -74q-99 0 -167.5 72.5t-68.5 193.5q0 119 71.5 194t182.5 75
+        q94 0 157 -60t86 -158q15 -65 15 -159q0 -215 -70 -332.5t-213 -117.5q-83 0 -144 50t-85 114z" />
+        </g>
+    </symbol>
+    <symbol id="tn" viewBox="-10 0 880 1024">
+        <g transform="matrix(1 0 0 -1 -100 817)">
+         <path d="M86 558v100h36q163 0 163 120v20h114v-807h-135v567h-178z" />
+        </g>
+        <g transform="matrix(1 0 0 -1 300 817)">
+         <path d="M176 395q0 -305 125 -305q35 0 59.5 25.5t38 70t19.5 96t6 113.5q0 63 -6 115.5t-20 96.5t-39 69t-59 25q-124 0 -124 -306zM40 395q0 117 23.5 202t63.5 129t82.5 63.5t90.5 19.5q125 0 192.5 -109t67.5 -305q0 -190 -66.5 -302t-192.5 -112q-46 0 -88.5 19t-83 62.5
+t-65 129t-24.5 203.5z" />
+        </g>
+    </symbol>
+    <symbol id="J" viewBox="-10 0 562 1024">
+        <g transform="matrix(1 0 0 -1 0 817)">
+         <path
+        d="M9 147l109 44q12 -41 40.5 -68.5t69.5 -27.5q50 0 77 38t27 110v548h132v-566q0 -116 -60.5 -179.5t-172.5 -63.5q-91 0 -146.5 48t-75.5 117z" />
+        </g>
+    </symbol>
+    <symbol id="Q" viewBox="-10 0 773 1024">
+        <g transform="matrix(1 0 0 -1 0 817)">
+         <path
+        d="M42 395q0 188 93.5 301t246.5 113t246 -114t93 -300q0 -185 -92.5 -299t-246.5 -114t-247 114t-93 299zM178 395q0 -139 54.5 -219.5t149.5 -80.5t149 80.5t54 219.5q0 141 -54 221t-149 80t-149.5 -81t-54.5 -220zM352 249l75 68l294 -305l-75 -67z" />
+        </g>
+    </symbol>
+    <symbol id="K" viewBox="-10 0 725 1024">
+        <g transform="matrix(1 0 0 -1 0 817)">
+         <path
+        d="M89 0v791h132v-358h2l307 358h167l-306 -346l314 -445h-159l-238 352l-87 -99v-253h-132z" />
+        </g>
+    </symbol>
+    <symbol id="A" viewBox="-14 0 736 1024">
+        <g transform="matrix(1 0 0 -1 0 817)">
+         <path
+        d="M236 302h236l-67 205q-7 22 -15.5 49t-18 59.5t-14.5 48.5h-6q-3 -10 -48 -157zM-4 0l286 791h145l285 -791h-140l-65 196h-306l-65 -196h-140z" />
+        </g>
+    </symbol>
+</defs>
+<defs>
+    <!-- card outline -->
+    <symbol id="bback" width="60" height="80" viewBox="0 0 60 80" >
+        <rect style="fill:white;stroke:black;stroke-width:1;" x="0.5" y="0.5" rx="6" ry="6" width="59" height="79" />
+    </symbol>
+    <symbol id="rback" width="60" height="80" viewBox="0 0 60 80" >
+        <rect style="fill:white;stroke:darkred;stroke-width:1;" x="0.5" y="0.5" rx="6" ry="6" width="59" height="79" />
+    </symbol>
+    <symbol id="cback" width="60" height="80" viewBox="0 0 60 80" >
+        <rect style="fill:grey;stroke:black;stroke-width:1;" x="0.5" y="0.5" rx="6" ry="6" width="59" height="79" />
+    </symbol>
+    <symbol id="ctrans" width="60" height="80" viewBox="0 0 60 80" >
+        <rect style="stroke:black;stroke-width:1;" x="0.5" y="0.5" rx="6" ry="6" width="59" height="79" />
+    </symbol>
+    <symbol id="cblank" width="60" height="80" viewBox="0 0 60 80" >
+    </symbol>
+    <symbol id="cbfan5" viewBox="0 4 200 90">
+        <use xlink:href="#cback" width="60" height="80" x="70" y="5" transform="rotate(-10, 100, 400)" />
+        <use xlink:href="#cback" width="60" height="80" x="70" y="5" transform="rotate(-5, 100, 400)" />
+        <use xlink:href="#cback" width="60" height="80" x="70" y="5" />
+        <use xlink:href="#cback" width="60" height="80" x="70" y="5" transform="rotate(5, 100, 400)" />
+        <use xlink:href="#cback" width="60" height="80" x="70" y="5" transform="rotate(10, 100, 400)" />
+    </symbol>
+    <symbol id="cbfan4" viewBox="0 4 200 90">
+        <use xlink:href="#cback" width="60" height="80" x="70" y="5" transform="rotate(-7.5, 100, 400)" />
+        <use xlink:href="#cback" width="60" height="80" x="70" y="5" transform="rotate(-2.5, 100, 400)" />
+        <use xlink:href="#cback" width="60" height="80" x="70" y="5" transform="rotate(2.5, 100, 400)" />
+        <use xlink:href="#cback" width="60" height="80" x="70" y="5" transform="rotate(7.5, 100, 400)" />
+    </symbol>
+    <symbol id="cbfan3" viewBox="0 4 200 90">
+        <use xlink:href="#cback" width="60" height="80" x="70" y="5" transform="rotate(-5, 100, 400)" />
+        <use xlink:href="#cback" width="60" height="80" x="70" y="5" />
+        <use xlink:href="#cback" width="60" height="80" x="70" y="5" transform="rotate(5, 100, 400)" />
+    </symbol>
+    <symbol id="cbfan2" viewBox="0 4 200 90">
+        <use xlink:href="#cback" width="60" height="80" x="70" y="5" transform="rotate(-2.5, 100, 400)" />
+        <use xlink:href="#cback" width="60" height="80" x="70" y="5" transform="rotate(2.5, 100, 400)" />
+    </symbol>
+    <symbol id="cbfan1" viewBox="0 4 200 90">
+        <use xlink:href="#cback" width="60" height="80" x="70" y="5" />
+    </symbol>
+    <symbol id="catsil" width="700" height="700" viewBox="0 0 700 700">
+        <path d="M307.52 609.8c-19.433-1.187-34.468-3.32-47.526-6.743-32.076-8.41-51.74-24.113-62.158-49.643-7.057-17.293-10.765-38.958-10.122-59.14.53-16.652 3.16-29.42 11.34-55.04 7.388-23.14 8.568-29.75 8.57-48 .001-12.885-.146-14.773-1.736-22.244-3.155-14.83-8.6-28.853-14.908-38.326-3.917-5.89-12.732-14.543-19.214-18.857-13.142-8.746-29.9-13.952-47.607-14.78-34.764-1.625-59.5 12.736-68.894 40.013-2.12 6.147-2.135 6.28-2.14 18.058-.007 13.836.533 16.617 4.847 24.97 6.826 13.217 18.448 21.026 31.35 21.068 8.327.027 15.246-2.575 21.283-8.003 5.357-4.817 5.356-4.788.316-10.1-12.728-13.414-19.408-22.26-21.985-29.108-2.867-7.62-.546-14.532 6.562-19.54 3.425-2.414 4-2.597 8.99-2.86 4.51-.237 5.847-.058 8.68 1.16 4.055 1.744 8.41 6.364 10.803 11.455l1.695 3.608 2.148-4.295c2.534-5.066 7.73-10.156 11.53-11.294 3.253-.975 9.573-.99 12.398-.028 6.63 2.255 11.36 8.726 10.572 14.464-.926 6.753-5.223 13.6-18.554 29.556-10.206 12.216-15.078 18.735-17.75 23.75-2.94 5.517-9.682 11.655-16.18 14.73-14.16 6.703-31.235 5.766-44.872-2.463-5.838-3.523-16.207-14.17-19.76-20.292-3.6-6.2-6.416-12.84-8.237-19.413-1.204-4.346-1.362-6.6-1.373-19.632l-.012-14.72 2.42-6.72c10.382-28.817 32.212-46.512 64.08-51.943 6.666-1.136 9.54-1.267 21.76-.992 15.075.34 18.908.906 29.44 4.353 8.32 2.723 21.54 9.492 27.88 14.274 7.18 5.416 19.4 18.142 23.843 24.834 11 16.563 14.86 28.985 18.41 59.24l1.446 12.325 7.145-14.565c13.84-28.213 25.568-45.13 44.226-63.793 22.574-22.58 41.326-34.984 61.925-40.96l5.034-1.46-1.834-1.266c-1.008-.696-5.3-3.227-9.514-5.623-15.137-8.588-21.652-13.346-31.038-22.664s-13.755-15.224-18.862-25.5l-2.867-5.77-4.657.265c-20.297 1.155-33.404 4.147-46.082 10.52-6.2 3.117-8.16 3.268-4.892.38 7.473-6.61 26.548-12.744 45.518-14.638 8.468-.845 8.13-.516 6.5-6.33l-1.02-3.64-6.82-2.04c-23.792-7.118-37.13-12.15-53.54-20.2-10.81-5.302-17.29-9.283-15.878-9.753.405-.135 7.744 2.62 16.307 6.12 23.548 9.627 53.072 19.947 57.068 19.947.886 0 1.062-.724 1.062-4.358 0-2.5-.34-4.804-.8-5.405-.44-.576-2.354-1.65-4.253-2.4-10.73-4.172-34.9-17.738-47.034-26.39-12.7-9.057-26.802-21.02-25.88-21.942.19-.19 10.258 6.214 22.376 14.23s26.436 16.98 31.82 19.923c11.35 6.2 21.97 11.12 22.596 10.467.24-.25.903-3.664 1.475-7.587 3.02-20.723 11.26-37.917 26.492-55.28 2.418-2.757 2.568-3.18 3.163-8.96 1.512-14.678 8.607-69.476 9.056-69.946.273-.286 9.392 13.463 20.264 30.554 16.844 26.478 19.957 31.028 21.048 30.762 9.71-2.364 21.56-3.514 36.16-3.508 25.917.01 42.242 3.3 62.163 12.562 6.722 3.122 7.793 3.448 8.842 2.69.996-.72 14.677-16.125 27.132-30.554l10.88-12.414c7.224-8.192 7.797-8.696 7.974-7.015.105.996-1.1 13.176-2.68 27.066l-4.585 42.855-1.714 17.6 4.302 9.28c8.81 19.006 10.886 28.1 10.403 45.6-.225 8.164-.11 11.356.405 11.347.395-.007 7.405-.997 15.576-2.2 17.512-2.578 28.882-5.368 52.342-12.843 19.622-6.252 25.657-7.997 27.507-7.953 1.816.043-3.992 2.95-14.467 7.242-26.687 10.934-48.486 16.46-75.13 19.043l-7.956.77-1.363 4.097c-.75 2.253-1.166 4.295-.926 4.536.8.792 25.366.89 37.134.15 12.285-.775 26.62-2.043 40.59-3.59 18.813-2.085 7.137 2.335-14.35 5.432-15.9 2.292-31.024 3.3-48.912 3.228l-16.946-.06-3.42 6.75 8.225 3c17.51 6.39 29.953 13.5 38.84 22.197 4.57 4.47 8.008 9.12 6.71 9.073-.273-.01-2.944-2.205-5.936-4.876-11.394-10.175-22.388-16.224-40.608-22.345-6.325-2.125-8.494-2.613-9.157-2.063-.478.397-2.863 3.375-5.3 6.618-14.974 19.923-35.6 28.683-70.97 30.14l-10.357.427-.884 1.71c-1.63 3.155-8.48 20.753-10.19 26.184-4.583 14.553-6.34 27.595-6.345 47.104-.006 19.37 1.35 32.3 5.053 48.155 2.994 12.823 11.457 36.563 22.007 61.73l5.233 12.483 6.84.397c8.043.466 11.916 1.516 19.312 5.23 18.002 9.043 26.365 22.708 25.422 41.537-.58 11.607-3.69 19.983-12.49 33.645-2.146 3.332-3.795 6.166-3.664 6.297s4.337.92 9.348 1.755c13.824 2.302 17.8 4.8 19.813 12.45.974 3.7.333 10.136-1.412 14.193-4.85 11.277-23.888 15.422-81.8 17.813-21.294.88-91.002 1.316-102.08.64z"/>
+    </symbol>
+    <symbol id="cbcatsil" viewBox="0 0 60 80" >
+        <rect style="fill:lightsteelblue;stroke:black;stroke-width:1;" x="0.5" y="0.5" rx="6" ry="6" width="59" height="79" />
+        <use x="3" y="8" width="60" height="70" xlink:href="#catsil" />
+    </symbol>
+    <symbol id="cbhoriz" viewBox="0 0 80 80">
+        <use xlink:href="#ctrans" width="60" height="80" x="10" y="0" transform="rotate(90, 40, 40)" />
+    </symbol>
+    <symbol id="cshoriz" viewBox="0 0 86 86">
+        <use xlink:href="#cbhoriz" width="80" height="80" x="0" y="0" />
+        <use xlink:href="#cbhoriz" width="80" height="80" x="1" y="2" />
+        <use xlink:href="#cbhoriz" width="80" height="80" x="2" y="4" />
+        <use xlink:href="#cbhoriz" width="80" height="80" x="3" y="6" />
+    </symbol>
+    <symbol id="csvert" viewBox="0 0 86 86">
+        <use xlink:href="#ctrans" width="60" height="80" x="10" y="0" />
+        <use xlink:href="#ctrans" width="60" height="80" x="11" y="2" />
+        <use xlink:href="#ctrans" width="60" height="80" x="12" y="4" />
+        <use xlink:href="#ctrans" width="60" height="80" x="13" y="6" />
+    </symbol>
+    <symbol id="cl_back" viewBox="0 0 60 80">
+        <use x="0" y="0" width="100%" height="100%" xlink:href="#bback" />
+        <use x="3%" y="28%" width="34%" height="28%" xlink:href="#cl" />
+        <use x="63%" y="72%" width="34%" height="28%" xlink:href="#cl" />
+        <!-- <text x="20%" y="42%" style="fill:yellow;font-size:20px;">&#x2663;</text> -->
+    </symbol>
+    <symbol id="di_back" viewBox="0 0 60 80">
+        <use x="0" y="0" width="100%" height="100%" xlink:href="#rback" />
+        <use x="0" y="26%" width="40%" height="30%" xlink:href="#di" />
+        <use x="60%" y="69%" width="40%" height="30%" xlink:href="#di" />
+        <!-- <text x="20%" y="42%" style="fill:yellow;font-size:32px;">&#x2666;</text>
+        <text x="80%" y="85%" style="fill:yellow;font-size:32px;">&#x2666;</text> -->
+    </symbol>
+    <symbol id="he_back" viewBox="0 0 60 80">
+        <use x="0" y="0" width="100%" height="100%" xlink:href="#rback" />
+        <use x="3%" y="27%" width="34%" height="28%" xlink:href="#he" />
+        <use x="63%" y="72%" width="34%" height="28%" xlink:href="#he" />
+        <!-- <text x="20%" y="42%" style="fill:darkred;font-size:20px;">&#x2665;</text>
+            <text x="80%" y="86%" style="fill:darkred;font-size:20px;">&#x2665;</text> -->
+    </symbol>
+    <symbol id="sp_back" viewBox="0 0 60 80">
+        <use x="0" y="0" width="100%" height="100%" xlink:href="#bback" />
+        <use x="4%" y="28%" width="32%" height="30%" xlink:href="#sp" />
+        <use x="64%" y="72%" width="32%" height="30%" xlink:href="#sp" />
+        <!-- <text x="20%" y="42%" style="fill:yellow;font-size:20px;">&#x2660;</text>
+            <text x="80%" y="87%" style="fill:yellow;font-size:20px;">&#x2660;</text> -->
+    </symbol>
+</defs>
+
+<!-- Suit 'clubs' -->
+<symbol id="2_cl" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#2n" />
+    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#2n" />
+    <!-- <text x="20%" y="18%" style="fill:yellow;font-size:24px;font-weight:bold;">2</text>
+        <text x="80%" y="62%" style="fill:yellow;font-size:24px;font-weight:bold;">2</text> -->
+</symbol>
+<symbol id="3_cl" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#3n" />
+    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#3n" />
+</symbol>
+<symbol id="4_cl" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#4n" />
+    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#4n" />
+</symbol>
+<symbol id="5_cl" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#5n" />
+    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#5n" />
+</symbol>
+<symbol id="6_cl" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#6n" />
+    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#6n" />
+</symbol>
+<symbol id="7_cl" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#7n" />
+    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#7n" />
+</symbol>
+<symbol id="8_cl" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#8n" />
+    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#8n" />
+</symbol>
+<symbol id="9_cl" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#9n" />
+    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#9n" />
+</symbol>
+<symbol id="t_cl" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
+    <use x="4%" y="2.5%" width="34%" height="30%" xlink:href="#tn" />
+    <use x="61%" y="46.5%" width="34%" height="30%" xlink:href="#tn" />
+    <!-- <text x="20%" y="18%" style="fill:yellow;font-size:24px;font-weight:bold;letter-spacing:-0.2em;">10</text>
+        <text x="77%" y="62%" style="fill:yellow;font-size:24px;font-weight:bold;letter-spacing:-0.2em;">10</text> -->
+</symbol>
+<symbol id="j_cl" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#J" />
+    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#J" />
+</symbol>
+<symbol id="q_cl" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#Q" />
+    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#Q" />
+</symbol>
+<symbol id="k_cl" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#K" />
+    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#K" />
+</symbol>
+<symbol id="a_cl" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#A" />
+    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#A" />
+</symbol>
+
+<!-- Suit 'diamonds' -->
+<symbol id="2_di" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#2n" />
+    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#2n" />
+    <!-- <text x="20%" y="18%" style="fill:yellow;font-size:24px;font-weight:bold;">2</text>
+    <text x="80%" y="61%" style="fill:yellow;font-size:24px;font-weight:bold;">2</text> -->
+</symbol>
+<symbol id="3_di" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#3n" />
+    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#3n" />
+</symbol>
+<symbol id="4_di" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#4n" />
+    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#4n" />
+</symbol>
+<symbol id="5_di" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#5n" />
+    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#5n" />
+</symbol>
+<symbol id="6_di" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#6n" />
+    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#6n" />
+</symbol>
+<symbol id="7_di" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#7n" />
+    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#7n" />
+</symbol>
+<symbol id="8_di" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#8n" />
+    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#8n" />
+</symbol>
+<symbol id="9_di" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#9n" />
+    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#9n" />
+</symbol>
+<symbol id="t_di" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
+    <use x="4%" y="2.5%" width="34%" height="30%" style="fill:darkred;" xlink:href="#tn" />
+    <use x="61%" y="45.5%" width="34%" height="30%" style="fill:darkred;" xlink:href="#tn" />
+    <!-- <text x="20%" y="18%" style="fill:yellow;font-size:24px;font-weight:bold;letter-spacing:-0.2em;">10</text>
+        <text x="77%" y="61%" style="fill:yellow;font-size:24px;font-weight:bold;letter-spacing:-0.2em;">10</text> -->
+</symbol>
+<symbol id="j_di" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#J" />
+    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#J" />
+</symbol>
+<symbol id="q_di" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#Q" />
+    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#Q" />
+</symbol>
+<symbol id="k_di" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#K" />
+    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#K" />
+</symbol>
+<symbol id="a_di" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#A" />
+    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#A" />
+</symbol>
+
+<!-- Suit 'hearts' -->
+<symbol id="2_he" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#2n" />
+    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#2n" />
+    <!-- <text x="20%" y="18%" style="fill:yellow;font-size:24px;font-weight:bold;">2</text>
+    <text x="80%" y="62%" style="fill:yellow;font-size:24px;font-weight:bold;">2</text> -->
+</symbol>
+<symbol id="3_he" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#3n" />
+    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#3n" />
+</symbol>
+<symbol id="4_he" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#4n" />
+    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#4n" />
+</symbol>
+<symbol id="5_he" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#5n" />
+    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#5n" />
+</symbol>
+<symbol id="6_he" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#6n" />
+    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#6n" />
+</symbol>
+<symbol id="7_he" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#7n" />
+    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#7n" />
+</symbol>
+<symbol id="8_he" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#8n" />
+    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#8n" />
+</symbol>
+<symbol id="9_he" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#9n" />
+    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#9n" />
+</symbol>
+<symbol id="t_he" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
+    <use x="4%" y="2.5%" width="34%" height="30%" style="fill:darkred;" xlink:href="#tn" />
+    <use x="61%" y="46.5%" width="34%" height="30%" style="fill:darkred;" xlink:href="#tn" />
+    <!-- <text x="20%" y="18%" style="fill:yellow;font-size:24px;font-weight:bold;letter-spacing:-0.2em;">10</text>
+    <text x="77%" y="62%" style="fill:yellow;font-size:24px;font-weight:bold;letter-spacing:-0.2em;">10</text> -->
+</symbol>
+<symbol id="j_he" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#J" />
+    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#J" />
+</symbol>
+<symbol id="q_he" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#Q" />
+    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#Q" />
+</symbol>
+<symbol id="k_he" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#K" />
+    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#K" />
+</symbol>
+<symbol id="a_he" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
+    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#A" />
+    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#A" />
+</symbol>
+
+<!-- Suit 'spades' -->
+<symbol id="2_sp" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
+    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#2n" />
+    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#2n" />
+    <!-- <text x="20%" y="18%" style="fill:yellow;font-size:24px;font-weight:bold;">2</text>
+    <text x="80%" y="62%" style="fill:yellow;font-size:24px;font-weight:bold;">2</text> -->
+</symbol>
+<symbol id="3_sp" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
+    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#3n" />
+    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#3n" />
+</symbol>
+<symbol id="4_sp" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
+    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#4n" />
+    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#4n" />
+</symbol>
+<symbol id="5_sp" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
+    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#5n" />
+    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#5n" />
+</symbol>
+<symbol id="6_sp" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
+    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#6n" />
+    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#6n" />
+</symbol>
+<symbol id="7_sp" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
+    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#7n" />
+    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#7n" />
+</symbol>
+<symbol id="8_sp" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
+    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#8n" />
+    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#8n" />
+</symbol>
+<symbol id="9_sp" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
+    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#9n" />
+    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#9n" />
+</symbol>
+<symbol id="t_sp" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
+    <use x="4%" y="2.6%" width="34%" height="30%" xlink:href="#tn" />
+    <use x="61%" y="46.6%" width="34%" height="30%" xlink:href="#tn" />
+</symbol>
+<symbol id="j_sp" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
+    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#J" />
+    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#J" />
+</symbol>
+<symbol id="q_sp" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
+    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#Q" />
+    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#Q" />
+</symbol>
+<symbol id="k_sp" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
+    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#K" />
+    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#K" />
+</symbol>
+<symbol id="a_sp" viewBox="0 0 60 80">
+    <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
+    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#A" />
+    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#A" />
+</symbol>
+
+<!-- Preview of symbols -->
+<use xlink:href="#2_cl" width="60" height="80" x="60" y="0" />
+<use xlink:href="#3_cl" width="60" height="80" x="120" y="0" />
+<use xlink:href="#4_cl" width="60" height="80" x="180" y="0" />
+<use xlink:href="#5_cl" width="60" height="80" x="240" y="0" />
+<use xlink:href="#6_cl" width="60" height="80" x="300" y="0" />
+<use xlink:href="#7_cl" width="60" height="80" x="360" y="0" />
+<use xlink:href="#8_cl" width="60" height="80" x="420" y="0" />
+<use xlink:href="#9_cl" width="60" height="80" x="480" y="0" />
+<use xlink:href="#t_cl" width="60" height="80" x="540" y="0" />
+<use xlink:href="#j_cl" width="60" height="80" x="600" y="0" />
+<use xlink:href="#q_cl" width="60" height="80" x="660" y="0" />
+<use xlink:href="#k_cl" width="60" height="80" x="720" y="0" />
+<use xlink:href="#a_cl" width="60" height="80" x="780" y="0" />
+
+<use xlink:href="#2_di" width="60" height="80" x="60" y="80" />
+<use xlink:href="#3_di" width="60" height="80" x="120" y="80" />
+<use xlink:href="#4_di" width="60" height="80" x="180" y="80" />
+<use xlink:href="#5_di" width="60" height="80" x="240" y="80" />
+<use xlink:href="#6_di" width="60" height="80" x="300" y="80" />
+<use xlink:href="#7_di" width="60" height="80" x="360" y="80" />
+<use xlink:href="#8_di" width="60" height="80" x="420" y="80" />
+<use xlink:href="#9_di" width="60" height="80" x="480" y="80" />
+<use xlink:href="#t_di" width="60" height="80" x="540" y="80" />
+<use xlink:href="#j_di" width="60" height="80" x="600" y="80" />
+<use xlink:href="#q_di" width="60" height="80" x="660" y="80" />
+<use xlink:href="#k_di" width="60" height="80" x="720" y="80" />
+<use xlink:href="#a_di" width="60" height="80" x="780" y="80" />
+
+<use xlink:href="#2_he" width="60" height="80" x="60" y="160" />
+<use xlink:href="#3_he" width="60" height="80" x="120" y="160" />
+<use xlink:href="#4_he" width="60" height="80" x="180" y="160" />
+<use xlink:href="#5_he" width="60" height="80" x="240" y="160" />
+<use xlink:href="#6_he" width="60" height="80" x="300" y="160" />
+<use xlink:href="#7_he" width="60" height="80" x="360" y="160" />
+<use xlink:href="#8_he" width="60" height="80" x="420" y="160" />
+<use xlink:href="#9_he" width="60" height="80" x="480" y="160" />
+<use xlink:href="#t_he" width="60" height="80" x="540" y="160" />
+<use xlink:href="#j_he" width="60" height="80" x="600" y="160" />
+<use xlink:href="#q_he" width="60" height="80" x="660" y="160" />
+<use xlink:href="#k_he" width="60" height="80" x="720" y="160" />
+<use xlink:href="#a_he" width="60" height="80" x="780" y="160" />
+
+<use xlink:href="#2_sp" width="60" height="80" x="60" y="240" />
+<use xlink:href="#3_sp" width="60" height="80" x="120" y="240" />
+<use xlink:href="#4_sp" width="60" height="80" x="180" y="240" />
+<use xlink:href="#5_sp" width="60" height="80" x="240" y="240" />
+<use xlink:href="#6_sp" width="60" height="80" x="300" y="240" />
+<use xlink:href="#7_sp" width="60" height="80" x="360" y="240" />
+<use xlink:href="#8_sp" width="60" height="80" x="420" y="240" />
+<use xlink:href="#9_sp" width="60" height="80" x="480" y="240" />
+<use xlink:href="#t_sp" width="60" height="80" x="540" y="240" />
+<use xlink:href="#j_sp" width="60" height="80" x="600" y="240" />
+<use xlink:href="#q_sp" width="60" height="80" x="660" y="240" />
+<use xlink:href="#k_sp" width="60" height="80" x="720" y="240" />
+<use xlink:href="#a_sp" width="60" height="80" x="780" y="240" />
+
+</svg>
