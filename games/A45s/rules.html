@@ -6,65 +6,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
+        table, th, td {
+            border: black solid 1px;
+            border-collapse: collapse; padding: 0px 0.4em;
+        }
+        table { margin-left: 4%; }
+        th { background-color: blue; color: white; }
     </style>
 </head>
 <body>
-<h3>Auction 45s Card Game Rules</h3>
-<p>
-<p>Note this document borrows heavily from 
+<h1>Auction 45s Card Game Rules</h1>
+<p><i>Note this document borrows heavily from 
     <a href="http://www.jord.ca/45s.html">
     http://www.jord.ca/45s.html</a>
-    , without permission.</p>
-Players
-</p><p>
+    , without permission.</i></p>
 
+<h4>Players</h4>
+
+<p>
 The game is played with 4 players, in teams of two (those sitting opposite each other are on a team). 
-</p><p>
-
-Game Play
-</p><p>
-
+</p>
+<h2>Game Play</h2>
+<h3>
 Dealing
-</p><p>
+</h3><p>
 
 Each player receives 5 cards, dealt in a group of 3, followed by a group of two.
 There is also a "kitty" of four cards from which the winning bidder can draw.
 The dealer deals 3 cards to the person to his left and to each subsequent player
 (including himself), then 2 to the kitty and 2 more to each player as well as
 two more to the kitty.
-</p><p>
-
-Variants:
-</p><p>
-
-the kitty is dealt three cards following the first round and gets no subsequent
-cards (3 total)
-the last card dealt to the kitty is turned face up to give players a "taste" of
-what is inside
-there is no kitty
-The Auction (bidding)
-</p><p>
-
+</p>
+<h3>The Auction (bidding)</h3>
+<p>
 Each "trick" is worth 5 points, except the trick involving the best card in play
 which is worth 10 points. Thus, with 5 cards each, the total points for each
 hand is 30. Starting with the player to the left of the dealer, each player bids
 (or passes) in multiples of 5 starting at a minimum of 15. A player bids the
 number of points they assume they (and their partner) can win in the hand. A
 player may pass or bid higher than the bid currently on the table.
+A player that has passed once may not bid again in the current hand.
 </p><p>
 
 When the bid reaches the dealer, he may choose to "hold" it. If the bid stands
 at 20, and the deal holds it, he is exercising his privilege of bidding 20 as
 well. The high bidder and the dealer may then auction up until one gives up.
-</p><p>
+</p><p><i>
 
 example: Player 1 bids 15. Player 2 passes. Player 3 bids 20. The dealer holds
 the bid. Player 3 bids 25. The dealer, not wanting to bid 25, allows Player 3 to
 take the bid at 25.
-</p><p>
+</i></p><p>
 
-The high bidder must now call which suit will be "trump" and then gets to pick
-through the kitty for any better cards that may be within in.
+The high bidder gets to pick
+through the kitty for any better cards that may be within in,
+then declares the trump suit to complete the contract.
 </p><p>
 
 If someone bids 30, which means they must take all of the tricks, this is called
@@ -75,25 +71,10 @@ still only loose 30.
 
 If a player/team is "in the hole" (has less then 0 points), then they may bid up
 past a 30 bid to a "60 for 120 bid".
-</p><p>
+</p>
 
-Additionally, if a bidder has a poor hand but has won the bid, he may choose to
-discard his entire hand and then take the kitty before declaring trump.
-</p><p>
-
-Variants:
-</p><p>
-
-there is no 60 for 120 bid
-there is no 30 for 60 bid
-the winning bidder may see the kitty before calling a suit
-the dealer cannot hold but bids just as a normal player
-the winning bidder may look at the kitty before declaring the trump
-</p><p>
-
-Discarding
-</p><p>
-
+<h3>Discarding</h3>
+<p>
 After the winner of the bid calls the suit, players may discard. A player may
 discard any, all or none of his cards. Normally a player discards all of their
 non-trump, but this can vary depending on individual strategy.
@@ -103,8 +84,42 @@ Once players have discarded, the dealer fills each hand back up to 5, dealing no
 more than 3 cards at a time, as above.
 
 </p>
-
-
+<h3>Ordinal Value of Cards</h3>
+<table>
+    <tr>
+        <th>Suit</th><th>Face cards</th>
+        <th colspan="2">Lower cards</th>
+    </tr><tr>
+        <td rowspan="2">As trump</td>
+        <td rowspan="2">5, J, A<font color="FF0000" face="symbol">©</font>, A, K, Q</td>
+        <td><font color="red" face="symbol">©</font>,
+            <font color="red" face="symbol">¨</font></td>
+        <td>10, 9, 8, 7, 6, 5, 4, 3, 2</td>
+    </tr><tr>
+        <td><font face="symbol">ª</font>,
+            <font face="symbol">§</font></td>
+        <td>2, 3, 4, 5, 6, 7, 8, 9, 10</td>
+    </tr><tr>
+        <td rowspan="2">Non-trump</td>
+        <td rowspan="2">K, Q, J</td>
+        <td><font color="red" face="symbol">©</font>,
+            <font color="red" face="symbol">¨</font></td>
+        <td>10, 9, 8, 7, 6, 5, 4, 3, 2 (, A<font color="red" face="symbol">¨</font>)</td>
+    </tr><tr>
+        <td><font face="symbol">ª</font>,
+            <font face="symbol">§</font></td>
+        <td>A, 2, 3, 4, 5, 6, 7, 8, 9, 10</td>
+    </tr>
+</table>
+<p>
+The rank of cards within a suit can change based on whether the suit is trump or not trump. 
+The lower valued cards are worth the same in the hierarchy whether they are trump or non-trump,
+though their value varies based on their colour. The "rule of thumb" is
+"highest in red, lowest in black," that is to say that the 2 of clubs is
+the second-best non-face club, and the 10 of diamonds is the best non-face diamond.
+</p>
+<p>
+To simplify, here is the breakdown from best to worst for each suit:</p>
     <ul>
         hearts as trump --&gt;
         5<font color="FF0000" face="symbol">©</font>,
@@ -221,55 +236,45 @@ more than 3 cards at a time, as above.
         9<font face="symbol">ª</font>,
         10<font face="symbol">ª</font>
     </ul>
+<h3>
+    Playing a hand
+</h3>
 <p>
 
-    Playing a hand
-</p><p>
-
-    The person to the left of the winning bidder plays the first card and then
-the person to his left plays until it reaches the winning bidder. The best card
+The person to the left of the winning bidder plays the first card.
+Play then proceeds in clockwise order until it reaches the winning bidder. The best card
 laid takes the trick.
 </p><p>
    
-    NOTE:
-</p><p>
-        - trump beats any other card regardless of value.
-    -if no trump is played, then the suit of the first card laid is considered
-trump for determining the winner of that round
-</p><p>
+<i>NOTE:</i>
+</p><ul>
+<li>trump beats any other card regardless of value.</li>
+<li>if no trump is played, then the suit of the first card laid is considered
+trump for determining the winner of that round</li>
+</ul><p>
    
     The winner of each round leads, then each player lays a card in turn, going
 clockwise (to the left).
 </p><p>
    
-    If the player/team who took the bid doesn't get points equal or great to
-their bid then they are "set". This means that, regardless of the points earned
+    If the player/team who took the bid doesn't get points equal to or great than
+their bid, then they are "set". This means that, regardless of the points earned
 in the hand, the bidding player/team has the value of their bid deducted from
 their score.
 </p><p>
    
-    The non bidding player/team gains any points from the tricks they manage in
-the hand. This is unless they are past 100 points, at which time you have to
-"take the bid to count", that is to say once you pass 100, you must be the
-winning bidder in order to increase your score.
-</p><p>
-   
-    Variants:
-</p><p>
-   
-    the person who wins the bid leads, not the person to his left
-    you only need to make a bid in order to count after 100
-    you only must bid 20 (and not necessarily take the bid) to count after 100
-    all above rules for reaching 100 points take effect at 90
-</p><p>
-
+    The non-bidding player/team gains any points from the tricks they manage in
+the hand. An exception is if they are past 100 points, in which case they have to
+have placed a bid in order to increase their score.
+</p>
+<h3>
     Following Suit
-</p><p>
+</h3>
+<p>
    
     If trump is the first card laid, all other players must also play trump if
 they have any trump in their hand. The exception to this is the 5 of trump which
-can be "reneged" against all other trump cards and the Jack of trump which can
-be reneged against all other trump except for the 5.
+can be "reneged" against all other trump cards.
 </p><p>
    
     If trump isn't lead, then the suit does not have to be followed. Any player
@@ -277,17 +282,11 @@ can play the card of their choice. A common strategy is for the person leading
 in the first hand to play a low value non-trump card but for another player to
 play trump before the person who has taken the bid in order to force him or her
 to play trump to take the trick.
-</p><p>
-   
-    Variants:
-</p><p>
-   
-    there is no reneging
-    only the 5 can be reneged
-    the 5 and Jack of trump, and the Ace of hearts can be reneged
+</p>
+<h3>
     Winning or Losing
-</p><p>
-   
+</h3>
+<p>
     The first player/team to 125 wins the game.
 </p>
 

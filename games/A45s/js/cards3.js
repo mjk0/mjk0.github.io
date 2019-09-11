@@ -324,6 +324,12 @@ const UI = {
             this.clickCardEnabled = true; // for play of a single card
         }
     },
+    playInProgress(data) {
+        this.biddingEnded();
+        Game.fore = data.fore;
+        this.showPlayArea(2); // show card play area
+        this.prepForePlayOrder();
+    },
     sleeping: false,
     trickEnd(data) {
         if (Game.hand.length) {
@@ -477,12 +483,16 @@ const UI = {
         if (ts || Game.ourSeat != declarerSeat) {
             const r = {'action':'handSelected', 'cards': Game.hand, 'trumpSuit': ts};
             Game.wsSendMsg(r);
-            Game.discarded = true;
-            this.clickCardEnabled = false; // no more discards
+            this.biddingEnded();
             this.showPlayArea(0, 'nokitty');
         } else {
             alert('You must select a trump suit');
         }
+    },
+    // This can be called directly without handSelected() when joining an in-progress game
+    biddingEnded(data) {
+        Game.discarded = true;
+        this.clickCardEnabled = false; // no more discards
     },
     rcvCards() {
         this.updateCardsDisplay();
@@ -599,6 +609,7 @@ const WsActionHandlers = {
     'deckShuffled': wsRcv.deckShuffled,
     'cardsDealt': wsRcv.rcvCards, // data.cards[]
     'kitty': wsRcv.kitty,
+    'playInProgress': UI.playInProgress.bind(UI), // for join-in-progress
     'trumpSuit': UI.trumpSuit.bind(UI),
     'bid': UI.bids.bind(UI),
     'cardsPlayed': UI.cardsPlayed.bind(UI),
