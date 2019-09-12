@@ -1,6 +1,8 @@
+use { width: 100%; height: 100%; }
 .cards-grp, .card-lg { display: inline-block; }
 .card-lg, .card-lg svg { width: 9vh; height: 12vh; }
 .card-m, .card-m svg { width: 6.75vh; height: 9vh; }
+td.card-m, td.card-lg { display: contents; }
 .card-fan-m, .card-fan-m svg { width: 22.5vh; height: 10.125vh; }
 .card-fan-m, .card-fan-m svg, .card-lg, .card-lg svg,
 .card-4stack-m, .card-4stack-m svg, #ttricks td,

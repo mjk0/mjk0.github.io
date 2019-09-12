@@ -444,14 +444,14 @@ const UI = {
 
     updateCards: function(uses, newHand, hide=true) {
         for (var i = 0; i< uses.length; ++i) {
-            var td = uses.eq(i).parents('td');
+            var svg = uses.eq(i).parents('svg');
             if (i<newHand.length) {
                 uses[i].href.baseVal = 'cards0.svg#'+newHand[i];
-                td.removeClass('hide-me');
+                svg.removeClass('hide-me');
             } else {
                 uses[i].href.baseVal = 'cards0.svg#cblank';
                 if (hide)
-                    td.addClass('hide-me');
+                    svg.addClass('hide-me');
             }
         }
     },
@@ -475,6 +475,24 @@ const UI = {
         this.setDealerInfo(data);
         this.updateSeatNamesInDisplay();
         $('.sidenav').sidenav('close'); // close Lobby slide-out
+    },
+    // declarer is clicking on trump suit radio buttons
+    trumpSuitClickChange() {
+        var ts = $("input[name=trumpSuit]:checked").val();
+        if (ts) {
+            // Pre-select trump suit cards
+            var cards = Game.hand.concat(Game.discards);
+            Game.hand.length = 0;
+            Game.discards.length = 0;
+            for (var c of cards) {
+                if (ts == c.substring(2) || c == "a_he") {
+                    Game.hand.push(c);
+                } else {
+                    Game.discards.push(c);
+                }
+            }
+        }
+        this.updateCardsDisplay();
     },
     handSelected: function() {
         // Make sure trump suit has been chosen if we are the declarer
@@ -593,7 +611,7 @@ const UI = {
             svgs.eq(i).attr('onclick', 'UI.showTrick('+i+')' );
         }
         // Change event handler for trump suit (winning bidder only)
-        $("input[name=trumpSuit]").change(this.updateCardsDisplay.bind(this));
+        $("input[name=trumpSuit]").change(this.trumpSuitClickChange.bind(this));
     }
 };
 
