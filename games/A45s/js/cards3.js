@@ -147,6 +147,8 @@ const wsRcv = {
     seatDiff: function(data) {
         for (var gn in data.diffs) {
             Game.games[gn-1] = data.diffs[gn];
+            if (gn == Game.ourGame)
+                UI.updateSeatNamesInDisplay();
         }
         UI.updateGamesDisplay();
     },
@@ -234,6 +236,7 @@ const UI = {
     endOfBidding(contract) {
         Game.declarer = contract.declarer;
         const declarerSeat = (Game.declarer&3);
+        Game.fore = contract.fore || ((declarerSeat+1)&3);
         const cBid = Math.floor(Game.declarer/16)*5 + 15;
         $('#contractWho').text(Game.games[Game.ourGame-1].seats[declarerSeat]);
         $('#contractBid').text(cBid);
@@ -303,7 +306,7 @@ const UI = {
         if (!this.sleeping) {
             this.updateOtherPlayerNumCards();
             const q = this.qForePlay();
-            this.updateCards(q.find("use"), Game.cardsPlayed);
+            this.updateCards(q.find("use"), Game.cardsPlayed, false);
         }
     },
     cardsPlayed(data) {
@@ -320,15 +323,26 @@ const UI = {
     },
     playACard(data) {
         this.highlightActivePlayer(data.fromSeat);
-        if (data.fromSeat == Game.ourSeat) {
-            this.clickCardEnabled = true; // for play of a single card
-        }
+        this.clickCardEnabled = (data.fromSeat == Game.ourSeat); // for play of a single card
     },
     playInProgress(data) {
         this.biddingEnded();
         Game.fore = data.fore;
         this.showPlayArea(2); // show card play area
         this.prepForePlayOrder();
+    },
+    rcvPastTricks(data) {
+        for (var pp of data.plays) {
+            Game.cardsPlayedPast.push(pp);
+            Game.cardsPlayedTricks.push('cshoriz');
+        }
+        $('#ttricks').removeClass('hide-me'); // make sure past tricks display is visible
+        this.updateCards($("#ttricks").find("use"), Game.cardsPlayedTricks, false);
+        // Update other player 'card fans'
+        for (var i=1; i<4; ++i) {
+            this.otherPlayerCfan.push((Game.ourSeat+i)&3);
+        }
+        this.updateOtherPlayerNumCards();
     },
     sleeping: false,
     trickEnd(data) {
@@ -633,6 +647,7 @@ const WsActionHandlers = {
     'cardsPlayed': UI.cardsPlayed.bind(UI),
     'playACard': UI.playACard.bind(UI),
     'trickEnd': UI.trickEnd.bind(UI),
+    'pastPlays': UI.rcvPastTricks.bind(UI),
     'playEnd': UI.playEnd.bind(UI),
     'contract': UI.endOfBidding.bind(UI),
     'yourBid': UI.showOurBidArea.bind(UI)
