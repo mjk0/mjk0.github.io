@@ -216,11 +216,16 @@
                         <svg class="hide-me"><use xlink:href="cards0.svg#cback" /></svg>
                         <svg class="hide-me"><use xlink:href="cards0.svg#cback" /></svg>
                     </td></tr><tr><td class="playEnd hide-me"><div class="top-info"><table class='playEndInner'>
-                            <tr><th class="pair-ew">E - W</th><th class="pair-ns">N - S</th>
-                                <th class='bordleft'>Continue?</th></tr>
-                            <tr><td id="pointEW">0</td><td id="pointNS">0</td><td class='bordleft'>
+                            <tr><th id="winOrSet">Win or set</th>
+                                <th class="pair-ew bordleft">E - W</th><th class="pair-ns">N - S</th>
+                            </tr><tr><td>
                                 <button class="btn" type="button" onclick="UI.shuffleNextDealer()">Shuffle</button>
-                            </td></tr>
+                            </td><td id="ptsEW" class='bordleft bordbot'>0</td>
+                                <td id="ptsNS" class='bordbot'>0</td>
+                            </tr><tr><td>Game totals:</td>
+                                <td id="ptsTotEW" class='bordleft'>0</td>
+                                <td id="ptsTotNS">0</td>
+                            </tr>
                         </table></div></td>
                     </tr><tr><td class="namebar nb-active"><!--
                             --><span class="seatdir">H</span><span class="seatname">Human</span><!--

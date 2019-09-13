@@ -312,7 +312,7 @@ const UI = {
     cardsPlayed(data) {
         var fromSeat = data.fromSeat; // use for transition effects
         for (var c of data.plays) {
-            this.cardsPlay1(c, fromSeat++);
+            this.cardsPlay1(c, (fromSeat++)&3);
         }
     },
     highlightActivePlayer(si) {
@@ -373,6 +373,13 @@ const UI = {
     },
     playEnd(data) {
         // Hand play is complete.  Show results
+        $('#ptsEW').text(data.ptsEW ? data.ptsEW : "0");
+        $('#ptsNS').text(data.ptsNS ? data.ptsNS : "0");
+
+        // Was contract satisfied?
+        const cdir = (Game.declarer&1); // 0: E-W, 1: N-S
+        $('#winOrSet').text((cdir? 'N-S':'E-W')
+            + (data[cdir?'ptsNS':'ptsEW']>0? ' wins!':' is set!'));
         $('.playEnd').removeClass('hide-me');
     },
     shuffleNextDealer() {

@@ -161,3 +161,4 @@ td.card-m, td.card-lg { display: contents; }
     margin: 0.3em 0px 0.2em 0px;
 }
 .bordleft { border-left: black dashed 1px; }
+td.bordbot { border-bottom: black solid 1px; }
