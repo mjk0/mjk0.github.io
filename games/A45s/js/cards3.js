@@ -13,6 +13,7 @@ var Game = {
     dealer: 255, // last player to bid
     fore: 255, // first player to bid
     declarer: 255,  // contract winner after bidding complete
+    trumpSuit: null, // cached copy of UI authoritative methods ('cl', 'di', 'he', 'sp')
     hand: [],
     discards: [],
     discarded: false,
@@ -75,6 +76,7 @@ var Game = {
         this.cardsPlayed.length = 0;
         this.cardsPlayedPast.length = 0;
         this.cardsPlayedTricks.length = 0;
+        this.trumpSuit = null;
         this.prepNextDeal();
     },
     // Things that the UI needs before deck shuffled msg arrives
@@ -92,8 +94,43 @@ var Game = {
         const b = a? a: ['cbcatsil','cbcatsil','cbcatsil','cbcatsil'];
         Array.prototype.push.apply(this.hand, b); // add all of b to end of hand
     },
+    weAreDealer() {
+        return this.dealer == this.ourSeat;
+    },
     weAreDeclarer() {
         return this.declarer != 255 && (this.declarer&3) == this.ourSeat;
+    },
+    isTrump(c) {
+        return this.trumpSuit == c.substring(2) || c == 'a_he';
+    },
+    // was trump led?
+    trumpLed() {
+        return (this.cardsPlayed.length && this.isTrump(this.cardsPlayed[0]));
+    },
+    // is it legal to play hand[n]
+    legalPlay(n) {
+        if (!this.trumpLed() || this.isTrump(this.hand[n])) {
+            return true; // legal if trump not led or card is trump
+        } else {
+            // Only legal if no trump cards left
+            var foundTrump = false;
+            for (var i=0; i<this.hand.length && !foundTrump; ++i) {
+                // You can renege the 5 of trump, but not others
+                foundTrump = this.isTrump(this.hand[i]) && this.hand[i][0] != '5';
+            }
+            return !foundTrump;
+        }
+    },
+    // get array of hand[] indices that contain trump cards
+    trumpsInHand() {
+        var a = [];
+        for (var i=0; i<this.hand.length; ++i) {
+            // You can renege the 5 of trump, but not others
+            if (this.isTrump(this.hand[i])) {
+                a.push(i);
+            }
+        }
+        return a;
     },
     discardAtPos: function(n) {
         return moveBetweenArrays(n, this.hand, this.discards);
@@ -207,8 +244,10 @@ const UI = {
         var msg = $('#msg').val();
         Game.wsSendMsg({'action': 'beNice', 'message': msg});
     },
-    bidCnt: 0,
+    bidCnt: 0, bidMax: 1,
     enterBidInDisplay: function(bid) {
+        if (bid > this.bidMax)
+            this.bidMax = bid; // track highest bid
         $('.bid-table td').eq(this.bidCnt++).text(bid);
     },
     enterBidWaiting: function() {
@@ -230,11 +269,31 @@ const UI = {
     clearBidTable: function(fore=0) {
         $('.bid-table td').empty();
         this.bidCnt = fore;
+        this.bidMax = 1; // Clear out old high bid
         this.enterBidWaiting();
         //console.log('clearBidTable()')
     },
+    bbids: ['pass',15,20,25,30],
     // enable our bid selection
-    showOurBidArea(v=true) { this.show('.bid-self', v); },
+    showOurBidArea(v=true) {
+        if (v) {
+            // show only legal bids
+            const q = $('.bid-self button');
+            for (var i=1; i<this.bbids.length && i<q.length; ++i) {
+                const dbl = '' + (this.bbids[i] >= 30 ? '/'+this.bbids[i]*2 :'');
+                if (this.bbids[i] > this.bidMax) {
+                    q.eq(i).text('bid: '+this.bbids[i]+dbl);
+                    q.eq(i).removeClass('hide-me');
+                } else if (this.bbids[i] == this.bidMax && Game.weAreDealer()) {
+                    q.eq(i).text('hold: '+this.bbids[i]+dbl);
+                    q.eq(i).removeClass('hide-me');
+                } else {
+                    q.eq(i).addClass('hide-me');
+                }
+            }
+        }
+        this.show('.bid-self', v);
+    },
     show(sel, v=true) {
         if (v) {
             $(sel).removeClass('hide-me');
@@ -298,7 +357,7 @@ const UI = {
         const names = $('.seatname');
         for (var i=2; i<6; ++i) {
             var si = (Game.ourSeat+i-1)&3;
-            names.eq(i).text(seats[si] || 'Robot');
+            names.eq(i).text((seats[si] || 'Robot')+(i == Game.dealer? ' *':''));
         }
     },
     seatAssigned() {
@@ -361,6 +420,10 @@ const UI = {
     playACard(data) {
         this.highlightActivePlayer(data.fromSeat);
         this.clickCardEnabled = (data.fromSeat == Game.ourSeat); // for play of a single card
+        if (this.sleeping && this.clickCardEnabled) {
+            this.sleepingClickEnable = true;
+            this.clickCardEnabled = false;
+        }
     },
     playInProgress(data) {
         this.biddingEnded();
@@ -382,6 +445,7 @@ const UI = {
         this.updateOtherPlayerNumCards();
     },
     sleeping: false,
+    sleepingClickEnable: false,
     trickEnd(data) {
         if (Game.hand.length) {
             // Since more tricks, prepare for next one
@@ -399,6 +463,8 @@ const UI = {
             this.sleeping = true;
             sleep(2000).then(() => {
                 this.sleeping = false;
+                this.clickCardEnabled = this.sleepingClickEnable;
+                this.sleepingClickEnable = false;
                 this.updateOtherPlayerNumCards();
                 this.prepForePlayOrder();
             });
@@ -473,13 +539,19 @@ const UI = {
             this.clickCardEnabled = true;
         }
     },
-    getTrumpSuit() { return $("input[name=trumpSuit]:checked").val(); },
+    getTrumpSuit() {
+        const ts = $("input[name=trumpSuit]:checked").val();
+        Game.trumpSuit = ts; // Cached copy for quick access
+        return ts;
+    },
     setTrumpSuit(suit) { // any invalid suit unselects all
         const q = $("input[name=trumpSuit][value='"+suit+"']");
         if (q.length) { // found suit value?
             q.prop('checked', true); // check selected suit
+            Game.trumpSuit = suit; // Cached copy for quick access
         } else { // unset any currently selected suit
             $("input[name=trumpSuit]:checked").prop('checked', false); // uncheck selected
+            Game.trumpSuit = null; // Cached copy for quick access
         }
     },
 
@@ -534,12 +606,24 @@ const UI = {
     clickCard: function(n) {
         //console.log('Card '+n+' is '+ (n<Game.hand.length? Game.hand[n] : 'blank/unknown'));
         if (this.clickCardEnabled) {
+            var valid = true;
             if (Game.discarded) {
-                this.clickCardEnabled = false; // disable after each play of a single card
-                const r = {'action':'cardsPlayed', 'plays': [Game.hand[n]], 'fromSeat': Game.ourSeat};
-                Game.wsSendMsg(r);
+                if (!Game.legalPlay(n)) {
+                    valid = false;
+                    const a = Game.trumpsInHand(); // indices of all trump cards
+                    const q = $("#hand").find("svg");
+                    for (var aa of a) {
+                        q.eq(aa).addClass('animated bounce infinite');
+                    }
+                } else {
+                    this.clickCardEnabled = false; // disable after each play of a single card
+                    const r = {'action':'cardsPlayed', 'plays': [Game.hand[n]], 'fromSeat': Game.ourSeat};
+                    Game.wsSendMsg(r);
+                }
             }
-            if (Game.discardAtPos(n)) {
+            if (valid && Game.discardAtPos(n)) {
+                // Clear any previous animations
+                $("#hand").find("svg").removeClass('animated bounce infinite');
                 this.updateCardsDisplay();
             }
         }
