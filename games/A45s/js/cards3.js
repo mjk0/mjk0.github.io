@@ -75,6 +75,11 @@ var Game = {
         this.cardsPlayed.length = 0;
         this.cardsPlayedPast.length = 0;
         this.cardsPlayedTricks.length = 0;
+        this.prepNextDeal();
+    },
+    // Things that the UI needs before deck shuffled msg arrives
+    prepNextDeal() {
+        this.declarer = 255;
     },
 
     // Get 5 cards for deck as {'cards': [...]}
@@ -87,7 +92,9 @@ var Game = {
         const b = a? a: ['cbcatsil','cbcatsil','cbcatsil','cbcatsil'];
         Array.prototype.push.apply(this.hand, b); // add all of b to end of hand
     },
-
+    weAreDeclarer() {
+        return this.declarer != 255 && (this.declarer&3) == this.ourSeat;
+    },
     discardAtPos: function(n) {
         return moveBetweenArrays(n, this.hand, this.discards);
     },
@@ -204,6 +211,9 @@ const UI = {
     enterBidInDisplay: function(bid) {
         $('.bid-table td').eq(this.bidCnt++).text(bid);
     },
+    enterBidWaiting: function() {
+        $('.bid-table td').eq(this.bidCnt).text('?');
+    },
     enterBid: function(bid) { // from UI
         this.enterBidInDisplay(bid);
         Game.wsSendMsg({'action': 'bid', 'bid': bid});
@@ -220,17 +230,23 @@ const UI = {
     clearBidTable: function(fore=0) {
         $('.bid-table td').empty();
         this.bidCnt = fore;
-        this.enterBidInDisplay('?');
-        this.bidCnt = fore;
+        this.enterBidWaiting();
         //console.log('clearBidTable()')
     },
     // enable our bid selection
-    showOurBidArea(v=true) {
+    showOurBidArea(v=true) { this.show('.bid-self', v); },
+    show(sel, v=true) {
         if (v) {
-            $('.bid-self').removeClass('hide-me');
+            $(sel).removeClass('hide-me');
         } else {
-            $('.bid-self').addClass('hide-me');
+            $(sel).addClass('hide-me');
         }
+    },
+    yourBid(data) {
+        // Highlight currently bidding player
+        this.highlightActivePlayer(data.toSeat);
+        this.enterBidWaiting();
+        this.showOurBidArea(data.toSeat == Game.ourSeat);
     },
     // received contract msg from server
     endOfBidding(contract) {
@@ -238,39 +254,50 @@ const UI = {
         const declarerSeat = (Game.declarer&3);
         Game.fore = contract.fore || ((declarerSeat+1)&3);
         const cBid = Math.floor(Game.declarer/16)*5 + 15;
-        $('#contractWho').text(Game.games[Game.ourGame-1].seats[declarerSeat]);
+        $('.contractWho').text(Game.games[Game.ourGame-1].seats[declarerSeat]);
         $('#contractBid').text(cBid);
         this.showPlayArea(3); // show discards
         //this.showKitty(false);
         // Are we the declarer?  If so, add kitty cards to our hand
-        if (declarerSeat == Game.ourSeat) {
+        if (Game.weAreDeclarer()) {
             Game.addKittyCards(); // null array will add placeholder kitty cards
-            this.updateCardsDisplay();
+            this.clickCardEnabled = true; // for discards
         }
-        this.clickCardEnabled = true; // for discards
+        this.prepDiscardsDisplay();
+        this.updateCardsDisplay();
+        this.highlightActivePlayer(declarerSeat);
     },
-    showKitty(v=true) {
-        if (v) {
-            $('#khand').removeClass('hide-me');
-        } else {
-            $('#khand').addClass('hide-me');
-        }
+    prepDiscardsDisplay() {
+        // Enable appropriate discard table rows
+        const ts = this.getTrumpSuit();
+        this.show('#disSelRow', ts || Game.weAreDeclarer());
+        this.show('.rdo-trump', Game.weAreDeclarer());
+        this.show('#disWOTRow', !ts && !Game.weAreDeclarer());
+        this.show('#disTrumpRow', !Game.weAreDeclarer());
     },
+    showKitty(v=true) { this.show('#khand', v); },
     seatToDir: ['E', 'S', 'W', 'N'],
     setDealerInfo(data) {
         $('#curDealer').text(this.seatToDir[data.dealer]+'/ '+data.dealerName);
     },
     namebars: [],
-    updateSeatNamesInDisplay() {
-        // Update player names
-        const seats = Game.games[Game.ourGame-1].seats;
+    updateSeatDirs() {
         const dirs = $('.seatdir');
-        const names = $('.seatname');
         const bars = $('.namebar');
         for (var i=2; i<6; ++i) {
             var si = (Game.ourSeat+i-1)&3;
             this.namebars[si] = bars.eq(i);
             dirs.eq(i).text(this.seatToDir[si]);
+            dirs.eq(i).removeClass((si&1)? 'EW':'NS');
+            dirs.eq(i).addClass((si&1)? 'NS':'EW');
+        }
+    },
+    updateSeatNamesInDisplay() {
+        // Update player names
+        const seats = Game.games[Game.ourGame-1].seats;
+        const names = $('.seatname');
+        for (var i=2; i<6; ++i) {
+            var si = (Game.ourSeat+i-1)&3;
             names.eq(i).text(seats[si] || 'Robot');
         }
     },
@@ -280,6 +307,7 @@ const UI = {
         for (var i=0; i<Game.ourSeat; ++i) {
             this.fpPos.unshift( this.fpPos.pop() ); // rotate right
         }
+        this.updateSeatDirs();
     },
     otherPlayerCfan: [],
     updateOtherPlayerNumCards() {
@@ -315,10 +343,19 @@ const UI = {
             this.cardsPlay1(c, (fromSeat++)&3);
         }
     },
-    highlightActivePlayer(si) {
+    waitingOn(data) {
+        this.highlightPlayers(data.fromSeat);
+    },
+    // Highlight the single active player
+    highlightActivePlayer(si) { this.highlightPlayers([si]); },
+    // Highlight multiple players (for waiting on...)
+    highlightPlayers(arr) { // sorted array, low to high
+        var si = arr.shift(); // get first seat to highlight
         for (var i=0; i<this.namebars.length; ++i) {
             this.namebars[i].removeClass(i == si? 'nb-inactive':'nb-active');
             this.namebars[i].addClass(i == si? 'nb-active':'nb-inactive');
+            if (i == si)
+                si = arr.shift(); // next seat, if any
         }
     },
     playACard(data) {
@@ -375,6 +412,10 @@ const UI = {
         // Hand play is complete.  Show results
         $('#ptsEW').text(data.ptsEW ? data.ptsEW : "0");
         $('#ptsNS').text(data.ptsNS ? data.ptsNS : "0");
+        $('#ptsTotEW').text(data.ptsEW ? data.totEW : "0");
+        $('.totPtsVal').eq(0).text(data.ptsEW ? data.totEW : "0");
+        $('#ptsTotNS').text(data.ptsNS ? data.totNS : "0");
+        $('.totPtsVal').eq(1).text(data.ptsNS ? data.totNS : "0");
 
         // Was contract satisfied?
         const cdir = (Game.declarer&1); // 0: E-W, 1: N-S
@@ -382,16 +423,64 @@ const UI = {
             + (data[cdir?'ptsNS':'ptsEW']>0? ' wins!':' is set!'));
         $('.playEnd').removeClass('hide-me');
     },
-    shuffleNextDealer() {
+    getScoreHistory() {
+        Game.wsSendMsg({'action': 'getScoreHistory'});
+    },
+    scoreHistory(data) {
+        var st = $('#scoreHbody');
+        st.empty();  // Clear out previous score history
+        var gn = 1;
+        // Add completed games history
+        for (var pg of data.pastGames) {
+            var r = '<tr class="pastGames"><td>'+gn+'</td>';
+            r += '<td>' + pg[0] + '</td>' + '<td>' + pg[1] + '</td></tr>';
+            st.append(r);
+            ++gn;
+        };
+        // Add current game history
+        r = '<tr><td rowspan="'+(data.pastScores.length+1)+'">'+gn+'</td>';
+        r += '<td>'+data.pastScores[0][0]+'</td>'+'<td>'+data.pastScores[0][1]+'</td></tr>';
+        st.append(r);
+        for (var i=1; i<data.pastScores.length; ++i) {
+            r = '<tr><td>'+data.pastScores[i][0]+'</td>'
+                +'<td>'+data.pastScores[i][1]+'</td></tr>';
+                st.append(r);
+            };
+        r = '<tr class="bordtop"><td>'+data.score[0]+'</td>'+'<td>'+data.score[1]+'</td></tr>';
+        st.append(r);
+        $('#scoreHistory').modal('open');
+    },
+    // UI prep for next deal
+    prepNextDeal() {
         $('.playEnd').addClass('hide-me');
         this.updateCards($('#lhand,#ohand,#rhand').find("use"), ['cbfan5','cbfan5','cbfan5']);
-        $("input[name=trumpSuit]:checked").prop('checked', false); // uncheck selected suit
+        Game.prepNextDeal();
         this.trumpSuit({'suit': 'cbcatsil'}); // contract suit unknown
+        $('.contractWho').text('TBD'); // declarer To Be Determined
+    },
+    shuffleNextDealer() {
+        this.prepNextDeal();
         Game.wsSendMsg({'action': 'shuffleNextDealer'});
     },
     // Game just announced the trump suit
     trumpSuit(data) {
-        this.updateCards($('#contractSuit svg').find('use'), [data.suit]);
+        this.setTrumpSuit(data.suit);
+        this.updateCards($('.contractSuit svg').find('use'), [data.suit, data.suit]);
+        this.prepDiscardsDisplay();
+        // If just selected a trump, and not declarer, enable card clicks
+        if (this.getTrumpSuit() && !Game.weAreDeclarer()) {
+            this.preSelectTrumpCards();
+            this.clickCardEnabled = true;
+        }
+    },
+    getTrumpSuit() { return $("input[name=trumpSuit]:checked").val(); },
+    setTrumpSuit(suit) { // any invalid suit unselects all
+        const q = $("input[name=trumpSuit][value='"+suit+"']");
+        if (q.length) { // found suit value?
+            q.prop('checked', true); // check selected suit
+        } else { // unset any currently selected suit
+            $("input[name=trumpSuit]:checked").prop('checked', false); // uncheck selected
+        }
     },
 
     // show 0:nothing, 1:bid, 2:play 3:discard
@@ -479,7 +568,7 @@ const UI = {
     updateCardsDisplay: function() {
         var uses = $("#hand").find("use");
         // Sort hand according to Auction 45s order
-        var ts = $("input[name=trumpSuit]:checked").val();
+        var ts = this.getTrumpSuit();
         Game.hand.sort(A45s.comparator(ts));
         this.updateCards(uses, Game.hand);
         //this.clearBidTable();
@@ -490,16 +579,20 @@ const UI = {
         }
     },
     deckShuffled: function(data) {
+        this.prepNextDeal();
         this.clearBidTable(data.fore); // first bid position
         this.updateCardsDisplay();
         this.showPlayArea(0);
         this.setDealerInfo(data);
-        this.updateSeatNamesInDisplay();
+        //this.updateSeatNamesInDisplay();
         $('.sidenav').sidenav('close'); // close Lobby slide-out
     },
     // declarer is clicking on trump suit radio buttons
     trumpSuitClickChange() {
-        var ts = $("input[name=trumpSuit]:checked").val();
+        this.preSelectTrumpCards();
+    },
+    preSelectTrumpCards() {
+        var ts = this.getTrumpSuit();
         if (ts) {
             // Pre-select trump suit cards
             var cards = Game.hand.concat(Game.discards);
@@ -518,7 +611,7 @@ const UI = {
     handSelected: function() {
         // Make sure trump suit has been chosen if we are the declarer
         const declarerSeat = (Game.declarer&3);
-        var ts = $("input[name=trumpSuit]:checked").val();
+        var ts = this.getTrumpSuit();
         if (ts || Game.ourSeat != declarerSeat) {
             const r = {'action':'handSelected', 'cards': Game.hand, 'trumpSuit': ts};
             Game.wsSendMsg(r);
@@ -577,6 +670,13 @@ const UI = {
             gt.append(r);
             ++gn;
         };
+        if (Game.games.length == 0) {
+            // Not connected.
+            var r = '<tr><td colspan="6">⚠️<i>You are not connected</i> - '
+            +'<button class="btn-small" onClick="Game.init()">Re-connect</button>'
+            +'</td></tr>';
+            gt.append(r);
+        }
     },
     updateUsersDisplay: function() {
         var uList = $('#uList');
@@ -592,6 +692,10 @@ const UI = {
             $('#logi-name').text(Game.username);
         } else {
             $('#logi-name').text(state? 'connected' : 'not connected');
+            if (state == 0) {
+                Game.games.length = 0;
+                UI.updateGamesDisplay();
+            }
         }
     },
 
@@ -656,8 +760,10 @@ const WsActionHandlers = {
     'trickEnd': UI.trickEnd.bind(UI),
     'pastPlays': UI.rcvPastTricks.bind(UI),
     'playEnd': UI.playEnd.bind(UI),
+    'scoreHistory': UI.scoreHistory.bind(UI),
     'contract': UI.endOfBidding.bind(UI),
-    'yourBid': UI.showOurBidArea.bind(UI)
+    'waitingOn': UI.waitingOn.bind(UI),
+    'yourBid': UI.yourBid.bind(UI)
 };
 
 // Function that executed jQuery code after page load is complete

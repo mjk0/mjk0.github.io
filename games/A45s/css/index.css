@@ -98,9 +98,10 @@ td.card-m, td.card-lg { display: contents; }
 .gameTable td { border: 1px solid black; }
 .gameTable td,
 .gameTable th {
-    padding: 5px 5px;
+    padding: 5px 5px; text-align: center;
     border-radius: 0px;
 }
+.gameTableDir { padding: 0px 0.3em; box-shadow: 0 0 1pt 1pt; border-radius: 5px; }
 .play-lg { font-size: xx-large !important; }
 #slide-out { width: 30em; }
 .top-info {
@@ -109,7 +110,7 @@ td.card-m, td.card-lg { display: contents; }
     width: fit-content; display: inline-block;
     font-size: 2vw; line-height: 1.3; padding: 0px 0.3em 2px 0.3em;
 }
-#contractSuit { box-shadow: 0pt 0pt 1pt 0pt black; border-radius: 6px; }
+.contractSuit { box-shadow: 0pt 0pt 1pt 0pt black; border-radius: 6px; }
 .aRight { align-self: flex-end; }
 .mt1p { margin: 1vh 1vh; }
 .h100p { height: 100%; }
@@ -124,7 +125,10 @@ td.card-m, td.card-lg { display: contents; }
 }
 .namebar i { font-size: 3vh; }
 .seatdir {background-color: teal; color: white; padding: 0px 0.2em; }
+.seatdir.NS, .seatdir.EW { border-right: double; }
 .seatname { margin-left: 0.2em; color: black; }
+.NS, .NS.gameTableDir { background-color: darkred; color: white; }
+.EW, .EW.gameTableDir { background-color: white; color: black; }
 .table-svg-m, .table-svg-k {
     width: fit-content; height: fit-content;
     font-size: 0px; border: none;
@@ -162,3 +166,23 @@ td.card-m, td.card-lg { display: contents; }
 }
 .bordleft { border-left: black dashed 1px; }
 td.bordbot { border-bottom: black solid 1px; }
+tr.bordtop { border-top: black double 3px; }
+#scoreHistory h3 {
+    background-color: lightblue; text-align: center;
+    margin-bottom: 0px; padding: 0px 1em 0.2em 1em;
+}
+#scoreHistory { width: max-content; }
+#scoreHistory table { font-size: 1.6vw; }
+#scoreHistory th, #scoreHistory td { text-align: center; }
+#scoreHistory div.modal-footer { background-color: lightblue; }
+tr.pastGames { background-color: burlywood; }
+#totEW { background-color: white; border-radius: 5px; box-shadow: 0 0 2pt 2pt black; }
+#totNS {
+    background-color: darkred; color: white;
+    border-radius: 5px; box-shadow: 0 0 2pt 2pt white;
+}
+.infoTbl th, .infoTbl td { padding: 0px 0px; text-align: center; }
+#infoTd1 { padding-bottom: 4px; }
+#totSpc { width: 5px; }
+svg.totPts { width: 2vw; height: 2vw; }
+span.totPtsVal { line-height: 1.2; vertical-align: text-top; }

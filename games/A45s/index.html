@@ -35,7 +35,10 @@
             </div>
             <div id="tab-games" class="col s12">
                 <table class="gameTable"><thead><tr><th>Game</th>
-                    <th>East</th><th>South</th><th>West</th><th>North</th>
+                    <th><span class='EW gameTableDir'>East</span></th>
+                    <th><span class='NS gameTableDir'>South</span></th>
+                    <th><span class='EW gameTableDir'>West</span></th>
+                    <th><span class='NS gameTableDir'>North</span></th>
                     <th>Status</th></tr></thead>
                     <tbody id="gtable"></tbody>
                 </table>
@@ -49,7 +52,17 @@
             <!-- Left column -->
             <div class="col s4">
                 <div class="flex-container">
-                    <div class="box top-info mt1p">Dealer: <span id='curDealer'>E/ TBD</span></div>
+                    <div class="box top-info mt1p"><table id='infoTbl' class='infoTbl'>
+                        <tr><td colspan='3' id='infoTd1'>Dealer: <span id='curDealer'>E/ TBD</span></td></tr>
+                        <tr><td id='totEW'>
+                            <svg class="totPts"><use xlink:href='cards0.svg#compassEW' x='0' y='0'/></svg>
+                            <span class='totPtsVal'>0</span></td><td id='totSpc'></td>
+                            <td id='totNS'>
+                                <svg class="totPts"><use xlink:href='cards0.svg#compassNS' x='0' y='0'/></svg>
+                                <span class='totPtsVal'>0</span>
+                            </td>
+                        </tr>
+                    </table></div>
                     <div class="box box-2"></div>
                     <div class="box box-svg-m">
                         <table id="ttricks" class="table-svg-k"><tr><td>
@@ -105,7 +118,7 @@
                     </div>
                     <div class="box box-2"></div>
                     <div class="box box-play">
-                        <table id="discards" class="hide-me"><tr>
+                        <table id="discards" class="hide-me"><tr id='disSelRow'>
                             <th>Select discards...
                                 <input id="b-done" class="btn-small" type="button" value="done" onclick="UI.handSelected()" /></th>
                         </tr><tr><td class="card-lg hide-me">
@@ -118,6 +131,11 @@
                             <svg><use xlink:href="cards0.svg#cback" /></svg>
                             <svg><use xlink:href="cards0.svg#cback" /></svg>
                             <svg><use xlink:href="cards0.svg#cback" /></svg>
+                        </td></tr><tr id='disWOTRow' class='hide-me'><td>
+                            Waiting for <span class='contractWho'>Declarer</span> to select trump...
+                        </td></tr><tr id='disTrumpRow' class='hide-me'><td>
+                            Trump is <span class='contractSuit svg-icon'><svg>
+                                <use xlink:href="cards0.svg#cbcatsil" /></svg></span>
                         </td></tr><tr><td class="svg-icon rdo-trump">
                             <span class="rdo-trump-q">Trump? </span>
                             <label><input type="radio" name="trumpSuit" value="cl" class="with-gap"><span>
@@ -176,8 +194,8 @@
             <div class="col s4">
                 <div class="flex-container">
                     <div class="box top-info mt1p aRight">Contract:
-                        <span id='contractWho'>TBD</span>
-                        <span id='contractSuit' class="svg-icon"><svg><use xlink:href="cards0.svg#cbcatsil" /></svg></span>
+                        <span class='contractWho'>TBD</span>
+                        <span class='contractSuit svg-icon'><svg><use xlink:href="cards0.svg#cbcatsil" /></svg></span>
                         <span id='contractBid'>99</span>
                     </div>
                     <div class="box box-2"></div>
@@ -222,7 +240,9 @@
                                 <button class="btn" type="button" onclick="UI.shuffleNextDealer()">Shuffle</button>
                             </td><td id="ptsEW" class='bordleft bordbot'>0</td>
                                 <td id="ptsNS" class='bordbot'>0</td>
-                            </tr><tr><td>Game totals:</td>
+                            </tr><tr><td>
+                                <button class="btn" type="button" onclick="UI.getScoreHistory()">
+                                    Game totals</button>:</td>
                                 <td id="ptsTotEW" class='bordleft'>0</td>
                                 <td id="ptsTotNS">0</td>
                             </tr>
@@ -263,10 +283,21 @@
             </svg>
         </div>
         <div class="modal-footer">
-            <a href="#!" class="modal-close btn">Close</a>
+            <a class="modal-close btn">Close</a>
         </div>
     </div>
-    
+    <!-- Modal score history -->
+    <div id="scoreHistory" class="modal">
+        <h3>Score History</h3>
+        <table id='scoreHTable' class='gameTable'>
+            <thead><th>Game</th><th>E-W</th><th>N-S</th></thead>
+            <tbody id='scoreHbody'></tbody>
+        </table>
+        <div class="modal-footer">
+            <a class="modal-close btn">Close</a>
+        </div>
+    </div>
+            
     <!--JavaScript at end of body for optimized loading-->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script type="text/javascript" src="js/materialize.min.js"></script>
