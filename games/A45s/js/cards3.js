@@ -224,6 +224,8 @@ const wsRcv = {
     }
 };
 
+const animEndEvents = 'webkitAnimationEnd animationend';
+
 const UI = {
     login: function() {
         const username = $('#mjk-username').val();
@@ -333,7 +335,7 @@ const UI = {
         // rcv function has added kitty to hand, but no UI update yet
         const anim = 'animated zoomOut';
         $('#khand').addClass(anim).one(
-            'webkitAnimationEnd animationend', function() {
+            animEndEvents, function() {
                 UI.showKitty(false); // hide before removing animation
                 $(this).removeClass(anim);
 
@@ -349,7 +351,7 @@ const UI = {
         const q = $("#hand").find("svg");
         for (var aa of [5,6,7,8]) {
             q.eq(aa).addClass('animated zoomIn').one(
-                'webkitAnimationEnd animationend', function() {
+                animEndEvents, function() {
                     UI.showKitty(false); // hide before removing animation
                     $(this).removeClass('animated zoomIn');
             });
@@ -445,7 +447,7 @@ const UI = {
             const wDir = this.fpPos[(Game.fore+Game.cardsPlayed.length-1)&3];
             const anim = 'animated slideIn'+this.playPosToEff[wDir];
             q.find('use').eq(Game.cardsPlayed.length-1).addClass(anim).one(
-                'webkitAnimationEnd animationend', function() {
+                animEndEvents, function() {
                     $(this).removeClass(anim);
                 }
             ); /* */
@@ -542,6 +544,7 @@ const UI = {
                 this.sleepingClickEnable = false;
                 this.updateOtherPlayerNumCards();
                 this.prepForePlayOrder();
+                this.cardsReplaced(false); // clear num of fill-in cards received
                 if (this.clickCardEnabled) {
                     this.cardPlayAnimate();
                 }
@@ -708,7 +711,7 @@ const UI = {
                     // Show animation for card moving up
                     const anim = 'animated slideOutUp';
                     $("#hand").find("svg").eq(n).addClass(anim).one(
-                        'webkitAnimationEnd animationend', function() {
+                        animEndEvents, function() {
                             $(this).removeClass(anim);
 
                             const r = {'action':'cardsPlayed', 'plays': [Game.hand[n]], 'fromSeat': Game.ourSeat};
@@ -824,6 +827,24 @@ const UI = {
             this.prepForePlayOrder();
         } else {
             this.showPlayArea(1, {'hide-self':true}); // show bidding area
+        }
+    },
+    // server lets all know how many replacement cards each player received
+    fillInCardsDealt(data) {
+        this.cardsReplaced(true, data.numCards);
+    },
+    oEffDir: ['Right', 'Up', 'Left'],
+    cardsReplaced(ena=false, a) {
+        const q = $('.card-fan-m').find('div'); // put text in div, for 'l', 'o', 'r'
+        if (ena && a) {
+            // Add indicator for number of fill-in cards received to 3 other players
+            for (var i=0; i<3; ++i) {
+                var si = (Game.ourSeat+i+1)&3;
+                q.eq(i).text('+'+a[si]).addClass('animated fadeIn'+this.oEffDir[i]);
+            }
+        } else {
+            // Clear fill-in card numbers
+            q.removeClass('animated fadeInRight fadeInUp fadeInLeft').empty();
         }
     },
 
@@ -955,6 +976,7 @@ const WsActionHandlers = {
     'scoreHistory': UI.scoreHistory.bind(UI),
     'contract': UI.endOfBidding.bind(UI),
     'waitingOn': UI.waitingOn.bind(UI),
+    'fillInCardsDealt': UI.fillInCardsDealt.bind(UI),
     'yourBid': UI.yourBid.bind(UI)
 };
 
