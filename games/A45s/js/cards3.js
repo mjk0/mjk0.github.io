@@ -91,7 +91,7 @@ var Game = {
     // Add kitty cards to the play hand
     addKittyCards(a=null) {
         if (this.hand.length > 5) { this.hand.length = 5; }
-        const b = a? a: ['cbcatsil','cbcatsil','cbcatsil','cbcatsil'];
+        const b = a?a.sort(A45s.comparator(null)): ['cbcatsil','cbcatsil','cbcatsil','cbcatsil'];
         Array.prototype.push.apply(this.hand, b); // add all of b to end of hand
     },
     weAreDealer() {
@@ -216,7 +216,7 @@ const wsRcv = {
 
     kitty: function(data) {
         Game.addKittyCards(data.cards);
-        UI.updateCardsDisplay();
+        UI.animateKitty();
     },
     rcvCards: function(data) {
         Game.hand = data.cards;
@@ -273,18 +273,21 @@ const UI = {
         this.enterBidWaiting();
         //console.log('clearBidTable()')
     },
-    bbids: ['pass',15,20,25,30],
+    bbids: ['pass',15,20,25,30,60],
     // enable our bid selection
     showOurBidArea(v=true) {
         if (v) {
             // show only legal bids
             const q = $('.bid-self button');
+            const pts = this.getTotPts();
+            const teamMax = (pts[Game.ourSeat&1]<0?60:30);
             for (var i=1; i<this.bbids.length && i<q.length; ++i) {
                 const dbl = '' + (this.bbids[i] >= 30 ? '/'+this.bbids[i]*2 :'');
-                if (this.bbids[i] > this.bidMax) {
+                if (this.bbids[i] > this.bidMax && this.bbids[i] <= teamMax) {
                     q.eq(i).text('bid: '+this.bbids[i]+dbl);
                     q.eq(i).removeClass('hide-me');
-                } else if (this.bbids[i] == this.bidMax && Game.weAreDealer()) {
+                } else if (this.bbids[i] == this.bidMax && Game.weAreDealer()
+                            && this.bbids[i] <= teamMax) {
                     q.eq(i).text('hold: '+this.bbids[i]+dbl);
                     q.eq(i).removeClass('hide-me');
                 } else {
@@ -315,29 +318,72 @@ const UI = {
         const cBid = Math.floor(Game.declarer/16)*5 + 15;
         $('.contractWho').text(Game.games[Game.ourGame-1].seats[declarerSeat]);
         $('#contractBid').text(cBid);
-        this.showPlayArea(3); // show discards
-        //this.showKitty(false);
         // Are we the declarer?  If so, add kitty cards to our hand
         if (Game.weAreDeclarer()) {
-            Game.addKittyCards(); // null array will add placeholder kitty cards
-            this.clickCardEnabled = true; // for discards
+            // Declarer's discards display and kitty animation on rcv kitty cards
+        } else {
+            this.showPlayArea(3); // show discards
+            this.prepDiscardsDisplay();
+            this.updateCardsDisplay();
         }
-        this.prepDiscardsDisplay();
-        this.updateCardsDisplay();
         this.highlightActivePlayer(declarerSeat);
+    },
+    // animate transfer of kitty to declarer's hand
+    animateKitty() {
+        // rcv function has added kitty to hand, but no UI update yet
+        const anim = 'animated zoomOut';
+        $('#khand').addClass(anim).one(
+            'webkitAnimationEnd animationend', function() {
+                UI.showKitty(false); // hide before removing animation
+                $(this).removeClass(anim);
+
+                // after animation
+                UI.clickCardEnabled = true; // for discards
+            }
+        );
+        UI.showPlayArea(3, {'showKitty':true}); // show discards
+        UI.updateCardsDisplay({'noSort':true});
+        UI.prepDiscardsDisplay();
+
+        // simultaneously animate new cards in hand
+        const q = $("#hand").find("svg");
+        for (var aa of [5,6,7,8]) {
+            q.eq(aa).addClass('animated zoomIn').one(
+                'webkitAnimationEnd animationend', function() {
+                    UI.showKitty(false); // hide before removing animation
+                    $(this).removeClass('animated zoomIn');
+            });
+        }
     },
     prepDiscardsDisplay() {
         // Enable appropriate discard table rows
-        const ts = this.getTrumpSuit();
-        this.show('#disSelRow', ts || Game.weAreDeclarer());
-        this.show('.rdo-trump', Game.weAreDeclarer());
-        this.show('#disWOTRow', !ts && !Game.weAreDeclarer());
-        this.show('#disTrumpRow', !Game.weAreDeclarer());
+        const ts = this.getTrumpSuit() || false;
+        const decl = Game.weAreDeclarer();
+        this.show('#disSelRow', ts || decl);
+        this.show('#b-done', ts);
+        this.show('.rdo-trump', decl);
+        this.show('#disWOTRow', !ts && !decl);
+        this.show('#disTrumpRow', !decl);
+        if (decl && !ts) {
+            // declarer hasn't selected trump yet.  Pulse the radio choices
+            $('.rdo-trump label').addClass('animated pulse infinite');
+        }
     },
     showKitty(v=true) { this.show('#khand', v); },
     seatToDir: ['E', 'S', 'W', 'N'],
     setDealerInfo(data) {
-        $('#curDealer').text(this.seatToDir[data.dealer]+'/ '+data.dealerName);
+        if (data.dealerName == 'Robot')
+            $('#curDealer').text(this.seatToDir[data.dealer]+' Robot');
+        else
+            $('#curDealer').text(data.dealerName);
+
+        // Make crown visible in dealer namebar
+        const crowns = $('.crowncl'); // each is an SVG
+        for (var i=1; i<5; ++i) {
+            var si = (Game.ourSeat+i)&3;
+            this.show(crowns.eq(i), (si == Game.dealer));
+        }
+        console.log('setDealerInfo');
     },
     namebars: [],
     updateSeatDirs() {
@@ -357,7 +403,7 @@ const UI = {
         const names = $('.seatname');
         for (var i=2; i<6; ++i) {
             var si = (Game.ourSeat+i-1)&3;
-            names.eq(i).text((seats[si] || 'Robot')+(i == Game.dealer? ' *':''));
+            names.eq(i).text((seats[si] || 'Robot'));
         }
     },
     seatAssigned() {
@@ -371,8 +417,9 @@ const UI = {
     otherPlayerCfan: [],
     updateOtherPlayerNumCards() {
         while (this.otherPlayerCfan.length) {
-            var uses = $('#'+this.fpPos[this.otherPlayerCfan.shift()]+'hand').find("use");
-            this.updateCards(uses, ['cbfan'+(4-Game.cardsPlayedPast.length)]);
+            var uses = $('#'+this.fpPos[this.otherPlayerCfan.shift()]
+                        +'hand td.card-fan-m').find("use");
+            this.updateCards(uses, ['cbfan'+(4-Game.cardsPlayedPast.length)], false);
         }
     },
     // get element that shows current trick play order
@@ -385,6 +432,7 @@ const UI = {
         $('#play-l,#play-o,#play-r,#play-n').addClass('hide-me');
         q.removeClass('hide-me');
     },
+    playPosToEff: {'l': 'Left','o':'Down', 'r':'Right', 'n':'Up'},
     cardsPlay1(c, fromSeat) {
         Game.cardsPlayed.push(c);
         if (fromSeat != Game.ourSeat) { // reduce card fan size of other player
@@ -393,13 +441,38 @@ const UI = {
         if (!this.sleeping) {
             this.updateOtherPlayerNumCards();
             const q = this.qForePlay();
-            this.updateCards(q.find("use"), Game.cardsPlayed, false);
+            this.updateCards(q.find("use"), Game.cardsPlayed, false); /*
+            const wDir = this.fpPos[(Game.fore+Game.cardsPlayed.length-1)&3];
+            const anim = 'animated slideIn'+this.playPosToEff[wDir];
+            q.find('use').eq(Game.cardsPlayed.length-1).addClass(anim).one(
+                'webkitAnimationEnd animationend', function() {
+                    $(this).removeClass(anim);
+                }
+            ); /* */
         }
     },
     cardsPlayed(data) {
         var fromSeat = data.fromSeat; // use for transition effects
         for (var c of data.plays) {
             this.cardsPlay1(c, (fromSeat++)&3);
+        }
+    },
+    // Animate the play spot for this player
+    cardPlayAnimate(ena=true) {
+        const uses = this.qForePlay().find("use");
+        const anim = 'animYourPlay'; //'animated fadeIn flash infinite';
+        if (uses.length > Game.cardsPlayed.length) {
+            if (ena) {
+                // Use the transparent 'Your play' card
+                uses[Game.cardsPlayed.length].href.baseVal = 'cards0.svg#cyplay';
+                uses.eq(Game.cardsPlayed.length).addClass(anim);
+            } else {
+                // if still on 'Your play' card, set to blank
+                if (uses[Game.cardsPlayed.length].href.baseVal == 'cards0.svg#cyplay') {
+                    uses[Game.cardsPlayed.length].href.baseVal = 'cards0.svg#cblank';
+                }
+                uses.eq(Game.cardsPlayed.length).removeClass(anim);
+            }
         }
     },
     waitingOn(data) {
@@ -423,6 +496,8 @@ const UI = {
         if (this.sleeping && this.clickCardEnabled) {
             this.sleepingClickEnable = true;
             this.clickCardEnabled = false;
+        } else if (!this.sleeping && this.clickCardEnabled) {
+            this.cardPlayAnimate();
         }
     },
     playInProgress(data) {
@@ -467,6 +542,9 @@ const UI = {
                 this.sleepingClickEnable = false;
                 this.updateOtherPlayerNumCards();
                 this.prepForePlayOrder();
+                if (this.clickCardEnabled) {
+                    this.cardPlayAnimate();
+                }
             });
         }
     },
@@ -478,19 +556,23 @@ const UI = {
         // Hand play is complete.  Show results
         $('#ptsEW').text(data.ptsEW ? data.ptsEW : "0");
         $('#ptsNS').text(data.ptsNS ? data.ptsNS : "0");
-        $('#ptsTotEW').text(data.ptsEW ? data.totEW : "0");
-        $('.totPtsVal').eq(0).text(data.ptsEW ? data.totEW : "0");
-        $('#ptsTotNS').text(data.ptsNS ? data.totNS : "0");
-        $('.totPtsVal').eq(1).text(data.ptsNS ? data.totNS : "0");
+        $('#ptsTotEW').text(data.totEW ? data.totEW : "0");
+        $('.totPtsVal').eq(0).text(data.totEW ? data.totEW : "0");
+        $('#ptsTotNS').text(data.totNS ? data.totNS : "0");
+        $('.totPtsVal').eq(1).text(data.totNS ? data.totNS : "0");
 
-        // Was contract satisfied?
-        const cdir = (Game.declarer&1); // 0: E-W, 1: N-S
-        $('#winOrSet').text((cdir? 'N-S':'E-W')
-            + (data[cdir?'ptsNS':'ptsEW']>0? ' wins!':' is set!'));
         $('.playEnd').removeClass('hide-me');
+    },
+    getTotPts() {
+        const q = $('.totPtsVal');
+        return [q.eq(0).text(), q.eq(1).text()];
     },
     getScoreHistory() {
         Game.wsSendMsg({'action': 'getScoreHistory'});
+    },
+    tdWinCell(a,b) {
+        return (a>b ? '<td class="winCell">':'<td>')+a+'</td>'+
+                (b>a ? '<td class="winCell">':'<td>')+b+'</td>';
     },
     scoreHistory(data) {
         var st = $('#scoreHbody');
@@ -499,27 +581,32 @@ const UI = {
         // Add completed games history
         for (var pg of data.pastGames) {
             var r = '<tr class="pastGames"><td>'+gn+'</td>';
-            r += '<td>' + pg[0] + '</td>' + '<td>' + pg[1] + '</td></tr>';
+            r += this.tdWinCell(pg[0], pg[1]) + '</tr>';
             st.append(r);
             ++gn;
         };
         // Add current game history
         r = '<tr><td rowspan="'+(data.pastScores.length+1)+'">'+gn+'</td>';
-        r += '<td>'+data.pastScores[0][0]+'</td>'+'<td>'+data.pastScores[0][1]+'</td></tr>';
-        st.append(r);
-        for (var i=1; i<data.pastScores.length; ++i) {
-            r = '<tr><td>'+data.pastScores[i][0]+'</td>'
-                +'<td>'+data.pastScores[i][1]+'</td></tr>';
+        if (data.pastScores.length) {
+            r += this.tdWinCell(data.pastScores[0][0], data.pastScores[0][1])+'</tr>';
+            st.append(r);
+            for (var i=1; i<data.pastScores.length; ++i) {
+                r = '<tr>'+this.tdWinCell(data.pastScores[i][0], data.pastScores[i][1])+'</tr>';
                 st.append(r);
             };
-        r = '<tr class="bordtop"><td>'+data.score[0]+'</td>'+'<td>'+data.score[1]+'</td></tr>';
+            r = '<tr class="bordtop nb-kitty"><td>'+data.score[0]
+                +'</td>'+'<td>'+data.score[1]+'</td></tr>';
+        } else {
+            // no score history yet
+            r += '<td colspan="2"><i>No score history yet</i></td></tr>';
+        }
         st.append(r);
         $('#scoreHistory').modal('open');
     },
     // UI prep for next deal
     prepNextDeal() {
         $('.playEnd').addClass('hide-me');
-        this.updateCards($('#lhand,#ohand,#rhand').find("use"), ['cbfan5','cbfan5','cbfan5']);
+        this.updateCards($('.card-fan-m').find("use"), ['cbfan5','cbfan5','cbfan5']);
         Game.prepNextDeal();
         this.trumpSuit({'suit': 'cbcatsil'}); // contract suit unknown
         $('.contractWho').text('TBD'); // declarer To Be Determined
@@ -558,7 +645,7 @@ const UI = {
     // show 0:nothing, 1:bid, 2:play 3:discard
     fpPos: ['l','o','r','n'],
     playView: 0, // starts as pre-bidding (blank) view
-    showPlayArea: function(v, option=null) {
+    showPlayArea: function(v, option={}) {
         this.playView = v;
         switch (v) {
         case 0:
@@ -566,9 +653,7 @@ const UI = {
             $('#ttricks').addClass('hide-me');
             $('#play-div').addClass('hide-me');
             $('.bid-table,.bid-self').addClass('hide-me');
-            if (!option) { // null option shows kitty
-                this.showKitty(true);
-            }
+            this.showKitty(option.showKitty || false);
             break;
         case 1: // bidding
             $('#discards').addClass('hide-me');
@@ -576,7 +661,7 @@ const UI = {
             $('#play-div').addClass('hide-me');
             //this.clearBidTable();
             $('.bid-table').removeClass('hide-me');
-            this.showOurBidArea(!option);
+            this.showOurBidArea(!option['hide-self']);
             this.showKitty(true);
             break;
         case 2: // card play
@@ -597,7 +682,7 @@ const UI = {
             $('#play-div').addClass('hide-me');
             $('.bid-table,.bid-self').addClass('hide-me');
             $('#discards').removeClass('hide-me');
-            this.showKitty(false);
+            this.showKitty(option.showKitty || false);
             break;
         }
     },
@@ -617,13 +702,24 @@ const UI = {
                     }
                 } else {
                     this.clickCardEnabled = false; // disable after each play of a single card
-                    const r = {'action':'cardsPlayed', 'plays': [Game.hand[n]], 'fromSeat': Game.ourSeat};
-                    Game.wsSendMsg(r);
+                    // Clear any previous animations
+                    $("#hand").find("svg").removeClass('animated bounce infinite');
+                    this.cardPlayAnimate(false);
+                    // Show animation for card moving up
+                    const anim = 'animated slideOutUp';
+                    $("#hand").find("svg").eq(n).addClass(anim).one(
+                        'webkitAnimationEnd animationend', function() {
+                            $(this).removeClass(anim);
+
+                            const r = {'action':'cardsPlayed', 'plays': [Game.hand[n]], 'fromSeat': Game.ourSeat};
+                            Game.wsSendMsg(r);
+                            if (Game.discardAtPos(n))
+                                UI.updateCardsDisplay();
+                        }
+                    ); /* */
                 }
-            }
-            if (valid && Game.discardAtPos(n)) {
-                // Clear any previous animations
-                $("#hand").find("svg").removeClass('animated bounce infinite');
+            } else if (valid && Game.discardAtPos(n)) {
+                // show card removed from hand
                 this.updateCardsDisplay();
             }
         }
@@ -649,11 +745,16 @@ const UI = {
             }
         }
     },
-    updateCardsDisplay: function() {
+    updateCardsDisplay: function(options={}) {
         var uses = $("#hand").find("use");
+        if (uses.length > 9) {
+            uses.length = 9; // ignore crown in namebar
+        }
         // Sort hand according to Auction 45s order
         var ts = this.getTrumpSuit();
-        Game.hand.sort(A45s.comparator(ts));
+        if (!options.noSort) {
+            Game.hand.sort(A45s.comparator(ts));
+        }
         this.updateCards(uses, Game.hand);
         //this.clearBidTable();
         // are the discards visible?
@@ -668,11 +769,12 @@ const UI = {
         this.updateCardsDisplay();
         this.showPlayArea(0);
         this.setDealerInfo(data);
-        //this.updateSeatNamesInDisplay();
+        this.updateSeatNamesInDisplay(); // To add asterisk next to dealer, for Jane
         $('.sidenav').sidenav('close'); // close Lobby slide-out
     },
     // declarer is clicking on trump suit radio buttons
     trumpSuitClickChange() {
+        $('.rdo-trump label').removeClass('animated pulse infinite'); // choice made
         this.preSelectTrumpCards();
     },
     preSelectTrumpCards() {
@@ -680,6 +782,9 @@ const UI = {
         if (ts) {
             // Pre-select trump suit cards
             var cards = Game.hand.concat(Game.discards);
+            if (Game.weAreDeclarer()) {
+                cards.sort(A45s.comparator(null));
+            }
             Game.hand.length = 0;
             Game.discards.length = 0;
             for (var c of cards) {
@@ -691,16 +796,18 @@ const UI = {
             }
         }
         this.updateCardsDisplay();
+        this.show('#b-done', true);
+        $('#b-done').addClass('animated pulse infinite'); // choice made
     },
     handSelected: function() {
-        // Make sure trump suit has been chosen if we are the declarer
-        const declarerSeat = (Game.declarer&3);
+        // Make sure trump suit has been chosen before chosing discards
         var ts = this.getTrumpSuit();
-        if (ts || Game.ourSeat != declarerSeat) {
+        if (ts) {
+            $('#b-done').removeClass('animated pulse infinite'); // choice made
             const r = {'action':'handSelected', 'cards': Game.hand, 'trumpSuit': ts};
             Game.wsSendMsg(r);
             this.biddingEnded();
-            this.showPlayArea(0, 'nokitty');
+            this.showPlayArea(0, {'showKitty':false});
         } else {
             alert('You must select a trump suit');
         }
@@ -716,7 +823,7 @@ const UI = {
             this.showPlayArea(2); // show card play area
             this.prepForePlayOrder();
         } else {
-            this.showPlayArea(1, 'hide-self'); // show bidding area
+            this.showPlayArea(1, {'hide-self':true}); // show bidding area
         }
     },
 
@@ -796,6 +903,7 @@ const UI = {
         $('.sidenav').sidenav();  // initialize lobby slide-out panel
         $('.tabs').tabs();  // initialize tabs
         $('.tabs').tabs('select','tab-games'); // pre-select games tab, since class="active" not
+        $(".dropdown-trigger").dropdown({ coverTrigger: false }); // nav-bar drop-down
 
         // Make sure 'enter' in form fields doesn't close WebSocket
         $('form').on('submit', (event)=>{ event.preventDefault(); });

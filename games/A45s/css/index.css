@@ -16,7 +16,7 @@ td.card-m, td.card-lg { display: contents; }
 .tt-stack:hover { fill: lightsteelblue; cursor: pointer;}
 /* https://blog.prototypr.io/align-svg-icons-to-text-and-say-goodbye-to-font-icons-d44b3d7b26b4 */
 .svg-icon { display: inline-block; }
-.svg-icon svg { height:1em; width:1em; top: .125em; position: relative; }
+.svg-icon svg, svg.svg-icon { height:1em; width:1em; top: .125em; position: relative; }
 .rdo-trump label {
     box-shadow: 0 0 3pt 1pt white; border-radius: 10px;
     margin: 2px 0.2em; padding: 1px 4px 1px 4px;
@@ -46,7 +46,7 @@ td.card-m, td.card-lg { display: contents; }
 #discards td { padding: 0px; }
 #discards > tbody > tr > td:last-child { padding: 0px 3px 3px 3px; }
 #b-done {
-    height: 1.8em; line-height: 1; float: right;
+    width: 10vw; height: 1.8em; line-height: 1; float: right;
     margin: 0px 5px 5px 0px; padding: 0px 1em;
 }
 .flex-container {
@@ -94,6 +94,8 @@ td.card-m, td.card-lg { display: contents; }
     padding-bottom: 0.3em;
 }
 .nav-wrapper { padding: 0px 0.3em; }
+#dropdown1 { background-color: #ee6e73; }
+#dropdown1.dropdown-content li > a { color: white; }
 #logi-name { font-style: italic; box-shadow: 0 0 1pt 0pt black; padding: 0px 0.3em; }
 .gameTable th {background-color: lightslategrey; color: white; }
 .gameTable table,
@@ -105,6 +107,7 @@ td.card-m, td.card-lg { display: contents; }
     border-radius: 0px;
 }
 .gameTableDir { padding: 0px 0.3em; box-shadow: 0 0 1pt 1pt; border-radius: 5px; }
+#scoreHbody > tr > td { padding: 0px 5px; }
 .play-lg { font-size: xx-large !important; }
 #slide-out { width: 30em; }
 .top-info {
@@ -167,18 +170,29 @@ td.card-m, td.card-lg { display: contents; }
     background-color: bisque; border-radius: 9px;
     margin: 0.3em 0px 0.2em 0px;
 }
+.playEndInner tr:nth-child(3) {
+    background-color: burlywood;
+}
+.animYourPlay {
+    animation: fadeIn 4s cubic-bezier(0.95, 0.05, 0.795, 0.035), flash 4s ease 4s infinite;
+}
 .bordleft { border-left: black dashed 1px; }
-td.bordbot { border-bottom: black solid 1px; }
-tr.bordtop { border-top: black double 3px; }
-#scoreHistory h3 {
+td.bordbot { border-bottom: black solid 2px; }
+tr.bordtop { border-top: black solid 3px; }
+.diaTable h3, .diaTable h4 {
     background-color: lightblue; text-align: center;
     margin-bottom: 0px; padding: 0px 1em 0.2em 1em;
 }
-#scoreHistory { width: max-content; }
-#scoreHistory table { font-size: 1.6vw; }
-#scoreHistory th, #scoreHistory td { text-align: center; }
-#scoreHistory div.modal-footer { background-color: lightblue; }
+.diaTable { width: max-content; }
+.diaTable table { font-size: 1.6vw; }
+.diaTable th, .diaTable td { text-align: center; }
+.diaTable div.modal-footer { background-color: lightblue; }
 tr.pastGames { background-color: burlywood; }
+.winCell { background-color: lightgreen; }
+#rankTable th { background-color: blue; color: white; }
+#rankTable table, #rankTable th, #rankTable td {
+    border: black solid 1px; padding: 0px 0.3em;
+}
 #totEW { background-color: white; border-radius: 5px; box-shadow: 0 0 2pt 2pt black; }
 #totNS {
     background-color: darkred; color: white;
@@ -186,6 +200,10 @@ tr.pastGames { background-color: burlywood; }
 }
 .infoTbl th, .infoTbl td { padding: 0px 0px; text-align: center; }
 #infoTd1 { padding-bottom: 4px; }
-#totSpc { width: 5px; }
+#totSpc, #totSpc button { width: 2em; padding: 0px 0.3em; }
 svg.totPts { width: 2vw; height: 2vw; }
 span.totPtsVal { line-height: 1.2; vertical-align: text-top; }
+#hand svg.slideOutUp {
+    animation-duration: 100ms;
+}
+.crowncl { color: blue; }
