@@ -20,6 +20,11 @@ td.card-fan-m > div {
 .card-4stack-m svg { width: 27vh; height: 10.125vh; max-width: 27vw; max-height: 10.125vw; }
 .tt-stack { fill: grey; cursor: pointer;}
 .tt-stack:hover { fill: lightsteelblue; cursor: pointer;}
+.modal0 {
+    position: absolute; right: 3px; top: calc(64px + 2.2vh + 2.2vw);
+    height: fit-content; background-color: bisque;
+}
+.modal0 h4 { margin-top: 0px; }
 /* https://blog.prototypr.io/align-svg-icons-to-text-and-say-goodbye-to-font-icons-d44b3d7b26b4 */
 .svg-icon { display: inline-block; }
 .svg-icon svg, svg.svg-icon { height:1em; width:1em; top: .125em; position: relative; }
@@ -179,6 +184,7 @@ td.card-fan-m > div {
 .playEndInner tr:nth-child(3) {
     background-color: burlywood;
 }
+.ptsWin { animation: tada 1s infinite; text-shadow: 0pt 0pt 4px yellow; }
 .animYourPlay {
     animation: fadeIn 4s cubic-bezier(0.95, 0.05, 0.795, 0.035), flash 4s ease 4s infinite;
 }

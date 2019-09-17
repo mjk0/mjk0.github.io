@@ -1,9 +1,14 @@
 // Deal 5 cards from a random deck
 /* global */
 "use strict";
+const urlParams = new URLSearchParams(window.location.search);
 
 var Game = {
-    server: "ws://pizzamonster.org:8081", // "ws://192.168.1.3:8081",
+    server: [
+        "ws://pizzamonster.org:8081",
+        "ws://pizzamonster.org:8082",
+        "ws://localhost:8083"
+    ],
     ws: null,
     username: null,
     users: [],
@@ -23,8 +28,11 @@ var Game = {
 
     // Allow Cross-domain AJAX for debugging
     init: function() {
+        const test = (urlParams.get('test') || 0);
+        if (test > this.server.length)
+            test = 0;
         try {
-            this.ws = new WebSocket(this.server);
+            this.ws = new WebSocket(this.server[test]);
             this.ws.onopen = this.wsOnOpen;
             this.ws.onclose = this.wsOnClose;
             this.ws.onerror = this.wsOnError;
@@ -252,20 +260,18 @@ const UI = {
             this.bidMax = bid; // track highest bid
         $('.bid-table td').eq(this.bidCnt++).text(bid);
     },
-    enterBidWaiting: function() {
-        $('.bid-table td').eq(this.bidCnt).text('?');
+    enterBidWaiting: function(bid='?') {
+        $('.bid-table td').eq(this.bidCnt).text(bid); // pre-enter bid
     },
     enterBid: function(bid) { // from UI
-        this.enterBidInDisplay(bid);
+        this.enterBidWaiting(bid); // pre-enter, then will rcv msg from server
         Game.wsSendMsg({'action': 'bid', 'bid': bid});
         this.showOurBidArea(false);
     },
     bids: function(ba) { // message from server
         //console.log('bids: fromSeat='+ba.fromSeat+', '+ba.bids.length+' bids');
-        if (ba.fromSeat != Game.ourSeat) { 
-            for (var b of ba.bids) {
-                this.enterBidInDisplay(b);
-            }
+        for (var b of ba.bids) {
+            this.enterBidInDisplay(b);
         }
     },
     clearBidTable: function(fore=0) {
@@ -361,10 +367,11 @@ const UI = {
         // Enable appropriate discard table rows
         const ts = this.getTrumpSuit() || false;
         const decl = Game.weAreDeclarer();
-        this.show('#disSelRow', ts || decl);
+        this.show('#disSelRow', !Game.discarded && (ts || decl));
         this.show('#b-done', ts);
-        this.show('.rdo-trump', decl);
-        this.show('#disWOTRow', !ts && !decl);
+        this.show('.rdo-trump', !Game.discarded && decl);
+        this.show('#disWODRow', Game.discarded);
+        this.show('#disWOTRow', !Game.discarded && !ts && !decl);
         this.show('#disTrumpRow', !decl);
         if (decl && !ts) {
             // declarer hasn't selected trump yet.  Pulse the radio choices
@@ -385,7 +392,7 @@ const UI = {
             var si = (Game.ourSeat+i)&3;
             this.show(crowns.eq(i), (si == Game.dealer));
         }
-        console.log('setDealerInfo');
+        //console.log('setDealerInfo');
     },
     namebars: [],
     updateSeatDirs() {
@@ -494,6 +501,8 @@ const UI = {
     },
     playACard(data) {
         this.highlightActivePlayer(data.fromSeat);
+        if (this.playView != 2)
+            this.showPlayArea(2); // show card play area
         this.clickCardEnabled = (data.fromSeat == Game.ourSeat); // for play of a single card
         if (this.sleeping && this.clickCardEnabled) {
             this.sleepingClickEnable = true;
@@ -532,11 +541,12 @@ const UI = {
                 Game.fore = (Game.fore+1)&3;
             }
             Game.cardsPlayedPast.push(Game.cardsPlayed);
-            Game.cardsPlayedTricks.push('cshoriz');
+            Game.cardsPlayed = [];
+            Game.fore = data.fore; // winner of last trick, starts new hand
+            const trh = ((Game.ourSeat&1)==(Game.fore&1)? 'csvert': 'cshoriz');
+            Game.cardsPlayedTricks.push(trh);
             $('#ttricks').removeClass('hide-me'); // make sure past tricks display is visible
             this.updateCards($("#ttricks").find("use"), Game.cardsPlayedTricks, false);
-            Game.cardsPlayed = [];
-            Game.fore = data.fore;
             this.sleeping = true;
             sleep(2000).then(() => {
                 this.sleeping = false;
@@ -564,6 +574,18 @@ const UI = {
         $('#ptsTotNS').text(data.totNS ? data.totNS : "0");
         $('.totPtsVal').eq(1).text(data.totNS ? data.totNS : "0");
 
+        // Is the game over?
+        if (data.totEW >= 125 || data.totNS >= 125) {
+            // Game over, but who won?  Declarer get priority (bitwise XOR, ^)
+            const wteam = (data.score[Game.declarer&1] < 125) ^ (Game.declarer&1);
+            $('#ptsTot'+(wteam?'NS':'EW')).addClass('ptsWin');
+            $('#dealAgain').text('New Game');
+            $('#scoreLbl').text(' game over:');
+        } else {
+            $('#ptsTotNS, #ptsTotEW').removeClass('ptsWin');
+            $('#dealAgain').text('Deal Again');
+            $('#scoreLbl').text(' score:');
+        }
         $('.playEnd').removeClass('hide-me');
     },
     getTotPts() {
@@ -810,7 +832,9 @@ const UI = {
             const r = {'action':'handSelected', 'cards': Game.hand, 'trumpSuit': ts};
             Game.wsSendMsg(r);
             this.biddingEnded();
-            this.showPlayArea(0, {'showKitty':false});
+            //this.showPlayArea(0, {'showKitty':false});
+            this.updateCards($("#discards .card-lg").find("use"), []); // clear discards
+            this.prepDiscardsDisplay(); // show waiting on others until 'playACard'
         } else {
             alert('You must select a trump suit');
         }
@@ -823,7 +847,6 @@ const UI = {
     rcvCards() {
         this.updateCardsDisplay();
         if (Game.discarded) {
-            this.showPlayArea(2); // show card play area
             this.prepForePlayOrder();
         } else {
             this.showPlayArea(1, {'hide-self':true}); // show bidding area

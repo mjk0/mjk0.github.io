@@ -25,7 +25,8 @@
             <a class="brand-logo left">Auction 45s</a>
             <ul class="right">
                 <li><a onclick="$('.sidenav').sidenav('open')">Lobby</a></li>
-                <li><a class="dropdown-trigger" href="#!" data-target="dropdown1">Help<i
+                <li><a class="dropdown-trigger" data-target="dropdown1"
+                        onclick="$('.dropdown-trigger').dropdown('open')">Help<i
                     class="material-icons right">arrow_drop_down</i></a></li>
                 <li id="logi-name">not connected</li>
             </ul>
@@ -147,6 +148,8 @@
                             <svg><use xlink:href="cards0.svg#cback" /></svg>
                             <svg><use xlink:href="cards0.svg#cback" /></svg>
                             <svg><use xlink:href="cards0.svg#cback" /></svg>
+                        </td></tr><tr id='disWODRow' class='hide-me'><td>
+                            Waiting for others to discard...
                         </td></tr><tr id='disWOTRow' class='hide-me'><td>
                             Waiting for <span class='contractWho'>Declarer</span> to select trump...
                         </td></tr><tr id='disTrumpRow' class='hide-me'><td>
@@ -253,13 +256,15 @@
                         <svg class="hide-me"><use xlink:href="cards0.svg#cback" /></svg>
                     </td></tr><tr><td class="playEnd hide-me"><div class="top-info"><table class='playEndInner'>
                             <tr><th>
-                                <button class="btn" type="button" onclick="UI.shuffleNextDealer()">Deal again</button>
+                                <button id='dealAgain' class="btn" type="button"
+                                    onclick="UI.shuffleNextDealer()">Deal again</button>
                                 </th><th class="pair-ew bordleft">E-W</th><th class="pair-ns">N-S</th>
                             </tr><tr><td>hand points:</td><td id="ptsEW" class='bordleft bordbot'>0</td>
                                 <td id="ptsNS" class='bordbot'>0</td>
                             </tr><tr><td style="text-align: right;">
                                 <button class="btn" type="button" onclick="UI.getScoreHistory()">
-                                    <i class="material-icons">assignment</i></button> score:</td>
+                                    <i class="material-icons">assignment</i></button>
+                                    <span id='scoreLbl'>score:</span></td>
                                 <td id="ptsTotEW" class='bordleft'>0</td>
                                 <td id="ptsTotNS">0</td>
                             </tr>
@@ -318,7 +323,8 @@
     </div>
     <!-- Modal card rank tip -->
     <div id="cardRank" class="modal diaTable">
-        <h4>Card Rank Table</h4>
+        <h4>Card Rank Table <a class="modal-close btn right">Close</a></h4>
+        
         <table id='rankTable' class='no-padding'>
             <tr>
                 <th>Suit</th><th>Face cards</th>
@@ -345,9 +351,6 @@
                 <td>A, 2, 3, 4, 5, 6, 7, 8, 9, 10</td>
             </tr>
         </table>
-        <div class="modal-footer">
-            <a class="modal-close btn">Close</a>
-        </div>
     </div>
                 
     <!--JavaScript at end of body for optimized loading-->
