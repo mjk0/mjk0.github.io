@@ -173,7 +173,12 @@ function sleep(ms) {
 // responses to WebSocket messages
 const wsRcv = {
     authenticate: function(data) {
-        $('#login').modal('open');
+        if (Game.username) {
+            // Already authenticated, just reconnecting
+            Game.wsSendMsg({'action': 'authenticate', 'username': Game.username});
+        } else {
+            $('#login').modal('open');
+        }
     },
     userJoined: function(data) {
         Game.users.push(data.uname); // One user joined
@@ -352,6 +357,7 @@ const UI = {
         UI.showPlayArea(3, {'showKitty':true}); // show discards
         UI.updateCardsDisplay({'noSort':true});
         UI.prepDiscardsDisplay();
+        $('#hand-sort').removeClass('hide-me');
 
         // simultaneously animate new cards in hand
         const q = $("#hand").find("svg");
@@ -362,6 +368,11 @@ const UI = {
                     $(this).removeClass('animated zoomIn');
             });
         }
+    },
+    // Sort hand after kitty added, on user request (click)
+    handSort() {
+        this.updateCardsDisplay();
+        $('#hand-sort').addClass('hide-me');
     },
     prepDiscardsDisplay() {
         // Enable appropriate discard table rows
@@ -800,6 +811,7 @@ const UI = {
     // declarer is clicking on trump suit radio buttons
     trumpSuitClickChange() {
         $('.rdo-trump label').removeClass('animated pulse infinite'); // choice made
+        $('#hand-sort').addClass('hide-me'); // trump selection triggers sort
         this.preSelectTrumpCards();
     },
     preSelectTrumpCards() {
@@ -933,6 +945,15 @@ const UI = {
             }
         }
     },
+    onSidenavClose() {
+        if (!Game.ourGame) {
+            alert('You must join a game or start a new one');
+            $('.sidenav').sidenav('open');  // back to lobby
+        } else if (!Game.games[Game.ourGame-1].started) {
+            alert("Press 'Start' to start your game");
+            $('.sidenav').sidenav('open');  // back to lobby
+        }
+    },
 
     init: function() {
         Game.shuffleInit();
@@ -944,7 +965,8 @@ const UI = {
         this.updateLoginDisplay(0); // until logged in, hide connected username
 
         // Lobby slide-out panel
-        $('.sidenav').sidenav();  // initialize lobby slide-out panel
+        var elems = document.querySelectorAll('.sidenav');
+        var instances = M.Sidenav.init(elems, {'onCloseEnd': this.onSidenavClose});
         $('.tabs').tabs();  // initialize tabs
         $('.tabs').tabs('select','tab-games'); // pre-select games tab, since class="active" not
         $(".dropdown-trigger").dropdown({ coverTrigger: false }); // nav-bar drop-down
@@ -953,8 +975,8 @@ const UI = {
         $('form').on('submit', (event)=>{ event.preventDefault(); });
 
         // Modal login dialog
-        var elems = document.querySelectorAll('.modal');
-        var instances = M.Modal.init(elems);
+        elems = document.querySelectorAll('.modal');
+        instances = M.Modal.init(elems);
         $('#login').modal({'dismissible': false});
         M.updateTextFields(); // reflect pre-init of login value from locaStorage
 

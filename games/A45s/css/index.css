@@ -155,7 +155,12 @@ td.card-fan-m > div {
 .table-svg-lg {
     width: fit-content; height: fit-content;
     align-self: center; font-size: 0px;
-    border: none;
+    border: none; position: relative;
+}
+#hand-sort {
+    position: absolute; right: -5px; top: -5px;
+    height: 5vh; width: 5vh;  max-width: 5vw; max-height: 5vw;
+    text-align: center; line-height: 5vh;
 }
 .hide-me { display: none; }
 .bid-self {
