@@ -43,21 +43,21 @@ var Game = {
     },
 
     wsOnOpen: function(ev) {
-        console.log("Ws open: "+ev.target.url); // {"isTrusted":true}
+        console.info("Ws open: "+ev.target.url); // {"isTrusted":true}
         UI.updateLoginDisplay(1);
     },
 
     wsOnClose: function(ev) {
-        console.log("Ws close: "+ev.target.url);
+        console.info("Ws close: "+ev.target.url);
         UI.updateLoginDisplay(0);
     },
 
     wsOnError: function(ev) {
-        console.log("Ws error: "+ev);
+        console.error("Ws error: "+ev);
     },
 
     wsOnMsg: function(ev) {
-        console.log("Ws msg: "+ev.data);
+        console.info("Ws msg: "+ev.data);
         var j;
         try {
             j = JSON.parse(ev.data);
@@ -65,7 +65,7 @@ var Game = {
                 WsActionHandlers[j.action](j);
             }
         } catch(e) {
-            console.log('Error: '+e);
+            console.error('Error: '+e);
         }
     },
 
@@ -182,7 +182,7 @@ const wsRcv = {
     },
     userJoined: function(data) {
         Game.users.push(data.uname); // One user joined
-        console.log(data.uname+' joined the game');
+        console.info(data.uname+' joined the game');
         if (Game.username == data.uname) {
             UI.updateLoginDisplay(2);  // server says we're logged in!
         }
@@ -190,7 +190,7 @@ const wsRcv = {
     },
     userExited: function(data) {
         removeA(Game.users, data.uname); // One user exited
-        console.log(data.uname+' exited the game');
+        console.info(data.uname+' exited the game');
         UI.updateUsersDisplay();
     },
     allGames: function(data) {
@@ -274,7 +274,7 @@ const UI = {
         this.showOurBidArea(false);
     },
     bids: function(ba) { // message from server
-        //console.log('bids: fromSeat='+ba.fromSeat+', '+ba.bids.length+' bids');
+        //console.info('bids: fromSeat='+ba.fromSeat+', '+ba.bids.length+' bids');
         for (var b of ba.bids) {
             this.enterBidInDisplay(b);
         }
@@ -284,7 +284,7 @@ const UI = {
         this.bidCnt = fore;
         this.bidMax = 1; // Clear out old high bid
         this.enterBidWaiting();
-        //console.log('clearBidTable()')
+        //console.info('clearBidTable()')
     },
     bbids: ['pass',15,20,25,30,60],
     // enable our bid selection
@@ -403,7 +403,7 @@ const UI = {
             var si = (Game.ourSeat+i)&3;
             this.show(crowns.eq(i), (si == Game.dealer));
         }
-        //console.log('setDealerInfo');
+        //console.info('setDealerInfo');
     },
     namebars: [],
     updateSeatDirs() {
@@ -725,7 +725,7 @@ const UI = {
     clickCardEnabled: false,
     // Clicked on a card in the player's hand
     clickCard: function(n) {
-        //console.log('Card '+n+' is '+ (n<Game.hand.length? Game.hand[n] : 'blank/unknown'));
+        //console.info('Card '+n+' is '+ (n<Game.hand.length? Game.hand[n] : 'blank/unknown'));
         if (this.clickCardEnabled) {
             var valid = true;
             if (Game.discarded) {
@@ -762,7 +762,7 @@ const UI = {
     },
     // Clicked on a card in the discard group
     clickDis: function(n) {
-        //console.log('Discard '+n+' is '+ (n<Game.discards.length? Game.discards[n] : 'non-existant'));
+        //console.info('Discard '+n+' is '+ (n<Game.discards.length? Game.discards[n] : 'non-existant'));
         if (Game.reclaimAtPos(n)) {
             this.updateCardsDisplay();
         }
