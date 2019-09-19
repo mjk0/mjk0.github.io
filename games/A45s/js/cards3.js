@@ -5,8 +5,8 @@ const urlParams = new URLSearchParams(window.location.search);
 
 var Game = {
     server: [
-        "ws://pizzamonster.org:8081",
         "ws://pizzamonster.org:8082",
+        "ws://pizzamonster.org:8081",
         "ws://localhost:8083"
     ],
     ws: null,
