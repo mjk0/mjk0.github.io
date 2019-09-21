@@ -525,8 +525,13 @@ const UI = {
     playInProgress(data) {
         this.biddingEnded();
         Game.fore = data.fore;
+        if (data.score)
+            this.updateScoreDisplay(data.score[0], data.score[1]);
         this.showPlayArea(2); // show card play area
         this.prepForePlayOrder();
+        // Move non-trump back into hand since joining in-progress
+        Array.prototype.push.apply(Game.hand, Game.discards);
+        this.updateCardsDisplay();
     },
     rcvPastTricks(data) {
         for (var pp of data.plays) {
@@ -576,14 +581,17 @@ const UI = {
         this.updateCards($('#play-trick-svg').find("use"), Game.cardsPlayedPast[n]);
         $('#showATrick').modal('open');
     },
+    updateScoreDisplay(totEW, totNS) {
+        $('.totPtsVal').eq(0).text(totEW || "0");
+        $('.totPtsVal').eq(1).text(totNS || "0");
+    },
     playEnd(data) {
         // Hand play is complete.  Show results
         $('#ptsEW').text(data.ptsEW ? data.ptsEW : "0");
         $('#ptsNS').text(data.ptsNS ? data.ptsNS : "0");
         $('#ptsTotEW').text(data.totEW ? data.totEW : "0");
-        $('.totPtsVal').eq(0).text(data.totEW ? data.totEW : "0");
         $('#ptsTotNS').text(data.totNS ? data.totNS : "0");
-        $('.totPtsVal').eq(1).text(data.totNS ? data.totNS : "0");
+        this.updateScoreDisplay(data.totEW, data.totNS);
 
         // Is the game over?
         if (data.totEW >= 125 || data.totNS >= 125) {
