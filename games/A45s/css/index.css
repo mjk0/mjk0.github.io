@@ -189,7 +189,7 @@ td.card-fan-m > div {
 .playEndInner tr:nth-child(3) {
     background-color: burlywood;
 }
-.ptsWin { animation: tada 1s infinite; text-shadow: 0pt 0pt 4px yellow; }
+.ptsWin { animation: tada 1s infinite; text-shadow: 0pt 0pt 4px white; }
 .animYourPlay {
     animation: fadeIn 4s cubic-bezier(0.95, 0.05, 0.795, 0.035), flash 4s ease 4s infinite;
 }

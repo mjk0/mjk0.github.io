@@ -598,10 +598,12 @@ const UI = {
             // Game over, but who won?  Declarer get priority (bitwise XOR, ^)
             const wteam = (data.score[Game.declarer&1] < 125) ^ (Game.declarer&1);
             $('#ptsTot'+(wteam?'NS':'EW')).addClass('ptsWin');
+            $('.playEndInner th.pair-'+(wteam?'ns':'ew')).addClass('animated tada infinite');
             $('#dealAgain').text('New Game');
             $('#scoreLbl').text(' game over:');
         } else {
             $('#ptsTotNS, #ptsTotEW').removeClass('ptsWin');
+            $('.playEndInner th.pair-ns, .playEndInner th.pair-ew').removeClass('animated tada infinite');
             $('#dealAgain').text('Deal Again');
             $('#scoreLbl').text(' score:');
         }
