@@ -2,6 +2,7 @@
 /* global */
 "use strict";
 const urlParams = new URLSearchParams(window.location.search);
+const seatToDir = ['E', 'S', 'W', 'N'];
 
 var Game = {
     server: [
@@ -107,6 +108,10 @@ var Game = {
     },
     weAreDeclarer() {
         return this.declarer != 255 && (this.declarer&3) == this.ourSeat;
+    },
+    seatWho(si) {
+        const name = Game.games[Game.ourGame-1].seats[si];
+        return name? name : seatToDir[si] + ' Robot';
     },
     isTrump(c) {
         return this.trumpSuit == c.substring(2) || c == 'a_he';
@@ -329,7 +334,7 @@ const UI = {
         const declarerSeat = (Game.declarer&3);
         Game.fore = contract.fore || ((declarerSeat+1)&3);
         const cBid = Math.floor(Game.declarer/16)*5 + 15;
-        $('.contractWho').text(Game.games[Game.ourGame-1].seats[declarerSeat]);
+        $('.contractWho').text(Game.seatWho(declarerSeat));
         $('#contractBid').text(cBid);
         // Are we the declarer?  If so, add kitty cards to our hand
         if (Game.weAreDeclarer()) {
@@ -390,10 +395,9 @@ const UI = {
         }
     },
     showKitty(v=true) { this.show('#khand', v); },
-    seatToDir: ['E', 'S', 'W', 'N'],
     setDealerInfo(data) {
         if (data.dealerName == 'Robot')
-            $('#curDealer').text(this.seatToDir[data.dealer]+' Robot');
+            $('#curDealer').text(seatToDir[data.dealer]+' Robot');
         else
             $('#curDealer').text(data.dealerName);
 
@@ -412,7 +416,7 @@ const UI = {
         for (var i=2; i<6; ++i) {
             var si = (Game.ourSeat+i-1)&3;
             this.namebars[si] = bars.eq(i);
-            dirs.eq(i).text(this.seatToDir[si]);
+            dirs.eq(i).text(seatToDir[si]);
             dirs.eq(i).removeClass((si&1)? 'EW':'NS');
             dirs.eq(i).addClass((si&1)? 'NS':'EW');
         }
