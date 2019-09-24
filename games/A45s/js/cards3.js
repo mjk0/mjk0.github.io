@@ -209,9 +209,14 @@ const wsRcv = {
     },
     seatDiff: function(data) {
         for (var gn in data.diffs) {
-            Game.games[gn-1] = data.diffs[gn];
-            if (gn == Game.ourGame)
-                UI.updateSeatNamesInDisplay();
+            if (typeof data.diffs[gn] === "string" && data.diffs[gn] == "removed") {
+                // regardless of game index, remove last in array
+                Game.games.length = Game.games.length - 1;
+            } else {
+                Game.games[gn-1] = data.diffs[gn];
+                if (gn == Game.ourGame)
+                    UI.updateSeatNamesInDisplay();
+            }
         }
         UI.updateGamesDisplay();
     },
