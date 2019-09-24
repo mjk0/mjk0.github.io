@@ -3,6 +3,7 @@
 "use strict";
 const urlParams = new URLSearchParams(window.location.search);
 const seatToDir = ['E', 'S', 'W', 'N'];
+var xDiscard = window.matchMedia("(max-width: 800px)"); // for media change testing
 
 var Game = {
     server: [
@@ -703,6 +704,7 @@ const UI = {
             $('#ttricks').addClass('hide-me');
             $('#play-div').addClass('hide-me');
             $('.bid-table,.bid-self').addClass('hide-me');
+            this.showSideCardFans(true);
             this.showKitty(option.showKitty || false);
             break;
         case 1: // bidding
@@ -712,6 +714,7 @@ const UI = {
             //this.clearBidTable();
             $('.bid-table').removeClass('hide-me');
             this.showOurBidArea(!option['hide-self']);
+            this.showSideCardFans(true);
             this.showKitty(true);
             break;
         case 2: // card play
@@ -721,6 +724,7 @@ const UI = {
             $('#play-div').removeClass('hide-me');
             var fpp = this.fpPos[Game.fore&3];
             $('#play-'+fpp).removeClass('hide-me');
+            this.showSideCardFans(true);
             this.showKitty(false);
             if (Game.cardsPlayedTricks.length)
                 $('#ttricks').removeClass('hide-me');
@@ -733,8 +737,15 @@ const UI = {
             $('.bid-table,.bid-self').addClass('hide-me');
             $('#discards').removeClass('hide-me');
             this.showKitty(option.showKitty || false);
+            this.showSideCardFans(this.visibleWidth() > 800);
             break;
         }
+    },
+    showSideCardFans(f) {
+        this.show($('#lhand,#rhand'), f);
+    },
+    visibleWidth() {
+        return parseFloat( $('.greenStripes').css('width') );
     },
     clickCardEnabled: false,
     // Clicked on a card in the player's hand
@@ -1009,8 +1020,17 @@ const UI = {
         }
         // Change event handler for trump suit (winning bidder only)
         $("input[name=trumpSuit]").change(this.trumpSuitClickChange.bind(this));
+
+        // Add media width-change handler
+        xDiscard.addListener(xDiscardWChange);
     }
 };
+
+function xDiscardWChange(x) {
+    if (UI.playView == 3) {
+        UI.showSideCardFans(!x.matches);
+    }
+}
 
 // For each action received from the server, map to handler
 const WsActionHandlers = {
