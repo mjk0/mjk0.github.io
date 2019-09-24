@@ -195,29 +195,29 @@ t-65 129t-24.5 203.5z" />
         <use xlink:href="#ctrans" width="60" height="80" x="13" y="6" />
     </symbol>
     <symbol id="cl_back" viewBox="0 0 60 80">
-        <use x="0" y="0" width="100%" height="100%" xlink:href="#bback" />
-        <use x="3%" y="28%" width="34%" height="28%" xlink:href="#cl" />
-        <use x="63%" y="72%" width="34%" height="28%" xlink:href="#cl" />
+        <use x="0" y="0" width="60" height="80" xlink:href="#bback" />
+        <use x="1.8" y="22.4" width="20.4" height="22.4" xlink:href="#cl" />
+        <use x="37.8" y="57.6" width="20.4" height="22.4" xlink:href="#cl" />
         <!-- <text x="20%" y="42%" style="fill:yellow;font-size:20px;">&#x2663;</text> -->
     </symbol>
     <symbol id="di_back" viewBox="0 0 60 80">
         <use x="0" y="0" width="100%" height="100%" xlink:href="#rback" />
-        <use x="0" y="26%" width="40%" height="30%" xlink:href="#di" />
-        <use x="60%" y="69%" width="40%" height="30%" xlink:href="#di" />
+        <use x="0" y="20.8" width="24" height="24" xlink:href="#di" />
+        <use x="36" y="55.2" width="24" height="24" xlink:href="#di" />
         <!-- <text x="20%" y="42%" style="fill:yellow;font-size:32px;">&#x2666;</text>
         <text x="80%" y="85%" style="fill:yellow;font-size:32px;">&#x2666;</text> -->
     </symbol>
     <symbol id="he_back" viewBox="0 0 60 80">
         <use x="0" y="0" width="100%" height="100%" xlink:href="#rback" />
-        <use x="3%" y="27%" width="34%" height="28%" xlink:href="#he" />
-        <use x="63%" y="72%" width="34%" height="28%" xlink:href="#he" />
+        <use x="1.8" y="21.6" width="20.4" height="22.4" xlink:href="#he" />
+        <use x="37.8" y="57.6" width="20.4" height="22.4" xlink:href="#he" />
         <!-- <text x="20%" y="42%" style="fill:darkred;font-size:20px;">&#x2665;</text>
             <text x="80%" y="86%" style="fill:darkred;font-size:20px;">&#x2665;</text> -->
     </symbol>
     <symbol id="sp_back" viewBox="0 0 60 80">
         <use x="0" y="0" width="100%" height="100%" xlink:href="#bback" />
-        <use x="4%" y="28%" width="32%" height="30%" xlink:href="#sp" />
-        <use x="64%" y="72%" width="32%" height="30%" xlink:href="#sp" />
+        <use x="2.4" y="22.4" width="19.2" height="24" xlink:href="#sp" />
+        <use x="38.4" y="57.6" width="19.2" height="24" xlink:href="#sp" />
         <!-- <text x="20%" y="42%" style="fill:yellow;font-size:20px;">&#x2660;</text>
             <text x="80%" y="87%" style="fill:yellow;font-size:20px;">&#x2660;</text> -->
     </symbol>
@@ -226,283 +226,283 @@ t-65 129t-24.5 203.5z" />
 <!-- Suit 'clubs' -->
 <symbol id="2_cl" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#2n" />
-    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#2n" />
+    <use x="3" y="2" width="18" height="24" xlink:href="#2n" />
+    <use x="39" y="37.2" width="18" height="24" xlink:href="#2n" />
     <!-- <text x="20%" y="18%" style="fill:yellow;font-size:24px;font-weight:bold;">2</text>
         <text x="80%" y="62%" style="fill:yellow;font-size:24px;font-weight:bold;">2</text> -->
 </symbol>
 <symbol id="3_cl" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#3n" />
-    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#3n" />
+    <use x="3" y="2" width="18" height="24" xlink:href="#3n" />
+    <use x="39" y="37.2" width="18" height="24" xlink:href="#3n" />
 </symbol>
 <symbol id="4_cl" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#4n" />
-    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#4n" />
+    <use x="3" y="2" width="18" height="24" xlink:href="#4n" />
+    <use x="39" y="37.2" width="18" height="24" xlink:href="#4n" />
 </symbol>
 <symbol id="5_cl" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#5n" />
-    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#5n" />
+    <use x="3" y="2" width="18" height="24" xlink:href="#5n" />
+    <use x="39" y="37.2" width="18" height="24" xlink:href="#5n" />
 </symbol>
 <symbol id="6_cl" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#6n" />
-    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#6n" />
+    <use x="3" y="2" width="18" height="24" xlink:href="#6n" />
+    <use x="39" y="37.2" width="18" height="24" xlink:href="#6n" />
 </symbol>
 <symbol id="7_cl" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#7n" />
-    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#7n" />
+    <use x="3" y="2" width="18" height="24" xlink:href="#7n" />
+    <use x="39" y="37.2" width="18" height="24" xlink:href="#7n" />
 </symbol>
 <symbol id="8_cl" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#8n" />
-    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#8n" />
+    <use x="3" y="2" width="18" height="24" xlink:href="#8n" />
+    <use x="39" y="37.2" width="18" height="24" xlink:href="#8n" />
 </symbol>
 <symbol id="9_cl" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#9n" />
-    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#9n" />
+    <use x="3" y="2" width="18" height="24" xlink:href="#9n" />
+    <use x="39" y="37.2" width="18" height="24" xlink:href="#9n" />
 </symbol>
 <symbol id="t_cl" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
-    <use x="4%" y="2.5%" width="34%" height="30%" xlink:href="#tn" />
-    <use x="61%" y="46.5%" width="34%" height="30%" xlink:href="#tn" />
+    <use x="2.4" y="2" width="20.4" height="24" xlink:href="#tn" />
+    <use x="36.6" y="37.2" width="20.4" height="24" xlink:href="#tn" />
     <!-- <text x="20%" y="18%" style="fill:yellow;font-size:24px;font-weight:bold;letter-spacing:-0.2em;">10</text>
         <text x="77%" y="62%" style="fill:yellow;font-size:24px;font-weight:bold;letter-spacing:-0.2em;">10</text> -->
 </symbol>
 <symbol id="j_cl" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#J" />
-    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#J" />
+    <use x="3" y="2" width="18" height="24" xlink:href="#J" />
+    <use x="39" y="37.2" width="18" height="24" xlink:href="#J" />
 </symbol>
 <symbol id="q_cl" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#Q" />
-    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#Q" />
+    <use x="3" y="2" width="18" height="24" xlink:href="#Q" />
+    <use x="39" y="37.2" width="18" height="24" xlink:href="#Q" />
 </symbol>
 <symbol id="k_cl" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#K" />
-    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#K" />
+    <use x="3" y="2" width="18" height="24" xlink:href="#K" />
+    <use x="39" y="37.2" width="18" height="24" xlink:href="#K" />
 </symbol>
 <symbol id="a_cl" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#cl_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" xlink:href="#A" />
-    <use x="65%" y="46.5%" width="30%" height="30%" xlink:href="#A" />
+    <use x="3" y="2" width="18" height="24" xlink:href="#A" />
+    <use x="39" y="37.2" width="18" height="24" xlink:href="#A" />
 </symbol>
 
 <!-- Suit 'diamonds' -->
 <symbol id="2_di" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#2n" />
-    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#2n" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#2n" />
+    <use x="39" y="36.4" width="18" height="24" style="fill:darkred;" xlink:href="#2n" />
     <!-- <text x="20%" y="18%" style="fill:yellow;font-size:24px;font-weight:bold;">2</text>
     <text x="80%" y="61%" style="fill:yellow;font-size:24px;font-weight:bold;">2</text> -->
 </symbol>
 <symbol id="3_di" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#3n" />
-    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#3n" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#3n" />
+    <use x="39" y="36.4" width="18" height="24" style="fill:darkred;" xlink:href="#3n" />
 </symbol>
 <symbol id="4_di" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#4n" />
-    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#4n" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#4n" />
+    <use x="39" y="36.4" width="18" height="24" style="fill:darkred;" xlink:href="#4n" />
 </symbol>
 <symbol id="5_di" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#5n" />
-    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#5n" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#5n" />
+    <use x="39" y="36.4" width="18" height="24" style="fill:darkred;" xlink:href="#5n" />
 </symbol>
 <symbol id="6_di" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#6n" />
-    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#6n" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#6n" />
+    <use x="39" y="36.4" width="18" height="24" style="fill:darkred;" xlink:href="#6n" />
 </symbol>
 <symbol id="7_di" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#7n" />
-    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#7n" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#7n" />
+    <use x="39" y="36.4" width="18" height="24" style="fill:darkred;" xlink:href="#7n" />
 </symbol>
 <symbol id="8_di" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#8n" />
-    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#8n" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#8n" />
+    <use x="39" y="36.4" width="18" height="24" style="fill:darkred;" xlink:href="#8n" />
 </symbol>
 <symbol id="9_di" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#9n" />
-    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#9n" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#9n" />
+    <use x="39" y="36.4" width="18" height="24" style="fill:darkred;" xlink:href="#9n" />
 </symbol>
 <symbol id="t_di" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
-    <use x="4%" y="2.5%" width="34%" height="30%" style="fill:darkred;" xlink:href="#tn" />
-    <use x="61%" y="45.5%" width="34%" height="30%" style="fill:darkred;" xlink:href="#tn" />
+    <use x="2.4" y="2" width="20.4" height="24" style="fill:darkred;" xlink:href="#tn" />
+    <use x="36.6" y="36.4" width="20.4" height="24" style="fill:darkred;" xlink:href="#tn" />
     <!-- <text x="20%" y="18%" style="fill:yellow;font-size:24px;font-weight:bold;letter-spacing:-0.2em;">10</text>
         <text x="77%" y="61%" style="fill:yellow;font-size:24px;font-weight:bold;letter-spacing:-0.2em;">10</text> -->
 </symbol>
 <symbol id="j_di" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#J" />
-    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#J" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#J" />
+    <use x="39" y="36.4" width="18" height="24" style="fill:darkred;" xlink:href="#J" />
 </symbol>
 <symbol id="q_di" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#Q" />
-    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#Q" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#Q" />
+    <use x="39" y="36.4" width="18" height="24" style="fill:darkred;" xlink:href="#Q" />
 </symbol>
 <symbol id="k_di" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#K" />
-    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#K" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#K" />
+    <use x="39" y="36.4" width="18" height="24" style="fill:darkred;" xlink:href="#K" />
 </symbol>
 <symbol id="a_di" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#di_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#A" />
-    <use x="65%" y="45.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#A" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#A" />
+    <use x="39" y="36.4" width="18" height="24" style="fill:darkred;" xlink:href="#A" />
 </symbol>
 
 <!-- Suit 'hearts' -->
 <symbol id="2_he" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#2n" />
-    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#2n" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#2n" />
+    <use x="39" y="37.2" width="18" height="24" style="fill:darkred;" xlink:href="#2n" />
     <!-- <text x="20%" y="18%" style="fill:yellow;font-size:24px;font-weight:bold;">2</text>
     <text x="80%" y="62%" style="fill:yellow;font-size:24px;font-weight:bold;">2</text> -->
 </symbol>
 <symbol id="3_he" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#3n" />
-    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#3n" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#3n" />
+    <use x="39" y="37.2" width="18" height="24" style="fill:darkred;" xlink:href="#3n" />
 </symbol>
 <symbol id="4_he" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#4n" />
-    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#4n" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#4n" />
+    <use x="39" y="37.2" width="18" height="24" style="fill:darkred;" xlink:href="#4n" />
 </symbol>
 <symbol id="5_he" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#5n" />
-    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#5n" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#5n" />
+    <use x="39" y="37.2" width="18" height="24" style="fill:darkred;" xlink:href="#5n" />
 </symbol>
 <symbol id="6_he" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#6n" />
-    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#6n" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#6n" />
+    <use x="39" y="37.2" width="18" height="24" style="fill:darkred;" xlink:href="#6n" />
 </symbol>
 <symbol id="7_he" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#7n" />
-    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#7n" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#7n" />
+    <use x="39" y="37.2" width="18" height="24" style="fill:darkred;" xlink:href="#7n" />
 </symbol>
 <symbol id="8_he" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#8n" />
-    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#8n" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#8n" />
+    <use x="39" y="37.2" width="18" height="24" style="fill:darkred;" xlink:href="#8n" />
 </symbol>
 <symbol id="9_he" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#9n" />
-    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#9n" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#9n" />
+    <use x="39" y="37.2" width="18" height="24" style="fill:darkred;" xlink:href="#9n" />
 </symbol>
 <symbol id="t_he" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
-    <use x="4%" y="2.5%" width="34%" height="30%" style="fill:darkred;" xlink:href="#tn" />
-    <use x="61%" y="46.5%" width="34%" height="30%" style="fill:darkred;" xlink:href="#tn" />
+    <use x="2.4" y="2" width="20.4" height="24" style="fill:darkred;" xlink:href="#tn" />
+    <use x="36.6" y="37.2" width="20.4" height="24" style="fill:darkred;" xlink:href="#tn" />
     <!-- <text x="20%" y="18%" style="fill:yellow;font-size:24px;font-weight:bold;letter-spacing:-0.2em;">10</text>
     <text x="77%" y="62%" style="fill:yellow;font-size:24px;font-weight:bold;letter-spacing:-0.2em;">10</text> -->
 </symbol>
 <symbol id="j_he" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#J" />
-    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#J" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#J" />
+    <use x="39" y="37.2" width="18" height="24" style="fill:darkred;" xlink:href="#J" />
 </symbol>
 <symbol id="q_he" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#Q" />
-    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#Q" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#Q" />
+    <use x="39" y="37.2" width="18" height="24" style="fill:darkred;" xlink:href="#Q" />
 </symbol>
 <symbol id="k_he" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#K" />
-    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#K" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#K" />
+    <use x="39" y="37.2" width="18" height="24" style="fill:darkred;" xlink:href="#K" />
 </symbol>
 <symbol id="a_he" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#he_back" />
-    <use x="5%" y="2.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#A" />
-    <use x="65%" y="46.5%" width="30%" height="30%" style="fill:darkred;" xlink:href="#A" />
+    <use x="3" y="2" width="18" height="24" style="fill:darkred;" xlink:href="#A" />
+    <use x="39" y="37.2" width="18" height="24" style="fill:darkred;" xlink:href="#A" />
 </symbol>
 
 <!-- Suit 'spades' -->
 <symbol id="2_sp" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
-    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#2n" />
-    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#2n" />
+    <use x="3" y="2.08" width="18" height="24" xlink:href="#2n" />
+    <use x="39" y="37.28" width="18" height="24" xlink:href="#2n" />
     <!-- <text x="20%" y="18%" style="fill:yellow;font-size:24px;font-weight:bold;">2</text>
     <text x="80%" y="62%" style="fill:yellow;font-size:24px;font-weight:bold;">2</text> -->
 </symbol>
 <symbol id="3_sp" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
-    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#3n" />
-    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#3n" />
+    <use x="3" y="2.08" width="18" height="24" xlink:href="#3n" />
+    <use x="39" y="37.28" width="18" height="24" xlink:href="#3n" />
 </symbol>
 <symbol id="4_sp" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
-    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#4n" />
-    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#4n" />
+    <use x="3" y="2.08" width="18" height="24" xlink:href="#4n" />
+    <use x="39" y="37.28" width="18" height="24" xlink:href="#4n" />
 </symbol>
 <symbol id="5_sp" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
-    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#5n" />
-    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#5n" />
+    <use x="3" y="2.08" width="18" height="24" xlink:href="#5n" />
+    <use x="39" y="37.28" width="18" height="24" xlink:href="#5n" />
 </symbol>
 <symbol id="6_sp" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
-    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#6n" />
-    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#6n" />
+    <use x="3" y="2.08" width="18" height="24" xlink:href="#6n" />
+    <use x="39" y="37.28" width="18" height="24" xlink:href="#6n" />
 </symbol>
 <symbol id="7_sp" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
-    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#7n" />
-    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#7n" />
+    <use x="3" y="2.08" width="18" height="24" xlink:href="#7n" />
+    <use x="39" y="37.28" width="18" height="24" xlink:href="#7n" />
 </symbol>
 <symbol id="8_sp" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
-    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#8n" />
-    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#8n" />
+    <use x="3" y="2.08" width="18" height="24" xlink:href="#8n" />
+    <use x="39" y="37.28" width="18" height="24" xlink:href="#8n" />
 </symbol>
 <symbol id="9_sp" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
-    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#9n" />
-    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#9n" />
+    <use x="3" y="2.08" width="18" height="24" xlink:href="#9n" />
+    <use x="39" y="37.28" width="18" height="24" xlink:href="#9n" />
 </symbol>
 <symbol id="t_sp" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
-    <use x="4%" y="2.6%" width="34%" height="30%" xlink:href="#tn" />
-    <use x="61%" y="46.6%" width="34%" height="30%" xlink:href="#tn" />
+    <use x="2.4" y="2.08" width="20.4" height="24" xlink:href="#tn" />
+    <use x="36.6" y="37.28" width="20.4" height="24" xlink:href="#tn" />
 </symbol>
 <symbol id="j_sp" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
-    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#J" />
-    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#J" />
+    <use x="3" y="2.08" width="18" height="24" xlink:href="#J" />
+    <use x="39" y="37.28" width="18" height="24" xlink:href="#J" />
 </symbol>
 <symbol id="q_sp" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
-    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#Q" />
-    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#Q" />
+    <use x="3" y="2.08" width="18" height="24" xlink:href="#Q" />
+    <use x="39" y="37.28" width="18" height="24" xlink:href="#Q" />
 </symbol>
 <symbol id="k_sp" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
-    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#K" />
-    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#K" />
+    <use x="3" y="2.08" width="18" height="24" xlink:href="#K" />
+    <use x="39" y="37.28" width="18" height="24" xlink:href="#K" />
 </symbol>
 <symbol id="a_sp" viewBox="0 0 60 80">
     <use x="0" y="0" width="100%" height="100%" xlink:href="#sp_back" />
-    <use x="5%" y="2.6%" width="30%" height="30%" xlink:href="#A" />
-    <use x="65%" y="46.6%" width="30%" height="30%" xlink:href="#A" />
+    <use x="3" y="2.08" width="18" height="24" xlink:href="#A" />
+    <use x="39" y="37.28" width="18" height="24" xlink:href="#A" />
 </symbol>
 
 <!-- Compass direction symbols -->

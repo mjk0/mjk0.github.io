@@ -40,7 +40,7 @@ td.card-fan-m > div {
     border: white solid 2px; width: 30%; background-color: green;
 }
 #showATrick div.play-area { min-height: 30vh; }
-#showATrick div.modal-footer { width: fit-content; float: right; background-color: green; }
+#showATrick div.modal-footer { width: auto; float: right; background-color: green; }
 .center {
     position: absolute;
     left: 50%;
@@ -49,7 +49,7 @@ td.card-fan-m > div {
 }
 #discards {
     border: white solid 2px; background-color: burlywood;
-    width: fit-content; height: fit-content; font-size: 1.8vw;
+    width: auto; height: fit-content; font-size: 1.8vw;
     align-self: center; padding: 0px;
     border-collapse: separate; border-radius: 9px;
 }
@@ -154,13 +154,13 @@ td.card-fan-m > div {
 .NS, .NS.gameTableDir { background-color: darkred; color: white; }
 .EW, .EW.gameTableDir { background-color: white; color: black; }
 .table-svg-m, .table-svg-k {
-    width: fit-content; height: fit-content;
+    width: auto; height: fit-content;
     font-size: 0px; border: none;
 }
 .table-svg-m { align-self: center; }
 .table-svg-k { align-self: flex-end; margin-bottom: 5vh; }
 .table-svg-lg {
-    width: fit-content; height: fit-content;
+    width: auto; height: fit-content;
     align-self: center; font-size: 0px;
     border: none; position: relative;
 }
@@ -176,7 +176,7 @@ td.card-fan-m > div {
 }
 .bid-table {
     background-color: slategray; border: white ridge 2px;
-    width: fit-content; height: fit-content; align-self: center;
+    width: auto; height: fit-content; align-self: center;
     padding: 0px 0.4em;
 }
 .bid-table td, .playEnd th, .playEnd td,
