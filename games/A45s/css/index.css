@@ -37,7 +37,8 @@ td.card-fan-m > div {
 .rdo-trump-q { font-size: medium; }
 #showATrick {
     vertical-align: middle; align-self: center;
-    border: white solid 2px; width: 30%; background-color: green;
+    border: white solid 2px; background-color: green;
+    width: 30%; min-width: 31vh;
 }
 #showATrick div.play-area { min-height: 30vh; }
 #showATrick div.modal-footer { width: auto; float: right; background-color: green; }
