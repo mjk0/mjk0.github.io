@@ -7,9 +7,8 @@ var xDiscard = window.matchMedia("(max-width: 800px)"); // for media change test
 
 var Game = {
     server: [
-        "ws://pizzamonster.org:8082",
-        "ws://pizzamonster.org:8081",
-        "ws://localhost:8083"
+        "wss://pizzamonster.org:8082",
+        "wss://pizzamonster.org:8081"
     ],
     ws: null,
     username: null,
