@@ -8,7 +8,8 @@ var xDiscard = window.matchMedia("(max-width: 800px)"); // for media change test
 var Game = {
     server: [
         "wss://pizzamonster.org:8082",
-        "wss://pizzamonster.org:8081"
+        "wss://pizzamonster.org:8081",
+        "wss://pizzamonster.org/games/A45s/wss/"
     ],
     ws: null,
     username: null,
@@ -741,7 +742,8 @@ const UI = {
             $('.bid-table,.bid-self').addClass('hide-me');
             $('#discards').removeClass('hide-me');
             this.showKitty(option.showKitty || false);
-            this.showSideCardFans(this.visibleWidth() > 800);
+            //this.showSideCardFans(this.visibleWidth() > 800);
+            this.showSideCardFans(!xDiscard.matches);
             break;
         }
     },

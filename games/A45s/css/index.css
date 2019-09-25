@@ -33,8 +33,8 @@ td.card-fan-m > div {
     margin: 2px 0.2em; padding: 1px 4px 1px 4px;
     display: inline-block; color: black;
 }
-.rdo-trump [type="radio"]+span { padding-left: 1.8em; }
-.rdo-trump-q { font-size: medium; }
+.rdo-trump [type="radio"]+span { padding-left: 1.2em; font-size: 2em; }
+.rdo-trump-q { font-size: inherit; }
 #showATrick {
     vertical-align: middle; align-self: center;
     border: white solid 2px; background-color: green;
@@ -58,7 +58,7 @@ td.card-fan-m > div {
 #discards td { padding: 0px; }
 #discards > tbody > tr > td:last-child { padding: 0px 3px 3px 3px; }
 @media only screen and (max-width: 1200px) {
-    #discards { font-size: 20px; }
+    #discards { font-size: 22px; }
 }
 @media only screen and (max-width: 800px) {
     #discards { min-width: 90vw; }
@@ -110,6 +110,9 @@ td.card-fan-m > div {
 .box-hand {
     min-height: 30vh;
     padding-bottom: 0.3em;
+}
+@media only screen and (max-width: 800px) {
+    .box-hand { min-height: 35vh; }
 }
 .nav-wrapper { padding: 0px 0.3em; }
 #dropdown1 { background-color: #ee6e73; }
