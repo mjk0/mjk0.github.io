@@ -239,6 +239,7 @@ const wsRcv = {
     ourGame: function(data) {
         Game.ourGame = data._id; // UI will update on seatDiff, coming next
         Game.ourSeat = data.seat;
+        UI.updateScoreDisplay(0, 0);
         UI.seatAssigned();
     },
     deckShuffled: function(data) {
