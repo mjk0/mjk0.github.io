@@ -119,15 +119,19 @@ td.card-fan-m > div {
 #dropdown1.dropdown-content li > a { color: white; }
 #logi-name { font-style: italic; box-shadow: 0 0 1pt 0pt black; padding: 0px 0.3em; }
 .gameTable th {background-color: lightslategrey; color: white; }
-.gameTable table,
-.gameTable th,
+.privTable th {background-color: peru; color: white; }
+.gameTable table, .privTable table,
+.gameTable th, .privTable th, .privTable td
 .gameTable td { border: 1px solid black; }
-.gameTable td,
+.gameTable td, .privTable td, .privTable th,
 .gameTable th {
     padding: 5px 5px; text-align: center;
     border-radius: 0px;
 }
+.privTable td[colspan] { text-align: left; }
+.privTable td { background-color: #e4d2bf; }
 .gameTableDir { padding: 0px 0.3em; box-shadow: 0 0 1pt 1pt; border-radius: 5px; }
+th.gameSectionTitle { text-align: left; font-style: italic; }
 #scoreHbody > tr > td { padding: 0px 5px; }
 .play-lg { font-size: xx-large !important; }
 #slide-out { width: 30em; }
@@ -238,5 +242,15 @@ svg.totPts { width: 2vw; height: 2vw; }
 span.totPtsVal { line-height: 1.2; vertical-align: text-top; }
 #hand svg.slideOutUp {
     animation-duration: 100ms;
+}
+#diaInvite { width: max-content; }
+#diaInvite h5 {
+    background-color: lightblue; margin: 0px; padding: 10px;
+}
+#diaInvite label > span { margin-left: 1em; width: calc(100% - 2em); }
+button.inviteBtn {
+    height: 1.6em; line-height: 1;
+    border-radius: 15px; background-color: darkblue;
+    margin: 0px 5px 0px 0px; padding: 0px 1em;
 }
 .crowncl { color: blue; }

@@ -42,6 +42,13 @@ var Game = {
         } catch (e) {
             console.error(e);
         }
+        this.clear();
+    },
+    clear() {
+        this.users.length = 0;
+        this.games.length = 0;
+        this.ourGame = 0;
+        this.ourSeat = -1;
     },
 
     wsOnOpen: function(ev) {
@@ -51,6 +58,7 @@ var Game = {
 
     wsOnClose: function(ev) {
         console.info("Ws close: "+ev.target.url);
+        Game.clear();
         UI.updateLoginDisplay(0);
     },
 
@@ -74,6 +82,14 @@ var Game = {
     wsSendMsg: function(data) {
         this.ws.send(JSON.stringify(data));
     },
+
+    isPublic(g) { return (!g.hasOwnProperty('owner') || g.owner === null); },
+    isVisible(g) {
+        return (g.hasOwnProperty('owner') &&
+            (g.owner === this.username
+                || g.owner !== '-' && g.invited && g.invited[this.username]));
+    },
+    privCreate() { this.wsSendMsg({'action': 'privGameCreate'}) },
 
     // Ask server to create a freshly shuffled deck of cards
     shuffleDeck: function() {
@@ -666,10 +682,16 @@ const UI = {
         Game.prepNextDeal();
         this.trumpSuit({'suit': 'cbcatsil'}); // contract suit unknown
         $('.contractWho').text('TBD'); // declarer To Be Determined
+        $('#contractBid').text(0); // high bid of 0
     },
     shuffleNextDealer() {
         this.prepNextDeal();
         Game.wsSendMsg({'action': 'shuffleNextDealer'});
+
+        // Is the game over?
+        if ($('.totPtsVal').eq(0).text() >= 125 || $('.totPtsVal').eq(1).text() >= 125) {
+            this.updateScoreDisplay(0, 0);
+        }
     },
     // Game just announced the trump suit
     trumpSuit(data) {
@@ -930,22 +952,36 @@ const UI = {
         }
         return status;
     },
+    addRowGamesDisplay(gn, g) {
+        var r = '<tr><td>'+(g.owner || gn)+'</td>';
+        var sn = 0;
+        for (var s of g.seats) {
+            r += '<td>'+(s?s:
+                '<button class="btn-small" onClick="UI.sitAt('+gn+','+sn+',this)">'
+                +(g.started ? 'join' : 'sit')
+                +'</button>' )+'</td>';
+            ++sn;
+        }
+        r += '<td>'+this.lobbyGameStatus(g.started, gn)+'</td>';
+        return r;
+    },
     updateGamesDisplay: function() {
+        const priv = [];
         var gt = $('#gtable');
         gt.empty();  // Clear out previous games list
         var gn = 1;
         for (var g of Game.games) {
-            var r = '<tr><td>'+gn+'</td>';
-            var sn = 0;
-            for (var s of g.seats) {
-                r += '<td>'+(s?s:
-                    '<button class="btn-small" onClick="UI.sitAt('+gn+','+sn+',this)">'
-                    +(g.started ? 'join' : 'sit')
-                    +'</button>' )+'</td>';
-                ++sn;
+            if (Game.isPublic(g)) {
+                gt.append(this.addRowGamesDisplay(gn, g));
+            } else if (Game.isVisible(g)) {
+                // visible and not public means private & invited
+                // if we own the game, shift to first array position
+                if (Game.username == g.owner) {
+                    priv.unshift(gn); // move to first spot
+                } else {
+                    priv.push(gn);
+                }
             }
-            r += '<td>'+this.lobbyGameStatus(g.started, gn)+'</td>';
-            gt.append(r);
             ++gn;
         };
         if (Game.games.length == 0) {
@@ -954,8 +990,64 @@ const UI = {
             +'<button class="btn-small" onClick="Game.init()">Re-connect</button>'
             +'</td></tr>';
             gt.append(r);
+            this.show('#privgtable', false);
+        } else {
+            // private games
+            this.updatePrivGamesDisplay(priv);
         }
     },
+    updatePrivGamesDisplay: function(priv) {
+        // Show private games
+        var privt = $('#privgtable');
+        this.show(privt, true);
+        privt.empty(); // clear out previous private games list
+        // If we don't have a private game yet.  Offer to create one
+        this.show('#privCreate', priv.length==0 || Game.games[priv[0]-1].owner != Game.username);
+        // If no private games at all, just show title with create button
+        this.show($('.privTable').find('tr').eq(1), priv.length>0);
+
+        priv.forEach( (gn, i) => {
+            // first row per game shows sit/join buttons, as with public games
+            const g = Game.games[gn-1];
+            privt.append(this.addRowGamesDisplay(gn, g));
+            // second row show invited list, and possible invite button
+            var r = '<tr><td colspan="6" class="bordbot">'
+            if (g.owner == Game.username) {
+                r += '<button class="btn-small inviteBtn" type="button"'
+                    + ' onclick="UI.privInvite('+gn+')">Invite</button>';
+            } else {
+                r += '<b>Invited:</b> ';
+            }
+            const ka = [];
+            for (var key in g.invited) {
+                if (g.invited.hasOwnProperty(key)) {
+                    ka.push(key);
+                }
+            }
+            r += ka.join(', ')+' </td></tr>';
+            privt.append(r);
+        });
+    },
+    privInvite(gn) {
+        const owner = Game.games[gn-1].owner;
+        const oldUl = Game.games[gn-1].invited;
+        const uList = $('#diaInviteUsers');
+        uList.empty();
+        Game.users.forEach(u => {
+            if (u != owner) {
+                uList.append('<p><label><input type="checkbox"'
+                    +(oldUl[u] ? 'checked="checked"' : '')
+                    +' /><span>'+u+'</span></label></p>');
+            }
+        });
+        $('#diaInvite').modal('open');
+    },
+    privInviteSelected() {
+        const inv = []; // invited list
+        const q = $('#diaInviteUsers input[type=checkbox]:checked');
+        q.each(function(){inv.push($(this).next().text()) });
+        Game.wsSendMsg({'action':'privGameInvite', 'list': inv});
+},
     updateUsersDisplay: function() {
         var uList = $('#uList');
         uList.empty();  // Clear out previous list
@@ -971,7 +1063,6 @@ const UI = {
         } else {
             $('#logi-name').text(state? 'connected' : 'not connected');
             if (state == 0) {
-                Game.games.length = 0;
                 UI.updateGamesDisplay();
             }
         }
