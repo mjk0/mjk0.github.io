@@ -130,6 +130,9 @@ var Game = {
         const name = Game.games[Game.ourGame-1].seats[si];
         return name? name : seatToDir[si] + ' Robot';
     },
+    askRobotPlay(pp) {
+        this.wsSendMsg({'action': 'robotPlay'});
+    },
     isTrump(c) {
         return this.trumpSuit == c.substring(2) || c == 'a_he';
     },
@@ -448,9 +451,12 @@ const UI = {
         // Update player names
         const seats = Game.games[Game.ourGame-1].seats;
         const names = $('.seatname');
+        const rPlayBtns = $('.namebar > div');
         for (var i=2; i<6; ++i) {
             var si = (Game.ourSeat+i-1)&3;
             names.eq(i).text((seats[si] || 'Robot'));
+            if (seats[si] != null && i<5)
+                rPlayBtns.eq(i-2).addClass('hide-me');
         }
     },
     seatAssigned() {
@@ -461,6 +467,18 @@ const UI = {
         }
         this.updateSeatDirs();
     },
+    // we are waiting on a just-abondoned seat.  Robot can play for that player
+    robotOffer(data) {
+        // {"action":"robotOffer","fromSeat":0}
+        const oSeat = (data.fromSeat-Game.ourSeat+3)&3;
+        $('.namebar > div').eq(oSeat).removeClass('hide-me');
+    },
+    // someone gave robot permission to take over for missing player
+    robotTookOver(data) {
+        // {"action":"robotTookOver"}
+        $('.namebar > div').addClass('hide-me');
+    },
+
     otherPlayerCfan: [],
     updateOtherPlayerNumCards() {
         while (this.otherPlayerCfan.length) {
@@ -855,7 +873,7 @@ const UI = {
     },
     deckShuffled: function(data) {
         this.prepNextDeal();
-        this.clearBidTable(data.fore); // first bid position
+        this.clearBidTable((data.dealer+1)&3); // first bid position
         this.updateCardsDisplay();
         this.showPlayArea(0);
         this.setDealerInfo(data);
@@ -1048,7 +1066,7 @@ const UI = {
         const q = $('#diaInviteUsers input[type=checkbox]:checked');
         q.each(function(){inv.push($(this).next().text()) });
         Game.wsSendMsg({'action':'privGameInvite', 'list': inv});
-},
+    },
     updateUsersDisplay: function() {
         var uList = $('#uList');
         uList.empty();  // Clear out previous list
@@ -1135,6 +1153,8 @@ const WsActionHandlers = {
     'authenticate': wsRcv.authenticate,
     'userExited': wsRcv.userExited,
     'userJoined': wsRcv.userJoined,
+    'robotOffer': UI.robotOffer.bind(UI),
+    'robotTookOver': UI.robotTookOver.bind(UI),
     'allGames': wsRcv.allGames,
     'allUsers': wsRcv.allUsers,
     'seatDiff': wsRcv.seatDiff,

@@ -18,6 +18,11 @@ td.card-fan-m > div {
 .card-m, .card-m svg { margin: 0px; padding: 0px; }
 .card-4stack-m { display: inline-block; }
 .card-4stack-m svg { width: 27vh; height: 10.125vh; max-width: 27vw; max-height: 10.125vw; }
+td.namebar > div {
+    position: absolute; left: 3px; bottom: -0.5em;
+    height: 1em;
+    animation: pulse 1s infinite;
+}
 .tt-stack { fill: grey; cursor: pointer;}
 .tt-stack:hover { fill: lightsteelblue; cursor: pointer;}
 .modal0 {
@@ -151,6 +156,7 @@ th.gameSectionTitle { text-align: left; font-style: italic; }
 .nb-inactive { background-color: lightsteelblue; }
 .nb-kitty { background-color: burlywood; }
 .namebar {
+    position: relative;
     font-size: 3vh; line-height: normal;
     border: black solid 1px; text-align: left; padding: 0px;
 }
