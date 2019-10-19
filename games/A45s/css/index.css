@@ -126,7 +126,7 @@ td.namebar > div {
 .gameTable th {background-color: lightslategrey; color: white; }
 .privTable th {background-color: peru; color: white; }
 .gameTable table, .privTable table,
-.gameTable th, .privTable th, .privTable td
+.gameTable th, .privTable th, .privTable td,
 .gameTable td { border: 1px solid black; }
 .gameTable td, .privTable td, .privTable th,
 .gameTable th {

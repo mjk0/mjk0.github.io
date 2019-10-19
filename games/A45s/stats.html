@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auction 45s User Stats</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="css/materialize.css" media="screen,projection"/>
+    <link type="text/css" rel="stylesheet" href="css/animate.min.css">
+    <link type="text/css" rel="stylesheet" href="css/index.css">
+    <style>
+        body { background-color: bisque;}
+        .topRow { background-color: lightsteelblue; margin-top: 0px; padding-bottom: .2em; }
+        table.userTable { width: auto;}
+        .userTable th {background-color: blue; color: white; }
+        .userTable table, .userTable th,
+        .userTable td { border: 1px solid black; }
+        .userTable td, .userTable th {
+            padding: 5px 5px; text-align: center;
+            border-radius: 0px;
+        }
+    </style>
+</head>
+<body>
+    <h3 class="topRow">Auction 45s User Stats</h3>
+    <p>
+        <button class="btn-small" type="button" onclick="Game.init()">
+                <i class="material-icons">refresh</i></button>
+        <b> Last updated on: </b>
+        <span id='updateTime'></span>
+    </p>
+    <table class="userTable"><thead>
+        <tr><th>Username</th><th>Last seen</th><th>Games completed</th>
+        </tr></thead>
+        <tbody id="utable"></tbody>
+    </table>
+
+    <!--JavaScript at end of body for optimized loading-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script type="text/javascript" src="js/materialize.min.js"></script>
+    <script src="js/stats.js"></script>
+
+</body>
