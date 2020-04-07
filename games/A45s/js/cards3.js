@@ -17,6 +17,7 @@ var Game = {
     games: [],
     ourGame: 0, // 1-based
     ourSeat: -1,
+    reJoin: [0, -1], // if disconnected, where to re-join
     dealer: 255, // last player to bid
     fore: 255, // first player to bid
     declarer: 255,  // contract winner after bidding complete
@@ -103,6 +104,8 @@ var Game = {
         this.cardsPlayedPast.length = 0;
         this.cardsPlayedTricks.length = 0;
         this.trumpSuit = null;
+        this.reJoin[0] = this.ourGame; // either page load or game start-up.  Remember spot
+        this.reJoin[1] = this.ourSeat;
         this.prepNextDeal();
     },
     // Things that the UI needs before deck shuffled msg arrives
@@ -244,6 +247,10 @@ const wsRcv = {
         Game.ourSeat = data.seat;
         UI.updateScoreDisplay(0, 0);
         UI.seatAssigned();
+    },
+    currScore: function(data) {
+        if (data.score)
+            UI.updateScoreDisplay(data.score[0], data.score[1]);
     },
     deckShuffled: function(data) {
         // Deck was just shuffled, show backs of cards only
@@ -1160,6 +1167,7 @@ const WsActionHandlers = {
     'seatDiff': wsRcv.seatDiff,
     'yourGame': wsRcv.ourGame,
     'deckShuffled': wsRcv.deckShuffled,
+    'currScore' : wsRcv.currScore, // data.score[]
     'cardsDealt': wsRcv.rcvCards, // data.cards[]
     'kitty': wsRcv.kitty,
     'playInProgress': UI.playInProgress.bind(UI), // for join-in-progress
