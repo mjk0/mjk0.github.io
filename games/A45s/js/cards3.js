@@ -313,8 +313,11 @@ const UI = {
     },
     bids: function(ba) { // message from server
         //console.info('bids: fromSeat='+ba.fromSeat+', '+ba.bids.length+' bids');
+        var si = ba.fromSeat;
         for (var b of ba.bids) {
             this.enterBidInDisplay(b);
+            this.ovalBid(true, si, b);
+            ++si;
         }
     },
     clearBidTable: function(fore=0) {
@@ -945,11 +948,12 @@ const UI = {
     },
     // server lets all know how many replacement cards each player received
     fillInCardsDealt(data) {
+        this.ovalBid(false);  // Clear bid ovals
         this.cardsReplaced(true, data.numCards);
     },
     oEffDir: ['Right', 'Up', 'Left'],
     cardsReplaced(ena=false, a) {
-        const q = $('.card-fan-m').find('div'); // put text in div, for 'l', 'o', 'r'
+        const q = $('div.anim-plus'); // put text in div, for 'l', 'o', 'r'
         if (ena && a) {
             // Add indicator for number of fill-in cards received to 3 other players
             for (var i=0; i<3; ++i) {
@@ -959,6 +963,35 @@ const UI = {
         } else {
             // Clear fill-in card numbers
             q.removeClass('animated fadeInRight fadeInUp fadeInLeft').empty();
+        }
+    },
+    ovBidStyles: {'pass': 'ovpass', 15: 'ov15bid', 20: 'ov20bid',
+                25: 'ov25bid', 30: 'ov30bid', 60: 'ov30bid'},
+    ovRc: 'animated fadeIn ovpass ov15bid ov20bid ov25bid ov30bid',
+    ovalBid(ena=false, si, bid) {
+        const q = $('div.anim-bid'); // put text in div, for 'l', 'o', 'r'
+        var offSeat = (3 + si - Game.ourSeat)&3; // 3 is us, 0-2 are others
+        if (ena && bid in this.ovBidStyles) {
+            // Each bid value gets its own style class
+            const ovStyle = 'animated ' + this.ovBidStyles[bid];
+            if (bid == 'pass') {
+                if (offSeat < q.length) {
+                    q.eq(offSeat).text(bid).addClass(ovStyle + ' fadeIn');
+                }
+            } else {
+                // numeric bid is a high bid.  Clear all previous numeric bid ovals
+                for (var i=0; i<q.length; ++i) {
+                    if (q.eq(i).text() != "pass") {
+                        q.eq(i).removeClass(this.ovRc).empty();
+                    }
+                    if (i == offSeat) {
+                        q.eq(i).text(bid).addClass(ovStyle + ' fadeIn');
+                    }
+                }
+            }
+        } else {
+            // Clear bid ovals of styles and text contents
+            q.removeClass(this.ovRc).empty();
         }
     },
 
