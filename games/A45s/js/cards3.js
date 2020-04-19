@@ -261,6 +261,8 @@ const wsRcv = {
             Game.fore = data.fore;
         if ('declarer' in data) // contract winner (255 until bidding is complete)
             Game.declarer = data.declarer;
+        if ('score' in data)
+            UI.updateScoreDisplay(data.score[0], data.score[1]);
 
         UI.deckShuffled(data);
     },
