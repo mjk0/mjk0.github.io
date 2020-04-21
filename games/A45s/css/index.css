@@ -51,7 +51,27 @@ td.card-m, td.card-lg { display: contents; }
 .card-m, .card-m svg { margin: 0px; padding: 0px; }
 .card-4stack-m { display: inline-block; }
 .card-4stack-m svg { width: 27vh; height: 10.125vh; max-width: 27vw; max-height: 10.125vw; }
-td.namebar > div {
+.contract-inline {
+    position: absolute; right: -1em; bottom: -2em; font-size: 3vh;
+    width: 3em; height: 2em; line-height: 2em;
+    border-radius: 50%; text-align: center;
+    color: black; background: burlywood;
+}
+div.contract-online.nearbar, .nearbar { bottom: -0.5em; }
+.contractBids { font-size: 110%; }
+.ov15contract {
+    box-shadow: inset 0 0 3pt 3pt olivedrab;
+}
+.ov20contract {
+    box-shadow: inset 0 0 3pt 3pt blue;
+}
+.ov25contract {
+    box-shadow: inset 0 0 3pt 3pt gold;
+}
+.ov30contract {
+    box-shadow: inset 0 0 3pt 3pt orangered;
+}
+.robotPlayBtn {
     position: absolute; left: 3px; bottom: -0.5em;
     height: 1em;
     animation: pulse 1s infinite;
@@ -179,7 +199,8 @@ th.gameSectionTitle { text-align: left; font-style: italic; }
     width: fit-content; display: inline-block;
     line-height: 1.3; padding: 0px 0.3em 2px 0.3em;
 }
-.contractSuit { box-shadow: 0pt 0pt 1pt 0pt black; border-radius: 6px; }
+.contractSuit { border-radius: 6px; }
+.cSuitBox { box-shadow: 0pt 0pt 1pt 0pt black; }
 .aRight { align-self: flex-end; }
 .mt1p { margin: 1vh 1vh; }
 .h100p { height: 100%; }

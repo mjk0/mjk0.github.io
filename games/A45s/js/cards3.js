@@ -129,6 +129,8 @@ var Game = {
     weAreDeclarer() {
         return this.declarer != 255 && (this.declarer&3) == this.ourSeat;
     },
+    getDeclarerSeat() { return (this.declarer&3) },
+    getContractBid() { return (this.declarer == 255) ? 0 : Math.floor(this.declarer/16)*5 + 15 },
     askRobotPlay(pp) {
         this.wsSendMsg({'action': 'robotPlay'});
     },
@@ -378,7 +380,7 @@ const UI = {
         Game.fore = contract.fore || ((declarerSeat+1)&3);
         const cBid = Math.floor(Game.declarer/16)*5 + 15;
         $('.contractWho').text(this.seatWho(declarerSeat));
-        $('#contractBid').text(cBid);
+        $('.contractBids').text(cBid);
         // Are we the declarer?  If so, add kitty cards to our hand
         if (Game.weAreDeclarer()) {
             // Declarer's discards display and kitty animation on rcv kitty cards
@@ -515,7 +517,7 @@ const UI = {
         while (this.otherPlayerCfan.length) {
             var uses = $('#'+this.fpPos[this.otherPlayerCfan.shift()]
                         +'hand td.card-fan-m').find("use");
-            this.updateCards(uses, ['cbfan'+(4-Game.cardsPlayedPast.length)], false);
+            this.updateCards(uses, ['cbfan'+(4-Game.cardsPlayedPast.length)], {hide:false});
         }
     },
     // get element that shows current trick play order
@@ -537,7 +539,7 @@ const UI = {
         if (!this.sleeping) {
             this.updateOtherPlayerNumCards();
             const q = this.qForePlay();
-            this.updateCards(q.find("use"), Game.cardsPlayed, false); /*
+            this.updateCards(q.find("use"), Game.cardsPlayed, {hide:false}); /*
             const wDir = this.fpPos[(Game.fore+Game.cardsPlayed.length-1)&3];
             const anim = 'animated slideIn'+this.playPosToEff[wDir];
             q.find('use').eq(Game.cardsPlayed.length-1).addClass(anim).one(
@@ -615,7 +617,7 @@ const UI = {
             Game.cardsPlayedTricks.push('cshoriz');
         }
         $('#ttricks').removeClass('hide-me'); // make sure past tricks display is visible
-        this.updateCards($("#ttricks").find("use"), Game.cardsPlayedTricks, false);
+        this.updateCards($("#ttricks").find("use"), Game.cardsPlayedTricks, {hide:false});
         // Update other player 'card fans'
         for (var i=1; i<4; ++i) {
             this.otherPlayerCfan.push((Game.ourSeat+i)&3);
@@ -638,7 +640,7 @@ const UI = {
             const trh = ((Game.ourSeat&1)==(Game.fore&1)? 'csvert': 'cshoriz');
             Game.cardsPlayedTricks.push(trh);
             $('#ttricks').removeClass('hide-me'); // make sure past tricks display is visible
-            this.updateCards($("#ttricks").find("use"), Game.cardsPlayedTricks, false);
+            this.updateCards($("#ttricks").find("use"), Game.cardsPlayedTricks, {hide:false});
             this.sleeping = true;
             sleep(2000).then(() => {
                 this.sleeping = false;
@@ -728,11 +730,12 @@ const UI = {
     // UI prep for next deal
     prepNextDeal() {
         $('.playEnd').addClass('hide-me');
-        this.updateCards($('.card-fan-m').find("use"), ['cbfan5','cbfan5','cbfan5']);
+        this.showContractInline(false);
+        this.updateCards($('.card-fan-m').find("use"), ['cbfan5'], {replicate:true});
         Game.prepNextDeal();
         this.trumpSuit({'suit': 'cbcatsil'}); // contract suit unknown
         $('.contractWho').text('TBD'); // declarer To Be Determined
-        $('#contractBid').text(0); // high bid of 0
+        $('.contractBids').text(0); // high bid of 0
     },
     shuffleNextDealer() {
         this.prepNextDeal();
@@ -746,12 +749,27 @@ const UI = {
     // Game just announced the trump suit
     trumpSuit(data) {
         this.setTrumpSuit(data.suit);
-        this.updateCards($('.contractSuit svg').find('use'), [data.suit, data.suit]);
+        this.updateCards($('.contractSuit svg').find('use'), [data.suit], {replicate:true});
         this.prepDiscardsDisplay();
+        this.ovalBid(false);  // Clear bid ovals
+        this.showContractInline();
         // If just selected a trump, and not declarer, enable card clicks
         if (this.getTrumpSuit() && !Game.weAreDeclarer()) {
             this.preSelectTrumpCards();
             this.clickCardEnabled = true;
+        }
+    },
+    // Enable contract oval for winning bidder, after trump selection
+    showContractInline(show=true) {
+        const q = $('.contract-inline').addClass('hide-me');
+        const cBid = Game.getContractBid(); // 0 if no contract yet
+        if (show && cBid) {
+            const rc = 'ov15bid ov20bid ov25bid ov30bid ov15contract ov20contract ov25contract ov30contract';
+            q.removeClass(rc);
+            const cSeat = (Game.getDeclarerSeat()+3-Game.ourSeat)&3;
+            q.eq(cSeat*2).addClass(UI.ovBidStyles[cBid]);
+            q.eq(cSeat*2+1).addClass(UI.ovBidStyles[cBid].replace('bid','contract'));
+            q.slice(cSeat*2, cSeat*2+2).removeClass('hide-me');
         }
     },
     getTrumpSuit() {
@@ -871,11 +889,13 @@ const UI = {
         }
     },
 
-    updateCards: function(uses, newHand, hide=true) {
+    updateCards: function(uses, newHand, opts={hide: true, replicate: false}) {
+        const hide = (!opts.hasOwnProperty('hide') || opts.hide);
+        const replicate = (opts.hasOwnProperty('replicate') && opts.replicate);
         for (var i = 0; i< uses.length; ++i) {
             var svg = uses.eq(i).parents('svg');
-            if (i<newHand.length) {
-                uses[i].href.baseVal = 'cards0.svg#'+newHand[i];
+            if (i<newHand.length || replicate) {
+                uses[i].href.baseVal = 'cards0.svg#'+newHand[i % newHand.length];
                 svg.removeClass('hide-me');
             } else {
                 uses[i].href.baseVal = 'cards0.svg#cblank';
@@ -969,7 +989,7 @@ const UI = {
     },
     // server lets all know how many replacement cards each player received
     fillInCardsDealt(data) {
-        this.ovalBid(false);  // Clear bid ovals
+        //this.ovalBid(false);  // Clear bid ovals
         this.cardsReplaced(true, data.numCards);
     },
     oEffDir: ['Right', 'Up', 'Left'],
