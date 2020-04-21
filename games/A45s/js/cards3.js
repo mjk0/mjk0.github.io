@@ -129,10 +129,6 @@ var Game = {
     weAreDeclarer() {
         return this.declarer != 255 && (this.declarer&3) == this.ourSeat;
     },
-    seatWho(si) {
-        const name = Game.games[Game.ourGame-1].seats[si];
-        return name? name : seatToDir[si] + ' Robot';
-    },
     askRobotPlay(pp) {
         this.wsSendMsg({'action': 'robotPlay'});
     },
@@ -236,8 +232,17 @@ const wsRcv = {
                 Game.games.length = Game.games.length - 1;
             } else {
                 Game.games[gn-1] = data.diffs[gn];
-                if (gn == Game.ourGame)
+                if (gn == Game.ourGame) {
+                    if ('robotNames' in Game.games[gn-1]
+                     && Array.isArray(Game.games[gn-1].robotNames)) {
+                        UI.robotNames[1] = Game.games[gn-1].robotNames;
+                        UI.robotNameIndex = 1;
+                    } else {
+                        UI.robotNameIndex = 0;
+                    }
                     UI.updateSeatNamesInDisplay();
+                    $('#curDealer').text(UI.seatWho(Game.dealer)); // seat change may be dealer
+                }
             }
         }
         UI.updateGamesDisplay();
@@ -372,7 +377,7 @@ const UI = {
         const declarerSeat = (Game.declarer&3);
         Game.fore = contract.fore || ((declarerSeat+1)&3);
         const cBid = Math.floor(Game.declarer/16)*5 + 15;
-        $('.contractWho').text(Game.seatWho(declarerSeat));
+        $('.contractWho').text(this.seatWho(declarerSeat));
         $('#contractBid').text(cBid);
         // Are we the declarer?  If so, add kitty cards to our hand
         if (Game.weAreDeclarer()) {
@@ -435,7 +440,7 @@ const UI = {
     showKitty(v=true) { this.show('#khand', v); },
     setDealerInfo(data) {
         if (data.dealerName == 'Robot')
-            $('#curDealer').text(seatToDir[data.dealer]+' Robot');
+            $('#curDealer').text(this.seatWho(data.dealer));
         else
             $('#curDealer').text(data.dealerName);
 
@@ -466,10 +471,24 @@ const UI = {
         const rPlayBtns = $('.namebar > div');
         for (var i=2; i<6; ++i) {
             var si = (Game.ourSeat+i-1)&3;
-            names.eq(i).text((seats[si] || 'Robot'));
+            names.eq(i).text(this.seatWhoSimple(si));
             if (seats[si] != null && i<5)
                 rPlayBtns.eq(i-2).addClass('hide-me');
         }
+    },
+    robotNames: [
+        ['Robot','Robot','Robot','Robot'],
+        ['*Mr Bean','*Homer','*Tinman','*Donut']
+    ],
+    robotNameIndex: 1,
+    seatWhoSimple(si) {
+        const name = Game.games[Game.ourGame-1].seats[si];
+        return name? name : this.robotNames[this.robotNameIndex][si];
+    },
+    seatWho(si) {
+        const name = this.seatWhoSimple(si);
+        // Prefix with direction only if default name 'Robot'
+        return (name == 'Robot')? seatToDir[si] + ' Robot' : name;
     },
     seatAssigned() {
         // with seat assignment, can init play display by fore number
