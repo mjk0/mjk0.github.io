@@ -88,7 +88,7 @@ var Game = {
     isVisible(g) {
         return (g.hasOwnProperty('owner') &&
             (g.owner === this.username
-                || g.owner !== '-' && g.invited && g.invited[this.username]));
+                || g.invited && g.invited[this.username]));
     },
     privCreate() { this.wsSendMsg({'action': 'privGameCreate'}) },
 
