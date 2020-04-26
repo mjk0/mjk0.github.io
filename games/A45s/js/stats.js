@@ -61,6 +61,46 @@ var Game = {
     },
 };
 
+var UI = {
+    // Sort by last seen time was clicked
+    doSortByDate: false,
+    sortByDateClicked: function(e) {
+        this.doSortByDate = e.currentTarget.checked;
+        this.showUserStats(null); // re-use last data
+    },
+
+    // Update display of user stats
+    ud: {}, // last received user data
+    showUserStats: function(udata) {
+        // Fill in stats table
+        this.ud = udata || this.ud;
+        const ut = $('#utable');
+        ut.empty();  // Clear out previous stats
+
+        const uOrder = (this.doSortByDate ? 
+            Object.keys(this.ud)
+                .sort(function(b, a) {
+                    return (UI.ud[a].lastSeenTime < UI.ud[b].lastSeenTime) ? -1
+                    : ((UI.ud[a].lastSeenTime > UI.ud[b].lastSeenTime) ? 1 : 0)})
+            : Object.keys(this.ud));
+
+        uOrder.forEach(u => this.showUserStatsOneLine(u, ut));
+    },
+    showUserStatsOneLine: function(u, ut) {
+        const pastInv = Object.keys(this.ud[u].invited || {});
+        var lastSeen;
+        if (this.ud[u].lastSeenTime == null) {
+            lastSeen = 'connected';
+        } else {
+            const ti = new Date(this.ud[u].lastSeenTime);
+            lastSeen = ti.toLocaleDateString(undefined, dFormat);
+        }
+        var r = '<tr><td>'+u+'</td><td>'+lastSeen+'</td>';
+        r += '<td>'+this.ud[u].completedGameCnt+'</td>';
+        r += '<td>'+pastInv.join(',')+'</td></tr>';
+        ut.append(r);
+    }
+};
 // {"action":"authenticate"}
 function hdlAuthenticate(ws, data) {
     // Request user stats.  No authentication needed
@@ -69,26 +109,7 @@ function hdlAuthenticate(ws, data) {
 
 // {"action":"userStats","data":{"Marcel":{"lastSeenTime":null,"completedGameCnt":0}},"time":"2019-10-18T20:04:38.523Z"}
 function hdlUserStats(ws, data) {
-    // Fill in stats table
-    const ut = $('#utable');
-    ut.empty();  // Clear out previous stats
-    const ud = data.data || {};
-    for (var u in ud) {
-        if (ud.hasOwnProperty(u)) {
-            const pastInv = Object.keys(ud[u].invited || {});
-            var lastSeen;
-            if (ud[u].lastSeenTime == null) {
-                lastSeen = 'connected';
-            } else {
-                const ti = new Date(ud[u].lastSeenTime);
-                lastSeen = ti.toLocaleDateString(undefined, dFormat);
-            }
-            var r = '<tr><td>'+u+'</td><td>'+lastSeen+'</td>';
-            r += '<td>'+ud[u].completedGameCnt+'</td>';
-            r += '<td>'+pastInv.join(',')+'</td></tr>';
-            ut.append(r);
-        }
-    }
+    UI.showUserStats(data.data);
     $('#updateTime').text(data.time);
     ws.close();
 }

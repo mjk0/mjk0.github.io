@@ -13,6 +13,7 @@
         .topRow { background-color: lightsteelblue; margin-top: 0px; padding-bottom: .2em; }
         table.userTable { width: auto;}
         .userTable th {background-color: blue; color: white; }
+        .userTable th > label { color: white; }
         .userTable table, .userTable th,
         .userTable td { border: 1px solid black; }
         .userTable td, .userTable th {
@@ -30,7 +31,9 @@
         <span id='updateTime'></span>
     </p>
     <table class="userTable"><thead>
-        <tr><th>Username</th><th>Last seen</th><th>Games completed</th><th>Past Invited</th>
+        <tr><th>Username</th><th><label><input type="checkbox" class="filled-in"
+            name="sortByDate" onclick="UI.sortByDateClicked(event)"><span>Last seen</span></label>
+            </th><th>Games completed</th><th>Past Invited</th>
         </tr></thead>
         <tbody id="utable"></tbody>
     </table>
