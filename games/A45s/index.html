@@ -355,7 +355,10 @@
             <input id="inv-done" class="btn-small modal-close blue darken-4"
             type="button" value="done" onclick="UI.privInviteSelected()" />
         </h5>
-        <div id="diaInviteUsers"></div>
+        <table id='diaInviteTable'>
+            <thead><th>username</th><th>last seen</th><th></th></thead>
+            <tbody id='diaInviteUsers'></tbody>
+        </table>
     </div>
     <!-- Modal Structure -->
     <div id="showATrick" class="modal">

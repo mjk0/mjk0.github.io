@@ -4,6 +4,9 @@
 const urlParams = new URLSearchParams(window.location.search);
 const seatToDir = ['E', 'S', 'W', 'N'];
 var xDiscard = window.matchMedia("(max-width: 800px)"); // for media change testing
+const dFormat = {
+    year:'numeric', month:'short', day:'numeric'
+};
 
 var Game = {
     server: [
@@ -252,6 +255,7 @@ const wsRcv = {
     ourGame: function(data) {
         Game.ourGame = data._id; // UI will update on seatDiff, coming next
         Game.ourSeat = data.seat;
+        Game.pastInvited = data.pastInvited || Game.pastInvited || {}; // sent on private game creation
         UI.updateScoreDisplay(0, 0);
         UI.seatAssigned();
     },
@@ -1133,14 +1137,42 @@ const UI = {
         const oldUl = Game.games[gn-1].invited;
         const uList = $('#diaInviteUsers');
         uList.empty();
-        Game.users.forEach(u => {
-            if (u != owner) {
-                uList.append('<p><label><input type="checkbox"'
-                    +(oldUl[u] ? 'checked="checked"' : '')
-                    +' /><span>'+u+'</span></label></p>');
-            }
-        });
+        const al = {}; // users already listed or to be excluded
+        al[owner] = true;
+
+        // First show all players currently connected
+        Game.users.forEach(u => this.privInviteAddToUList(u, uList, oldUl, al));
+        // Next show all players that were previously invited, but not currently connected
+        Object.keys(Game.pastInvited)
+            .sort(function(b, a) {
+                return (Game.pastInvited[a] < Game.pastInvited[b]) ? -1
+                : ((Game.pastInvited[a] > Game.pastInvited[b]) ? 1 : 0)})
+            .forEach(u => this.privInviteAddToUList(u, uList, oldUl, al, Game.pastInvited));
+        // And finally, if any players were invited, then left the server before the owner
+        // record is saved, make sure they are remembered
+        Object.keys(oldUl).forEach(u => this.privInviteAddToUList(u, uList, oldUl, al));
         $('#diaInvite').modal('open');
+    },
+    privInviteAddToUList(u, uList, oldUl, al, timeHash=null) {
+        var ti = timeHash ? timeHash[u] : null; // time last seen, null if now connected
+        if (!al.hasOwnProperty(u)) {
+            var lastSeen = ti ? (new Date(ti)).toLocaleDateString(undefined, dFormat) : 'now';
+            uList.append('<tr><td><label><input type="checkbox"'
+            +(oldUl[u] ? 'checked="checked"' : '')
+            +' /><span>'+u+'</span></label></td><td>'
+            +lastSeen+'</td><td>'
+            +(ti?'<i class="material-icons iconBtn" onclick="UI.privInviteDel(\''+u+'\')">delete</i>':'')
+            +'</td></tr>');
+            al[u] = true; // track those already added
+        }
+    },
+    privInviteDel(u) {
+        const inv = [u]; // list of old invitations to forget
+        Game.wsSendMsg({'action':'privGameInviteDel', 'list': inv});
+        // remove that line from table
+        $('#diaInviteUsers span').filter(function() {
+            return $(this).text() == u;
+        }).closest("tr").remove();
     },
     privInviteSelected() {
         const inv = []; // invited list

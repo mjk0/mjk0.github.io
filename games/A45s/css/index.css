@@ -303,14 +303,20 @@ span.totPtsVal { line-height: 1.2; vertical-align: text-top; }
 #hand svg.slideOutUp {
     animation-duration: 100ms;
 }
-#diaInvite { width: max-content; }
+#diaInvite { width: max-content; max-height: 85%; }
 #diaInvite h5 {
     background-color: lightblue; margin: 0px; padding: 10px;
 }
+#diaInviteTable th {
+    background-color: blue; margin: 0px; padding: 0.3em; color: white; text-align: center;
+}
+#diaInviteUsers td:nth-child(2) { text-align: center; }
 #diaInvite label > span { margin-left: 1em; width: calc(100% - 2em); }
 button.inviteBtn {
     height: 1.6em; line-height: 1;
     border-radius: 15px; background-color: darkblue;
     margin: 0px 5px 0px 0px; padding: 0px 1em;
 }
+.iconBtn { color: grey; cursor: pointer;}
+.iconBtn:hover { color: lightcoral; cursor: pointer;}
 .crowncl { color: blue; }

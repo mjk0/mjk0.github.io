@@ -63,8 +63,8 @@ var Game = {
 
 // {"action":"authenticate"}
 function hdlAuthenticate(ws, data) {
-    // Authentication is just requesting user stats
-    Game.wsSendMsg({'action': 'authenticate', 'username': '--stats--'});
+    // Request user stats.  No authentication needed
+    Game.wsSendMsg({'action': 'userStats'});
 }
 
 // {"action":"userStats","data":{"Marcel":{"lastSeenTime":null,"completedGameCnt":0}},"time":"2019-10-18T20:04:38.523Z"}
@@ -75,6 +75,7 @@ function hdlUserStats(ws, data) {
     const ud = data.data || {};
     for (var u in ud) {
         if (ud.hasOwnProperty(u)) {
+            const pastInv = Object.keys(ud[u].invited || {});
             var lastSeen;
             if (ud[u].lastSeenTime == null) {
                 lastSeen = 'connected';
@@ -83,11 +84,13 @@ function hdlUserStats(ws, data) {
                 lastSeen = ti.toLocaleDateString(undefined, dFormat);
             }
             var r = '<tr><td>'+u+'</td><td>'+lastSeen+'</td>';
-            r += '<td>'+ud[u].completedGameCnt+'</td></tr>';
+            r += '<td>'+ud[u].completedGameCnt+'</td>';
+            r += '<td>'+pastInv.join(',')+'</td></tr>';
             ut.append(r);
         }
     }
     $('#updateTime').text(data.time);
+    ws.close();
 }
 
 const WsActionHandlers = {
