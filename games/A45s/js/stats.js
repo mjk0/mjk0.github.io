@@ -80,8 +80,8 @@ var UI = {
         const uOrder = (this.doSortByDate ? 
             Object.keys(this.ud)
                 .sort(function(b, a) {
-                    return (UI.ud[a].lastSeenTime < UI.ud[b].lastSeenTime) ? -1
-                    : ((UI.ud[a].lastSeenTime > UI.ud[b].lastSeenTime) ? 1 : 0)})
+                    var aa = (UI.ud[a].lastSeenTime || "Z"), bb = (UI.ud[b].lastSeenTime || "Z");
+                    return (aa < bb) ? -1 : ((aa > bb) ? 1 : 0)})
             : Object.keys(this.ud));
 
         uOrder.forEach(u => this.showUserStatsOneLine(u, ut));
