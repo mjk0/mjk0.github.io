@@ -1,0 +1,322 @@
+use { width: 100%; height: 100%; }
+.cards-grp, .card-lg { display: inline-block; }
+.card-lg, .card-lg svg { width: 9vh; height: 12vh; max-width: 18vw; max-height: 24vw; }
+.card-m, .card-m svg { width: 6.75vh; height: 9vh; max-width: 6.75vw; max-height: 9vw; }
+td.card-m, td.card-lg { display: contents; }
+.card-fan-m { position: relative; }
+.anim-plus {
+    position: absolute; right: 3px; bottom: 0px;
+    width: 2em; height: 2em; font-size: 4vh;
+    animation-duration: 2s;
+}
+.anim-bid {
+    position: absolute; right: 3px; bottom: 0px;
+}
+#nearBid.anim-bid {
+    position: absolute; right: -3em; top: -1em; bottom: unset;
+}
+.oval, .ovpass, .ov15bid, .ov20bid, .ov25bid, .ov30bid {
+    animation-duration: 0.5s;
+}
+.oval {
+    width: 3em; height: 2em; font-size: 4vh; line-height: 2em;
+    border-radius: 50%; text-align: center;
+}
+.ovpass {
+    color: #fff; background: dimgray;
+    box-shadow: 0 0 3pt 3pt pink;
+}
+.ov15bid {
+    color: #fff; background: olivedrab;
+    box-shadow: 0 0 3pt 3pt greenyellow;
+}
+.ov20bid {
+    color: #fff; background: blue;
+    box-shadow: 0 0 3pt 3pt aqua;
+}
+.ov25bid {
+    color: black; background: gold;
+    box-shadow: 0 0 3pt 3pt yellow;
+}
+.ov30bid {
+    color: white; background: orangered;
+    box-shadow: 0 0 3pt 3pt red;
+}
+.card-fan-m, .card-fan-m svg {
+    width: 22.5vh; height: 10.125vh;
+    max-width: 22.5vw; max-height: 10.125vw;
+}
+.card-fan-m, .card-fan-m svg, .card-lg, .card-lg svg,
+.card-4stack-m, .card-4stack-m svg, #ttricks td,
+.card-m, .card-m svg { margin: 0px; padding: 0px; }
+.card-4stack-m { display: inline-block; }
+.card-4stack-m svg { width: 27vh; height: 10.125vh; max-width: 27vw; max-height: 10.125vw; }
+.contract-inline {
+    position: absolute; right: -1em; bottom: -2em; font-size: 3vh;
+    width: 3em; height: 2em; line-height: 2em;
+    border-radius: 50%; text-align: center;
+    color: black; background: burlywood;
+}
+div.contract-online.nearbar, .nearbar { bottom: -0.5em; }
+.contractBids { font-size: 110%; }
+.ov15contract {
+    box-shadow: inset 0 0 3pt 3pt olivedrab;
+}
+.ov20contract {
+    box-shadow: inset 0 0 3pt 3pt blue;
+}
+.ov25contract {
+    box-shadow: inset 0 0 3pt 3pt gold;
+}
+.ov30contract {
+    box-shadow: inset 0 0 3pt 3pt orangered;
+}
+.robotPlayBtn {
+    position: absolute; left: 3px; bottom: -0.5em;
+    height: 1em;
+    animation: pulse 1s infinite;
+}
+.tt-stack { fill: grey; cursor: pointer;}
+.tt-stack:hover { fill: lightsteelblue; cursor: pointer;}
+.modal0 {
+    position: absolute; right: 3px; top: calc(64px + 2.2vh + 2.2vw);
+    height: fit-content; background-color: bisque;
+}
+.modal0 h4 { margin-top: 0px; }
+/* https://blog.prototypr.io/align-svg-icons-to-text-and-say-goodbye-to-font-icons-d44b3d7b26b4 */
+.svg-icon { display: inline-block; }
+.svg-icon svg, svg.svg-icon { height:1em; width:1em; top: .125em; position: relative; }
+.rdo-trump label {
+    box-shadow: 0 0 3pt 1pt white; border-radius: 10px;
+    margin: 2px 0.2em; padding: 1px 4px 1px 4px;
+    display: inline-block; color: black;
+}
+.rdo-trump [type="radio"]+span { padding-left: 1.2em; font-size: 2em; }
+.rdo-trump-q { font-size: inherit; }
+#showATrick {
+    vertical-align: middle; align-self: center;
+    border: white solid 2px; background-color: green;
+    width: 30%; min-width: 31vh;
+}
+#showATrick div.play-area { min-height: 30vh; }
+#showATrick div.modal-footer { width: auto; float: right; background-color: green; }
+.center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+#discards {
+    border: white solid 2px; background-color: burlywood;
+    width: auto; height: fit-content; font-size: 1.8vw;
+    align-self: center; padding: 0px;
+    border-collapse: separate; border-radius: 9px;
+}
+#discards th { padding: 0px 0px 0px 3px; border-bottom: white solid; }
+#discards td { padding: 0px; }
+#discards > tbody > tr > td:last-child { padding: 0px 3px 3px 3px; }
+@media only screen and (max-width: 1200px) {
+    #discards { font-size: 22px; }
+}
+@media only screen and (max-width: 800px) {
+    #discards { min-width: 90vw; }
+}
+#b-done {
+    width: 10vw; height: 1.8em; line-height: 1; min-width: 6em;
+    margin: 0px 5px 5px 0px; padding: 0px 1em; float: right;
+}
+.flex-container {
+    height: 100%;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.greenStripes {
+    background: repeating-linear-gradient(
+        45deg, green, green 10px, #208020 10px, #208020 20px
+    );
+}
+.row .col { padding: 0px; }
+.box {
+    text-align: center;
+    color: white;
+    font-size: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.box-1 {
+    background-color: blueviolet;
+    height: 10%;
+}
+.box-2 {
+    flex: 1;
+    flex-direction: row;
+}
+.box-3 {
+    min-height: 30%;
+}
+.box-svg-m {
+    min-height: 9vh;
+}
+.box-svg-lg {
+    min-height: 16vh;
+}
+.box-play {
+    min-height: 30%;
+}
+.box-hand {
+    min-height: 30vh;
+    padding-bottom: 0.3em;
+}
+@media only screen and (max-width: 800px) {
+    .box-hand { min-height: 35vh; }
+}
+.nav-wrapper { padding: 0px 0.3em; }
+#dropdown1 { background-color: #ee6e73; }
+#dropdown1.dropdown-content li > a { color: white; }
+#logi-name { font-style: italic; box-shadow: 0 0 1pt 0pt black; padding: 0px 0.3em; }
+.gameTable th {background-color: lightslategrey; color: white; }
+.privTable th {background-color: peru; color: white; }
+.gameTable table, .privTable table,
+.gameTable th, .privTable th, .privTable td,
+.gameTable td { border: 1px solid black; }
+.gameTable td, .privTable td, .privTable th,
+.gameTable th {
+    padding: 5px 5px; text-align: center;
+    border-radius: 0px;
+}
+.privTable td[colspan] { text-align: left; }
+.privTable td { background-color: #e4d2bf; }
+.gameTableDir { padding: 0px 0.3em; box-shadow: 0 0 1pt 1pt; border-radius: 5px; }
+th.gameSectionTitle { text-align: left; font-style: italic; }
+#scoreHbody > tr > td { padding: 0px 5px; }
+.play-lg { font-size: xx-large !important; }
+#slide-out { width: 30em; }
+.top-info {
+    background-color: burlywood; color: black;
+    border: white solid 2px; border-radius: 10px;
+    width: fit-content; display: inline-block;
+    line-height: 1.3; padding: 0px 0.3em 2px 0.3em;
+}
+.contractSuit { border-radius: 6px; }
+.cSuitBox { box-shadow: 0pt 0pt 1pt 0pt black; }
+.aRight { align-self: flex-end; }
+.mt1p { margin: 1vh 1vh; }
+.h100p { height: 100%; }
+.w100p { width: 100%; }
+.row { margin-bottom: 0px; }
+.nb-active { background-color: yellow; }
+.nb-inactive { background-color: lightsteelblue; }
+.nb-kitty { background-color: burlywood; }
+.namebar {
+    position: relative;
+    font-size: 3vh; line-height: normal;
+    border: black solid 1px; text-align: left; padding: 0px;
+}
+.box-svg-m .namebar { max-width: 27vw; }
+.namebar i { font-size: 3vh; }
+.seatdir {background-color: teal; color: white; padding: 0px 0.2em; }
+.seatdir.NS, .seatdir.EW { border-right: double; }
+.seatname { margin-left: 0.2em; color: black; }
+.NS, .NS.gameTableDir { background-color: darkred; color: white; }
+.EW, .EW.gameTableDir { background-color: white; color: black; }
+.table-svg-m, .table-svg-k {
+    width: auto; height: fit-content;
+    font-size: 0px; border: none;
+}
+.table-svg-m { align-self: center; }
+.table-svg-k { align-self: flex-end; margin-bottom: 5vh; }
+.table-svg-lg {
+    width: auto; height: fit-content;
+    align-self: center; font-size: 0px;
+    border: none; position: relative;
+}
+#hand-sort {
+    position: absolute; right: -5px; top: -5px;
+    height: 5vh; width: 5vh;  max-width: 10vw; max-height: 10vw;
+    font-size: 2.5vh; text-align: center; line-height: 5vh;
+}
+.hide-me { display: none; }
+.bid-self {
+    background-color: bisque; border: white solid 2px; border-radius: 9px;
+    font-size: 5vh; height: 1.9em; padding: 0px 0.4em; margin-top: 0.2em;
+}
+.bid-table {
+    background-color: slategray; border: white ridge 2px;
+    width: auto; height: fit-content; align-self: center;
+    padding: 0px 0.4em;
+}
+.bid-table td, .playEnd th, .playEnd td,
+.bid-table th {
+    padding: 0px 5px; border-radius: 0px;
+    text-align: center; min-width: 2.5em;
+}
+.bid-table td, .bid-table th { font-size: 2.8vw; }
+.playEnd th, .playEnd td { font-size: 2.8vmax; }
+@media only screen and (max-width: 600px) {
+    .bid-table td, .bid-table th { font-size: 3.8vw; }
+    .playEnd th, .playEnd td { font-size: 24px; }
+}
+.pair-ew { background-color: white; color: black; }
+.pair-ns { background-color: darkred; color: white; }
+.play-area, .play-area svg { width: 20.4vh; height: 27.3vh; align-self: center; }
+.play-trick, .play-trick svg { width: 29.4vh; height: 39.3vh; align-self: center; }
+.playEndInner th.pair-ew, .playEndInner th.pair-ns { border-radius: 9px; }
+.playEndInner {
+    background-color: bisque; border-radius: 9px;
+    margin: 0.3em 0px 0.2em 0px;
+}
+.playEndInner tr:nth-child(3) {
+    background-color: burlywood;
+}
+.ptsWin { animation: tada 1s infinite; text-shadow: 0pt 0pt 4px white; }
+.animYourPlay {
+    animation: fadeIn 4s cubic-bezier(0.95, 0.05, 0.795, 0.035), flash 4s ease 4s infinite;
+}
+.bordleft { border-left: black dashed 1px; }
+td.bordbot { border-bottom: black solid 2px; }
+tr.bordtop { border-top: black solid 3px; }
+.diaTable h3, .diaTable h4 {
+    background-color: lightblue; text-align: center;
+    margin-bottom: 0px; padding: 0px 1em 0.2em 1em;
+}
+.diaTable { width: max-content; }
+.diaTable th, .diaTable td { text-align: center; }
+.diaTable div.modal-footer { background-color: lightblue; }
+tr.pastGames { background-color: burlywood; }
+.winCell { background-color: lightgreen; }
+#rankTable th { background-color: blue; color: white; }
+#rankTable table, #rankTable th, #rankTable td {
+    border: black solid 1px; padding: 0px 0.3em;
+}
+#totEW { background-color: white; border-radius: 5px; box-shadow: 0 0 2pt 2pt black; }
+#totNS {
+    background-color: darkred; color: white;
+    border-radius: 5px; box-shadow: 0 0 2pt 2pt white;
+}
+.infoTbl th, .infoTbl td { padding: 0px 0px; text-align: center; }
+#infoTd1 { padding-bottom: 4px; }
+#totSpc, #totSpc button { width: 2em; padding: 0px 0.3em; }
+svg.totPts { width: 2vw; height: 2vw; }
+span.totPtsVal { line-height: 1.2; vertical-align: text-top; }
+#hand svg.slideOutUp {
+    animation-duration: 100ms;
+}
+#diaInvite { width: max-content; max-height: 85%; }
+#diaInvite h5 {
+    background-color: lightblue; margin: 0px; padding: 10px;
+}
+#diaInviteTable th {
+    background-color: blue; margin: 0px; padding: 0.3em; color: white; text-align: center;
+}
+#diaInviteUsers td:nth-child(2) { text-align: center; }
+#diaInvite label > span { margin-left: 1em; width: calc(100% - 2em); }
+button.inviteBtn {
+    height: 1.6em; line-height: 1;
+    border-radius: 15px; background-color: darkblue;
+    margin: 0px 5px 0px 0px; padding: 0px 1em;
+}
+.iconBtn { color: grey; cursor: pointer;}
+.iconBtn:hover { color: lightcoral; cursor: pointer;}
+.crowncl { color: blue; }

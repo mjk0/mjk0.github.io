@@ -530,6 +530,15 @@ t-65 129t-24.5 203.5z" />
  <circle style="fill:#ffe15b" cx="32" cy="20" r="3"/>
 </symbol>
 
+<!-- Auction 45s logo - max possible hand -->
+<symbol id="xfan5s" viewBox="0 4 200 90">
+    <use xlink:href="#5_sp" width="60" height="80" x="70" y="5" transform="rotate(-10, 100, 400)" />
+    <use xlink:href="#j_sp" width="60" height="80" x="70" y="5" transform="rotate(-5, 100, 400)" />
+    <use xlink:href="#a_he" width="60" height="80" x="70" y="5" />
+    <use xlink:href="#a_sp" width="60" height="80" x="70" y="5" transform="rotate(5, 100, 400)" />
+    <use xlink:href="#k_sp" width="60" height="80" x="70" y="5" transform="rotate(10, 100, 400)" />
+</symbol>
+
 <!-- Preview of symbols -->
 <use xlink:href="#2_cl" width="60" height="80" x="60" y="0" />
 <use xlink:href="#3_cl" width="60" height="80" x="120" y="0" />
