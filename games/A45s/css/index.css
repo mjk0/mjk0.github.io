@@ -28,6 +28,11 @@ nav i.material-icons {
     );
 }
 .card-bgg { background-color: #546e7a; } /* blue-grey darken-1 */
+.card-content button {
+    background-color: #ee6e73;
+    border-radius: 1em;
+    box-shadow: 0 0 1px 1px yellow;
+}
 span.card-title a { color: white; }
 .panelright { background-color: forestgreen; color: white; }
 p.card-title {
