@@ -852,6 +852,7 @@ const UI = {
     clickCard: function(n) {
         //console.info('Card '+n+' is '+ (n<Game.hand.length? Game.hand[n] : 'blank/unknown'));
         if (this.clickCardEnabled) {
+            this.clickCardEnabled = false; // disable until handler path determined
             var valid = true;
             if (Game.discarded) {
                 if (!Game.legalPlay(n)) {
@@ -861,8 +862,9 @@ const UI = {
                     for (var aa of a) {
                         q.eq(aa).addClass('animated bounce infinite');
                     }
+                    this.clickCardEnabled = true; // Allow user to choose another card
                 } else {
-                    this.clickCardEnabled = false; // disable after each play of a single card
+                    //this.clickCardEnabled = false; // disable after each play of a single card
                     // Clear any previous animations
                     $("#hand").find("svg").removeClass('animated bounce infinite');
                     this.cardPlayAnimate(false);
@@ -880,6 +882,7 @@ const UI = {
                     ); /* */
                 }
             } else if (valid && Game.discardAtPos(n)) {
+                this.clickCardEnabled = true; // allow more discard selection
                 // show card removed from hand
                 this.updateCardsDisplay();
             }
