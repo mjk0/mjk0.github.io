@@ -86,10 +86,7 @@
             <div class="col s4">
                 <div class="flex-container">
                     <div class="box top-info mt1p"><table id='infoTbl' class='infoTbl'>
-                        <tr><td colspan='3' id='infoTd1'>
-                            <svg class="crowncl svg-icon">
-                                <use xlink:href="cards0.svg#crown" />
-                            </svg>Dealer: <span id='curDealer'>E/ TBD</span></td></tr>
+                        <tr><td colspan='3' id='infoTd1'>Score:</td></tr>
                         <tr><td id='totEW'>
                             <!-- <svg class="totPts"><use xlink:href='cards0.svg#compassEW' x='0' y='0'/></svg> -->
                             <span class='totPtsVal'>0</span></td>
@@ -252,10 +249,12 @@
             <!-- Right column -->
             <div class="col s4">
                 <div class="flex-container">
-                    <div class="box top-info mt1p aRight">Contract:
+                    <div class="box top-info mt1p aRight"><table class="infoTbl"><tr><td><svg
+                        class="info-crowncl svg-icon"><use xlink:href="cards0.svg#crown" />
+                    </svg>Dealer: <span id='curDealer'>E/ TBD</span></td></tr><tr><td>Contract:
                         <span class='contractWho'>TBD</span>
                         <span class='contractSuit cSuitBox svg-icon'><svg><use xlink:href="cards0.svg#cbcatsil" /></svg></span>
-                        <span class='contractBids'>99</span>
+                        <span class='contractBids'>99</span></td></tr></table>
                     </div>
                     <div class="box box-2"></div>
                     <div class="box box-svg-m">

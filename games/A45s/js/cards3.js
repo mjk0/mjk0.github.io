@@ -452,8 +452,8 @@ const UI = {
 
         // Make crown visible in dealer namebar
         const crowns = $('.crowncl'); // each is an SVG
-        for (var i=1; i<5; ++i) {
-            var si = (Game.ourSeat+i)&3;
+        for (var i=0; i<4; ++i) {
+            var si = (Game.ourSeat+1+i)&3;
             this.show(crowns.eq(i), (si == Game.dealer));
         }
         //console.info('setDealerInfo');

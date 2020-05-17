@@ -297,7 +297,9 @@ tr.pastGames { background-color: burlywood; }
     border-radius: 5px; box-shadow: 0 0 2pt 2pt white;
 }
 .infoTbl th, .infoTbl td { padding: 0px 0px; text-align: center; }
-#infoTd1 { padding-bottom: 4px; }
+.infoTbl tr { border-bottom: none;}
+table.infoTbl tbody:first-child tr:first-child td:first-child { border-bottom: 3px solid black;}
+#infoTd1 { padding-bottom: 4px; min-width: 6em; border-bottom: none; }
 #totSpc, #totSpc button { width: 2em; padding: 0px 0.3em; }
 svg.totPts { width: 2vw; height: 2vw; }
 span.totPtsVal { line-height: 1.2; vertical-align: text-top; }
@@ -320,4 +322,4 @@ button.inviteBtn {
 }
 .iconBtn { color: grey; cursor: pointer;}
 .iconBtn:hover { color: lightcoral; cursor: pointer;}
-.crowncl { color: blue; }
+.crowncl, .info-crowncl { color: blue; }
