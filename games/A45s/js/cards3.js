@@ -352,10 +352,11 @@ const UI = {
                 const dbl = '' + (this.bbids[i] >= 30 ? '/'+this.bbids[i]*2 :'');
                 if (this.bbids[i] > this.bidMax && this.bbids[i] <= teamMax) {
                     q.eq(i).text('bid: '+this.bbids[i]+dbl);
-                    q.eq(i).removeClass('hide-me');
+                    q.eq(i).removeClass('hide-me yellow-text');
                 } else if (this.bbids[i] == this.bidMax && Game.weAreDealer()
                             && this.bbids[i] <= teamMax) {
                     q.eq(i).text('hold: '+this.bbids[i]+dbl);
+                    q.eq(i).addClass('yellow-text');
                     q.eq(i).removeClass('hide-me');
                 } else {
                     q.eq(i).addClass('hide-me');
@@ -848,6 +849,7 @@ const UI = {
         return parseFloat( $('.greenStripes').css('width') );
     },
     clickCardEnabled: false,
+    clickCardPlayedTime: 0.1,
     // Clicked on a card in the player's hand
     clickCard: function(n) {
         //console.info('Card '+n+' is '+ (n<Game.hand.length? Game.hand[n] : 'blank/unknown'));
@@ -870,14 +872,29 @@ const UI = {
                     this.cardPlayAnimate(false);
                     // Show animation for card moving up
                     const anim = 'animated slideOutUp';
+                    var evCnt = 0;
                     $("#hand").find("svg").eq(n).addClass(anim).one(
                         animEndEvents, function() {
-                            $(this).removeClass(anim);
+                            if (++evCnt == 1) {
+                                $(this).removeClass(anim);
+                                var preCardPlayedTime = performance.now() - UI.clickCardPlayedTime;
 
-                            const r = {'action':'cardsPlayed', 'plays': [Game.hand[n]], 'fromSeat': Game.ourSeat};
-                            Game.wsSendMsg(r);
-                            if (Game.discardAtPos(n))
-                                UI.updateCardsDisplay();
+                                if (preCardPlayedTime >= 200) {
+                                    const r = {'action':'cardsPlayed', 'plays': [Game.hand[n]], 'fromSeat': Game.ourSeat};
+                                    Game.wsSendMsg(r);
+                                    this.clickCardPlayedTime = performance.now();
+                                    if (Game.discardAtPos(n))
+                                        UI.updateCardsDisplay();
+                                } else {
+                                    const r = {'action':'beNice', 'message': 'click('
+                                        +n+').animEnd fired '
+                                        +preCardPlayedTime+' ms ago - suppressed'};
+                                    Game.wsSendMsg(r);
+                                }
+                            } else {
+                                const r = {'action':'beNice', 'message': 'click('+n+').animEnd fired '+evCnt+' times'};
+                                Game.wsSendMsg(r);
+                            }
                         }
                     ); /* */
                 }

@@ -140,7 +140,7 @@ div.contract-online.nearbar, .nearbar { bottom: -0.5em; }
 .box {
     text-align: center;
     color: white;
-    font-size: 24px;
+    font-size: 3vmin;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -242,6 +242,12 @@ th.gameSectionTitle { text-align: left; font-style: italic; }
 .bid-self {
     background-color: bisque; border: white solid 2px; border-radius: 9px;
     font-size: 5vh; height: 1.9em; padding: 0px 0.4em; margin-top: 0.2em;
+}
+@media only screen and (max-width: 800px) {
+    div.bid-self button.btn {
+        height: 6vmin; line-height: 6vmin;
+        font-size: 2.2vmin;
+    }
 }
 .bid-table {
     background-color: slategray; border: white ridge 2px;
