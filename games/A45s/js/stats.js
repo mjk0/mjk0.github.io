@@ -99,6 +99,22 @@ var UI = {
         r += '<td>'+this.ud[u].completedGameCnt+'</td>';
         r += '<td>'+pastInv.join(',')+'</td></tr>';
         ut.append(r);
+    },
+    showUserChats: function(msgs) {
+        const msgt = $('#msgtable');
+        msgt.empty();  // Clear out previous chat messages
+        // "2020-05-25T07:15:34.482Z/Marcel - playing in my sleep"
+        const msgRe = /^([^\/]*)\/([^ -]*) - (.*)$/;
+        msgs.forEach(msg => {
+            const f = msgRe.exec(msg);
+            var r;
+            if (f) {
+                r = '<tr><td>'+f[1]+'</td><td>'+f[2]+'</td><td>'+f[3]+'</td></tr>';
+            } else {
+                r = '<tr><td></td><td></td><td>'+msg+'</td></tr>';
+            }
+            msgt.append(r);
+        })
     }
 };
 // {"action":"authenticate"}
@@ -110,6 +126,7 @@ function hdlAuthenticate(ws, data) {
 // {"action":"userStats","data":{"Marcel":{"lastSeenTime":null,"completedGameCnt":0}},"time":"2019-10-18T20:04:38.523Z"}
 function hdlUserStats(ws, data) {
     UI.showUserStats(data.data);
+    UI.showUserChats(data.chats || []);
     $('#updateTime').text(data.time);
     ws.close();
 }
