@@ -349,7 +349,7 @@ const UI = {
             const pts = this.getTotPts();
             const teamMax = (pts[Game.ourSeat&1]<0?60:30);
             for (var i=1; i<this.bbids.length && i<q.length; ++i) {
-                const dbl = '' + (this.bbids[i] >= 30 ? '/'+this.bbids[i]*2 :'');
+                let dbl = '' + (this.bbids[i] >= 30 ? '/'+this.bbids[i]*2 :'');
                 if (this.bbids[i] > this.bidMax && this.bbids[i] <= teamMax) {
                     q.eq(i).text('bid: '+this.bbids[i]+dbl);
                     q.eq(i).removeClass('hide-me yellow-text');
@@ -874,25 +874,26 @@ const UI = {
                     const anim = 'animated slideOutUp';
                     var evCnt = 0;
                     $("#hand").find("svg").eq(n).addClass(anim).one(
-                        animEndEvents, function() {
+                        animEndEvents, function(e) {
                             if (++evCnt == 1) {
                                 $(this).removeClass(anim);
                                 var preCardPlayedTime = performance.now() - UI.clickCardPlayedTime;
 
                                 if (preCardPlayedTime >= 200) {
-                                    const r = {'action':'cardsPlayed', 'plays': [Game.hand[n]], 'fromSeat': Game.ourSeat};
+                                    let r = {'action':'cardsPlayed', 'plays': [Game.hand[n]], 'fromSeat': Game.ourSeat};
                                     Game.wsSendMsg(r);
-                                    this.clickCardPlayedTime = performance.now();
+                                    UI.clickCardPlayedTime = performance.now();
                                     if (Game.discardAtPos(n))
                                         UI.updateCardsDisplay();
                                 } else {
-                                    const r = {'action':'beNice', 'message': 'click('
-                                        +n+').animEnd fired '
+                                    let r = {'action':'beNice', 'message': 'click('
+                                        +n+').animEnd('+e.type+') fired '
                                         +preCardPlayedTime+' ms ago - suppressed'};
                                     Game.wsSendMsg(r);
                                 }
                             } else {
-                                const r = {'action':'beNice', 'message': 'click('+n+').animEnd fired '+evCnt+' times'};
+                                let r = {'action':'beNice', 'message': 'click('
+                                    +n+').animEnd('+e.type+') fired '+evCnt+' times'};
                                 Game.wsSendMsg(r);
                             }
                         }
