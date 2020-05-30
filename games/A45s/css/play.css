@@ -173,10 +173,9 @@ div.contract-online.nearbar, .nearbar { bottom: -0.5em; }
     .box-hand { min-height: 35vh; }
 }
 .nav-wrapper { padding: 0px 0.3em; }
-#dropdown1 { background-color: #ee6e73; }
-#dropdown1.dropdown-content li > a { color: white; }
+.dropdown-content { background-color: #ee6e73; }
+.dropdown-content li > a { color: white; }
 i.material-icons.right.helpdd { margin-left: 0px; }
-#logi-name { font-style: italic; box-shadow: 0 0 1pt 0pt black; padding: 0px 0.3em; }
 .gameTable th {background-color: lightslategrey; color: white; }
 .privTable th {background-color: peru; color: white; }
 .gameTable table, .privTable table,

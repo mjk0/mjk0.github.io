@@ -21,6 +21,7 @@ var Game = {
     ourGame: 0, // 1-based
     ourSeat: -1,
     reJoin: [0, -1], // if disconnected, where to re-join
+    replayAction: {action: "beNice", message: "replay??"},
     dealer: 255, // last player to bid
     fore: 255, // first player to bid
     declarer: 255,  // contract winner after bidding complete
@@ -110,6 +111,10 @@ var Game = {
         this.reJoin[0] = this.ourGame; // either page load or game start-up.  Remember spot
         this.reJoin[1] = this.ourSeat;
         this.prepNextDeal();
+    },
+    // Replay the most recently dealt hand
+    replayHand() {
+        this.wsSendMsg(this.replayAction);
     },
     // Things that the UI needs before deck shuffled msg arrives
     prepNextDeal() {
@@ -212,9 +217,6 @@ const wsRcv = {
     userJoined: function(data) {
         Game.users.push(data.uname); // One user joined
         console.info(data.uname+' joined the game');
-        if (Game.username == data.uname) {
-            UI.updateLoginDisplay(2);  // server says we're logged in!
-        }
         UI.updateUsersDisplay();
     },
     userExited: function(data) {
@@ -258,6 +260,8 @@ const wsRcv = {
         Game.pastInvited = data.pastInvited || Game.pastInvited || {}; // sent on private game creation
         UI.updateScoreDisplay(0, 0);
         UI.seatAssigned();
+        UI.updateLoginDisplay(2);  // show in-game more options menu
+
     },
     currScore: function(data) {
         if (data.score)
@@ -266,6 +270,8 @@ const wsRcv = {
     deckShuffled: function(data) {
         // Deck was just shuffled, show backs of cards only
         Game.shuffleInit();
+        Game.replayAction = Object.assign({}, data);
+        Game.replayAction.action = "shuffleNextDealer"; // in case owner wants to replay hand
         if ('dealer' in data)
             Game.dealer = data.dealer;
         if ('fore' in data) // the one who bids & plays first
@@ -1209,15 +1215,19 @@ const UI = {
         });
     },
 
-    // 0: not connected, 1: connected, 2: logged in
+    // 0: not connected, 1: connected, 2: in game (game owner or seat selected)
     updateLoginDisplay(state) {
-        if (state > 1 && Game.username) {
-            $('#logi-name').text(Game.username);
-        } else {
-            $('#logi-name').text(state? 'connected' : 'not connected');
-            if (state == 0) {
+        switch (state) {
+            case 1: // connected, but not in game
+                $('#logi-state').text("sync"); // sync icon
                 UI.updateGamesDisplay();
-            }
+                break;
+            case 2: // in a game
+                $('#logi-state').text("more_vert"); // more icon, vertical dots
+                break;
+            default:
+                $('#logi-state').text("warning"); // warning ! icon
+                UI.updateGamesDisplay();
         }
     },
     onSidenavClose() {
