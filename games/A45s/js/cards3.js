@@ -881,25 +881,20 @@ const UI = {
                     var evCnt = 0;
                     $("#hand").find("svg").eq(n).addClass(anim).one(
                         animEndEvents, function(e) {
-                            if (++evCnt == 1) {
+                            ++evCnt;
+                            var preCardPlayedTime = performance.now() - UI.clickCardPlayedTime;
+                            if (preCardPlayedTime >= 150 && evCnt < 2) {
+                                UI.clickCardPlayedTime = performance.now();
                                 $(this).removeClass(anim);
-                                var preCardPlayedTime = performance.now() - UI.clickCardPlayedTime;
 
-                                if (preCardPlayedTime >= 200) {
-                                    let r = {'action':'cardsPlayed', 'plays': [Game.hand[n]], 'fromSeat': Game.ourSeat};
-                                    Game.wsSendMsg(r);
-                                    UI.clickCardPlayedTime = performance.now();
-                                    if (Game.discardAtPos(n))
-                                        UI.updateCardsDisplay();
-                                } else {
-                                    let r = {'action':'beNice', 'message': 'click('
-                                        +n+').animEnd('+e.type+') fired '
-                                        +preCardPlayedTime+' ms ago - suppressed'};
-                                    Game.wsSendMsg(r);
-                                }
+                                let r = {'action':'cardsPlayed', 'plays': [Game.hand[n]], 'fromSeat': Game.ourSeat};
+                                Game.wsSendMsg(r);
+                                if (Game.discardAtPos(n))
+                                    UI.updateCardsDisplay();
                             } else {
                                 let r = {'action':'beNice', 'message': 'click('
-                                    +n+').animEnd('+e.type+') fired '+evCnt+' times'};
+                                    +n+').animEnd('+e.type+'), evCnt:'+evCnt+', '
+                                    +Math.round(preCardPlayedTime)+' ms'};
                                 Game.wsSendMsg(r);
                             }
                         }
