@@ -270,7 +270,7 @@ const wsRcv = {
     deckShuffled: function(data) {
         // Deck was just shuffled, show backs of cards only
         Game.shuffleInit();
-        Game.replayAction = Object.assign({}, data);
+        Game.replayAction = data;
         Game.replayAction.action = "shuffleNextDealer"; // in case owner wants to replay hand
         if ('dealer' in data)
             Game.dealer = data.dealer;
