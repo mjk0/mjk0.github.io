@@ -27,19 +27,32 @@
     </ul>
     <nav><div class="nav-wrapper">
             <a class="brand-logo left">Auction 45s</a>
+            <a data-target="sidenav-r"
+                class="sidenav-trigger right hide-on-med-and-up"><i
+                class="material-icons">menu</i></a>
             <ul class="right">
-                <li><a onclick="$('.sidenav').sidenav('open')">Lobby</a></li>
+                <li><a class="hide-on-small-only"
+                     onclick="UI.lobbyOpen()">Lobby</a></li>
                 <li><a href="./">Exit</a></li>
-                <li><a class="dropdown-trigger" data-target="dropdown_h"
-                        onclick="$('.dropdown-trigger[data-slide=dropdown_h]').dropdown('open')">Help<i
+                <li><a class="dropdown-trigger hide-on-small-only"
+                     data-target="dropdown_h">Help<i
                     class="material-icons right helpdd">arrow_drop_down</i></a></li>
-                <li><a class="dropdown-trigger" data-target="dropdown_g"
-                        onclick="$('.dropdown-trigger[data-slide=dropdown_g]').dropdown('open')"><i
-                        id="logi-state" class="material-icons">warning</i></a></li>
+                <li><a class="dropdown-trigger hide-on-small-only"
+                     data-target="dropdown_g"><i
+                    id="logi-state" class="material-icons">warning</i></a></li>
             </ul>
         </div>
     </nav>
-    <div id="slide-out" class="sidenav">
+    <ul id="sidenav-r" class="sidenav sidenav-close">
+        <li><a onclick="UI.lobbyOpen()">Lobby</a></li>
+        <li class="divider"></li>
+        <li><a href="rules.html" target="_blank">Rules</a></li>
+        <li><a onclick="$('#cardRank').modal('open')">Card Rank</a></li>
+        <li><a href="help.html" target="_blank">Game Help</a></li>
+        <li class="divider"></li>
+        <li><a onclick="Game.replayHand()">Replay hand</a></li>
+    </ul>
+    <div id="sidenav-l" class="sidenav">
         <div class="row">
             <div class="col s12">
                 <ul class="tabs tabs-fixed-width">

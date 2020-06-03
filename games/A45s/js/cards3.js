@@ -305,7 +305,7 @@ const UI = {
         }
         Game.wsSendMsg({'action': 'authenticate', 'username': username});
         // Jump to Lobby for game selection
-        $('.sidenav').sidenav('open');
+        this.lobbyOpen();
     },
     sitAt: function(gnum, seat) {
         // Check if in-progress
@@ -955,7 +955,7 @@ const UI = {
         this.showPlayArea(0);
         this.setDealerInfo(data);
         this.updateSeatNamesInDisplay(); // To add asterisk next to dealer, for Jane
-        $('.sidenav').sidenav('close'); // close Lobby slide-out
+        this.lobbyClose(); // close Lobby slide-out
     },
     // declarer is clicking on trump suit radio buttons
     trumpSuitClickChange() {
@@ -1225,13 +1225,15 @@ const UI = {
                 UI.updateGamesDisplay();
         }
     },
-    onSidenavClose() {
+    lobbyOpen() { $('#sidenav-l').sidenav('open'); },
+    lobbyClose() { $('#sidenav-l').sidenav('close'); },
+    onSidenavLClose() {
         if (!Game.ourGame) {
             alert('You must join a game or start a new one');
-            $('.sidenav').sidenav('open');  // back to lobby
+            this.lobbyOpen();  // back to lobby
         } else if (!Game.games[Game.ourGame-1].started) {
             alert("Press 'Start' to start your game");
-            $('.sidenav').sidenav('open');  // back to lobby
+            this.lobbyOpen();  // back to lobby
         }
     },
 
@@ -1245,8 +1247,12 @@ const UI = {
         this.updateLoginDisplay(0); // until logged in, hide connected username
 
         // Lobby slide-out panel
-        var elems = document.querySelectorAll('.sidenav');
-        var instances = M.Sidenav.init(elems, {'onCloseEnd': this.onSidenavClose});
+        var elems = document.querySelectorAll('#sidenav-l');
+        var instances = M.Sidenav.init(elems, {
+            'onCloseEnd': this.onSidenavLClose.bind(UI)
+        });
+        elems = document.querySelectorAll('#sidenav-r');
+        instances = M.Sidenav.init(elems, { edge: 'right' });
         $('.tabs').tabs();  // initialize tabs
         $('.tabs').tabs('select','tab-games'); // pre-select games tab, since class="active" not
         $(".dropdown-trigger").dropdown({ coverTrigger: false }); // nav-bar drop-down

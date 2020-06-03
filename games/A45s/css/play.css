@@ -192,7 +192,8 @@ i.material-icons.right.helpdd { margin-left: 0px; }
 th.gameSectionTitle { text-align: left; font-style: italic; }
 #scoreHbody > tr > td { padding: 0px 5px; }
 .play-lg { font-size: xx-large !important; }
-#slide-out { width: 30em; }
+#sidenav-l { width: 30em; max-width: 100%; }
+#sidenav-r { width: 30em; max-width: 50%; }
 .top-info {
     background-color: burlywood; color: black;
     border: white solid 2px; border-radius: 10px;
