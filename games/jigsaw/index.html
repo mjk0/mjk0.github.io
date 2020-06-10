@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Jigsaw Eye</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="/css/materialize.css" media="screen,projection"/>
+    <link type="text/css" rel="stylesheet" href="css/index.css">
+    <link rel="modulepreload" href="js/launch.js">
+</head>
+<body>
+    <div class="row">
+        <div class="col s12">
+            <div class="title">Jigsaw Puzzles</div>
+            <div class="divider"></div>
+        </div>
+        <div class="col s7">
+            <div class="nav-bg"><i class="material-icons">looks_one</i>Select Image</div>
+            <div>
+                <div class="input-field col s12">
+                    <input placeholder="Image URL" id="img_url" type="text">
+                    <label for="img_url" class="active">Paste an image URL:
+                        <button class="btn right" type="button"
+                            onclick="Launch.test_image()">Test</button> 
+                    </label>
+                </div>
+                <p>Or select from sample images:</p>
+                <div class="carousel">
+                    <a class="carousel-item"><img src="media/backyard-180px.jpg"></a>
+                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Aerial_view_of_Love_valley_Cappadocia_from_hot_air_balloon_1510232_3_4_Compressor.jpg/180px-Aerial_view_of_Love_valley_Cappadocia_from_hot_air_balloon_1510232_3_4_Compressor.jpg"></a>
+                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Amur_tiger_yawning_widescreen.jpg/180px-Amur_tiger_yawning_widescreen.jpg"></a>
+                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/BaylorLineTunnel.jpg/180px-BaylorLineTunnel.jpg"></a>
+                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Biltmore_Estate-27527-1.jpg/180px-Biltmore_Estate-27527-1.jpg"></a>
+                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Biltmore_Estate-27527-2.jpg/180px-Biltmore_Estate-27527-2.jpg"></a>
+                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Bisbee_Arizona-27527-1.jpg/180px-Bisbee_Arizona-27527-1.jpg"></a>
+                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Black_Spiny-tailed_Iguana-27527.jpg/180px-Black_Spiny-tailed_Iguana-27527.jpg"></a>
+                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Cathedral_Rock_Water-27527-1.jpg/180px-Cathedral_Rock_Water-27527-1.jpg"></a>
+                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Feeding_Recharging.png/180px-Feeding_Recharging.png"></a>
+                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Grayson_Highlands_Ponies-27527-2.jpg/180px-Grayson_Highlands_Ponies-27527-2.jpg"></a>
+                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Iller_water_stair.jpg/180px-Iller_water_stair.jpg"></a>
+                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Katrinetorp_Mansion_close.jpg/180px-Katrinetorp_Mansion_close.jpg"></a>
+                </div>
+            </div>
+        </div>
+        <div class="col s5">
+            <div class="nav-bg"><i class="material-icons">looks_two</i>Select Options</div>
+            <p>Number of pieces:</p>
+            <p>
+                <div class="cc-selector">
+                    <input checked="checked" id="p50" type="radio" name="pieces" value="50" />
+                    <label class="label-cc" for="p50">50</label>
+                    <input id="p100" type="radio" name="pieces" value="100" />
+                    <label class="label-cc" for="p100">100</label>
+                    <input id="p200" type="radio" name="pieces" value="200" />
+                    <label class="label-cc" for="p200">200</label>
+                    <input id="p400" type="radio" name="pieces" value="400" />
+                    <label class="label-cc" for="p400">400</label>
+                </div>
+            </p>
+            <div class="nav-bg"><i class="material-icons">looks_3</i>Start</div>
+            <p>
+                <button class="btn" type="button"><span><a id='a_start'
+                    href="puzzle.html" onclick="Launch.pre_puzzle()"><i
+                    class="material-icons">send</i> Start</a></span></button> 
+            </p>
+        </div>
+        <div class="col s12">
+            <div class="opt-bg">Optional - Image Preview (
+                <button class="btn-small" type="button" onclick="Launch.test_image()">Test</button>
+                ) <span id="img_test_result"></span>
+            </div>
+            <img id="img_test" width="100%"
+                src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" >
+        </div>
+    </div>
+
+    <!--JavaScript at end of body for optimized loading-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/materialize.min.js"></script>
+    <script type="module">
+        import * as Launch from './js/launch.js';
+        window.Launch = Launch;
+    </script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Jigsaw Big</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="css/index.css">
+    <link rel="modulepreload" href="js/jigsaw.js">
+    <link rel="modulepreload" href="js/drag.js">
+</head>
+<body>
+    <svg id="puzzlecontainer"
+        version="1.1" baseProfile="full"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        xmlns:ev="http://www.w3.org/2001/xml-events"
+        width="100vw" height="90vh" viewBox="0 0 900 600">
+        <defs>
+            <pattern id="img1" patternUnits="userSpaceOnUse" width="10" height="10">
+                <image xlink:href="media/backyard.jpg" x="0" y="0" />
+            </pattern>
+        </defs>
+    </svg>
+    <audio id="snap-sound" src="media/Snap-sound-effect.mp3"></audio>
+
+    <!--JavaScript at end of body for optimized loading-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
