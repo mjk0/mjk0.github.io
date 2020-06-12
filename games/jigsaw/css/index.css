@@ -23,30 +23,50 @@ div.logo.col { padding: 0px; }
 .nav-bg { background-color: #ee6e73; font-size: 2.3vw; }
 .opt-bg { background-color: wheat; font-size: 1.6vw; }
 
+div.cc-selector {
+    display: inline-block;
+    font-size: 2.2vh;
+}
 .cc-selector input{
     margin:0;padding:0;
     -webkit-appearance:none;
        -moz-appearance:none;
             appearance:none;
 }
-.cc-selector input:active +.label-cc{opacity: .9;}
-.cc-selector input:checked +.label-cc{
-    outline: 1px solid white;
-    color: white;
+.cc-selector input:active +.label-cc, .cc-selector input:active +.label-pm {
+    opacity: .9;
+}
+.cc-selector input:checked +.label-cc, .cc-selector input:checked +.label-pm {
     -webkit-filter: none;
        -moz-filter: none;
             filter: none;
 }
-.label-cc{
+.cc-selector input:checked +.label-cc {
+    outline: 1px solid white;
+    color: white;
+}
+.cc-selector input:checked +.label-pm {
+    outline: 1px solid white;
+    color: white;
+    background-color: limegreen;
+}
+.label-cc, .label-pm {
     cursor:pointer;
     background-size:contain;
     display:inline-block;
-    width: 3em; height: 1.6em; font-size: 1.3em;
     text-align: center;
     outline: 1px solid grey;
+}
+.label-cc {
+    width: 3em; height: 1.6em; font-size: 1.3em;
     color: wheat;
 }
-.label-cc:hover{
+.label-pm {
+    width: 2em;
+    color: lightgray; background-color: rgb(239, 239, 239);
+    height: 3.2vh; line-height: 3.2vh;
+}
+.label-cc:hover, .label-pm:hover {
     outline: 1px dotted white;
     -webkit-filter: brightness(1.2) grayscale(.5) opacity(.9);
        -moz-filter: brightness(1.2) grayscale(.5) opacity(.9);
@@ -67,4 +87,32 @@ button.btn-small {
     height: 1.7em;
     line-height: 1.5em;
     vertical-align: text-bottom;
+}
+body.zero {
+    display: flex;
+    flex-flow: column;
+    height: 100vh;
+}
+.zero {
+    margin: 0px; padding: 0px;
+}
+.ptop {
+    background-color: #ee6e73; width: 100vw;
+    height: 0.5vh; flex: 0 0 auto;
+}
+.pbottom {
+    background-color: #ee6e73; width: 100vw;
+    flex: 1 0 auto; /* fill remaining vertical space in bottom bar */
+}
+.pmenu {
+    background-color: wheat; width: 100vw;
+    height: 4vh; flex: 0 0 auto;
+    outline: 1px solid black;
+}
+button.menu-btn{
+    height: 3.2vh; font-size: 1.8vh; line-height: 1.8vh;
+    margin: 0.4vh 1vw 0.4vh 1vw;
+}
+#puzzlecontainer {
+    flex: 0 0 auto;
 }

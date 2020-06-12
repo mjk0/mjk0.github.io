@@ -5,10 +5,12 @@ const jopts = {
     'pieces':   400, // target # of pieces
 };
 var svg;
-var snap_sound;
+
+function scramble_puzzle() {
+    Jig.scramble_tiles();
+}
 
 function svg_init() {
-    snap_sound = document.getElementById('snap-sound');
     $('path').remove(); // remove all existing SVG path elements
 
     // Set puzzle image URL
@@ -28,7 +30,7 @@ function svg_init() {
         // If SVG resizes, allow jigsaw viewBox to resize
         window.addEventListener('resize', (event) => {
             Jig.svg_resize_handler(event, (viewBox) => {
-                snap_sound.play();
+                Drag.play_snap_sound();
                 Drag.change_boundaries(viewBox);
             });
         });
@@ -40,3 +42,5 @@ $(document).ready(function(){
     svg = document.getElementsByTagName("svg")[0];
     svg_init();
 });
+
+export { jopts, Drag, scramble_puzzle };

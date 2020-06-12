@@ -2,9 +2,18 @@
 // SVG Drag and Drop support,
 // from: http://www.petercollingridge.co.uk/tutorials/svg/interactive/dragging/
 //
+import * as Jig from './jigsaw.js';
+
 var svg;
 var selectedElement, offset, transform,
     minX, maxX, minY, maxY;
+var snap_sound;
+var drg = {
+    r:          0,  // row of dragging tile
+    c:          0,  // col of dragging tile
+    bb:         null,   // bounding box
+    snap_tol:   0.06,   // 6% of tile width
+};
 
 var boundaryX1;
 var boundaryX2;
@@ -22,6 +31,8 @@ function drag_init(thesvg, viewBox) {
     svg.addEventListener('touchend', endDrag);
     svg.addEventListener('touchleave', endDrag);
     svg.addEventListener('touchcancel', endDrag);
+
+    snap_sound = document.getElementById('snap-sound');
     set_boundaries(viewBox);
 }
 function set_boundaries(viewBox) {
@@ -29,6 +40,10 @@ function set_boundaries(viewBox) {
     boundaryX2 = viewBox.minX + viewBox.w;
     boundaryY1 = viewBox.minY;
     boundaryY2 = viewBox.minY + viewBox.h;
+}
+
+function play_snap_sound() {
+    snap_sound.play();
 }
 
 function getMousePosition(evt) {
@@ -61,11 +76,23 @@ function startDrag(evt) {
         offset.y -= transform.matrix.f;
 
         // No moving pieces outside the viewBox
-        //bbox = selectedElement.getBBox();
-        minX = boundaryX1 - selectedElement.getAttribute('bbminx');
-        maxX = boundaryX2 - selectedElement.getAttribute('bbmaxx');
-        minY = boundaryY1 - selectedElement.getAttribute('bbminy');
-        maxY = boundaryY2 - selectedElement.getAttribute('bbmaxy');
+        drg.bb = selectedElement.getBBox();
+        minX = boundaryX1 - drg.bb.x;
+        maxX = boundaryX2 - drg.bb.x - drg.bb.width;
+        minY = boundaryY1 - drg.bb.y;
+        maxY = boundaryY2 - drg.bb.y - drg.bb.height;
+
+        // Check snap tolerance
+        drg.snap_tol = $('input[name=snap]:checked').val();
+
+        // get row & col of dragging tile
+        let rc = selectedElement.id.split(',');
+        if (rc.length == 2) {
+            drg.r = +rc[0];
+            drg.c = +rc[1];
+        } else {
+            console.error('startDrag: bad id r/c');
+        }
     }
 }
 
@@ -86,6 +113,17 @@ function drag(evt) {
             if (dy < minY) { dy = minY; }
             else if (dy > maxY) { dy = maxY; }
     
+            // Check for drag snap to neighbor tile
+            if (drg.snap_tol > 0) {
+                let ndelta = Jig.snap_to_neighbor(drg, dx, dy);
+                if (ndelta) {
+                    dx = ndelta.dx;
+                    dy = ndelta.dy;
+                    // end drag since snapping
+                    selectedElement = false;
+                    play_snap_sound();
+                }
+            }
             transform.setTranslate(dx, dy);
         }
     }
@@ -132,5 +170,5 @@ function change_boundaries(viewBox) {
 }
 
 export {
-    drag_init, change_boundaries
+    drag_init, change_boundaries, play_snap_sound
 };

@@ -47,8 +47,9 @@ const P = {
     'pieces':   400,    // target # of pieces
     'xn':       5,  // number of tiles in x direction.  Auto-calc from pieces & image dims
     'yn':       3,  // number of tiles in y direction
-    'width':    984,  // ignored.  Will be read from image object
-    'height':   450,
+    'naturalWidth':    984,  // Will be read from image object, then set here
+    'naturalHeight':   450,
+    'viewBox':  {minX:0, minY:0, w:0, h:0}, // most recently calculated viewBox
     'radius':   2.0, // ignored.  Was corner radius
     'stroke':   "black",
     'strokeW1k': 0.3, // stroke-width scalled to a 1k width image
@@ -162,6 +163,9 @@ function get_svg_image(callback) {
 function get_svg_image_set_viewBox(callback)
 {
     get_svg_image((puzzle_img) => {
+        P.naturalWidth = puzzle_img.naturalWidth;
+        P.naturalHeight = puzzle_img.naturalHeight;
+
         svg = $("puzzlecontainer");
         let svg_w = svg.clientWidth;
         let svg_h = svg.clientHeight;
@@ -170,6 +174,10 @@ function get_svg_image_set_viewBox(callback)
         let pattern = $('img1');
         pattern.setAttribute('width', puzzle_img.naturalWidth);
         pattern.setAttribute('height', puzzle_img.naturalHeight);
+        
+        let pattern_image = pattern.getElementsByTagName('image')[0];
+        pattern_image.setAttribute('width', puzzle_img.naturalWidth);
+        pattern_image.setAttribute('height', puzzle_img.naturalHeight);
 
         // Calculate maximum scaling needed to make image fit in SVG
         let scale_max_x = svg_w / puzzle_img.naturalWidth;
@@ -177,30 +185,30 @@ function get_svg_image_set_viewBox(callback)
 
         // Scale down anough to make puzzle image use no more than half the SVG area (area_ratio >= 2)
         let area_ratio = Math.max(scale_max_x, scale_max_y) / Math.min(scale_max_x, scale_max_y);
-        let scale_xy = (area_ratio < 2) ? Math.sqrt(2.0 / area_ratio) : 1.0;
-        let viewBox = {
+        let scale_xy = (area_ratio < 2) ? Math.sqrt(2.0 / area_ratio) : 1.05;
+        P.viewBox = {
             minX: 0, minY: 0,
             w: puzzle_img.naturalWidth * scale_xy,
             h: puzzle_img.naturalHeight * scale_xy
         };
         if (scale_max_x > scale_max_y) {
             // puzzle aspect ratio is taller than the SVG area
-            viewBox.w *= scale_max_x / scale_max_y;
+            P.viewBox.w *= scale_max_x / scale_max_y;
         } else {
             // puzzle aspect ratio is wider than the SVG area
-            viewBox.h *= scale_max_y / scale_max_x;
+            P.viewBox.h *= scale_max_y / scale_max_x;
         }
 
         // set viewBox to match SVG aspect ratio.  Tiles will use image natural dimensions
-        viewBox.minX = (puzzle_img.naturalWidth - viewBox.w)/2.0; // center image
-        viewBox.minY = (puzzle_img.naturalHeight - viewBox.h)/2.0; // center image
-        let viewBox_str = ''+viewBox.minX + ' '
-            + viewBox.minY + ' '
-            + viewBox.w +' '+ viewBox.h;
+        P.viewBox.minX = (puzzle_img.naturalWidth - P.viewBox.w)/2.0; // center image
+        P.viewBox.minY = (puzzle_img.naturalHeight - P.viewBox.h)/2.0; // center image
+        let viewBox_str = ''+P.viewBox.minX + ' '
+            + P.viewBox.minY + ' '
+            + P.viewBox.w +' '+ P.viewBox.h;
         svg.setAttribute('viewBox', viewBox_str);
         console.log('svg: '+svg_w+' x '+svg_h+', viewBox: '+viewBox_str);
 
-        callback(puzzle_img, viewBox);
+        callback(puzzle_img, P.viewBox);
     });
 }
 
@@ -276,25 +284,79 @@ function create_tiles(edges, attributes) {
             pathElement.setAttribute('bbmaxy', bbox.y + bbox.height);
         }
     }
+    //let r1 = $('r1'); svg.removeChild(r1); svg.appendChild(r1); // move to end of list
     console.log("puzzle tiles: "+P.xn+" x "+P.yn +", image: "+width+" x "+height);
 }
 
-function generate()
-{
-    width = P.width;
-    height = P.height;
-    radius = P.radius;
-    offset = 0.0;
+// randomize location of all PATH elements of the SVG
+function scramble_tiles() {
+    let paths = svg.getElementsByTagName('path');
 
-    var data = "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.0\" ";
-    data += "width=\"" + width + "mm\" height=\"" + height + "mm\" viewBox=\"0 0 " + width + " " + height + "\">";
-    data += "<path fill=\"none\" stroke=\"black\" stroke-width=\"0.1\" d=\"";
-    data += gen_d();
-    data += "\"></path></svg>";
-    
-    save("jigsaw.svg", data);
+    // viewBox defines valid coordinate space
+    let minX = P.viewBox.minX;
+    let minY = P.viewBox.minY;
+    let boundaryX2 = P.viewBox.minX + P.viewBox.w;
+    let boundaryY2 = P.viewBox.minY + P.viewBox.h;
+
+    for (let el of paths) {
+        let bbminx = +el.getAttribute('bbminx'); // '+' converts to numeric
+        let bbmaxx = +el.getAttribute('bbmaxx');
+        let bbminy = +el.getAttribute('bbminy');
+        let bbmaxy = +el.getAttribute('bbmaxy');
+        let el_w = bbmaxx - bbminx;
+        let el_h = bbmaxy - bbminy;
+        let transform = el.transform.baseVal.getItem(0);
+
+        // Generate random offsets
+        for (let offsetVerified=false; !offsetVerified; ) {
+            let randX = uniform(minX, boundaryX2-el_w);
+            let randY = uniform(minY, boundaryY2-el_h);
+
+            // pattern image defines exclusion space
+            // (0,0) -> (P.naturalWidth, P.naturalHeight)
+            if (randY < 0 || randY+el_h > P.naturalHeight
+             || randX < 0 || randX+el_w > P.naturalWidth) {
+                let offsetX = randX - bbminx;
+                let offsetY = randY - bbminy;
+                transform.setTranslate(offsetX, offsetY);
+                offsetVerified = true;
+            }
+        }
+    }
+}
+
+// Check if a neighboring tile is within the snap tolerance
+function snap_to_neighbor(drg, dx, dy) {
+    // Check all 4 neighbors.  Stop if snap possible
+    for (let dd of [[0,-1], [0,1], [-1,0], [1,0]]) {
+        let ndelta = neighbor_delta(drg, dx, dy, dd);
+        if (ndelta) { // null if no snap
+            return ndelta;
+        }
+    }
+    return null;
+}
+
+// Compare target row,col tile with given transform, and
+// calc distance as fraction of given bounding box
+function neighbor_delta(drg, dx, dy, dd) {
+    let r = drg.r + dd[0];
+    let c = drg.c + dd[1];
+    if (r >= 0 && r < P.yn && c >= 0 && c < P.xn) {
+        let nEl = $(''+r+','+c);
+        let nTr = nEl.transform.baseVal.getItem(0);
+        // Percentage of original tile deltas
+        let pde = Math.abs(nTr.matrix.e - dx)/drg.bb.width;
+        let pdf = Math.abs(nTr.matrix.f - dy)/drg.bb.height;
+        // need non-zero, but less than tolerance
+        if (pde < drg.snap_tol && pdf < drg.snap_tol) {
+            //console.log('to#'+r+','+c+'('+Math.round(pde*100)+'%,'+Math.round(pdf*100)+'%) ');
+            return {r, c, dx: nTr.matrix.e, dy: nTr.matrix.f};
+        }
+    }
+    return null;
 }
 
 export {
-    update, options, svg_resize_handler
+    update, options, svg_resize_handler, scramble_tiles, snap_to_neighbor
 };
