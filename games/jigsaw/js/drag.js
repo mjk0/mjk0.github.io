@@ -14,6 +14,9 @@ var drg = {
     bb:         null,   // bounding box
     snap_tol:   0.06,   // 6% of tile width
 };
+var selectedElement_isg; // snap group of selectedElement
+var idSgrp = []; // map from id to snap group.  -1 means no snap group
+var sgrps = [];  // snap groups.  Each entry is { ids:[], bb:{minx, maxx, miny, maxy}}
 
 var boundaryX1;
 var boundaryX2;
@@ -33,7 +36,13 @@ function drag_init(thesvg, viewBox) {
     svg.addEventListener('touchcancel', endDrag);
 
     snap_sound = document.getElementById('snap-sound');
+    snap_grp_clear_all();
     set_boundaries(viewBox);
+}
+function snap_grp_clear_all() {
+    sgrps.length = 0;   // empty the array
+    idSgrp.length = Jig.P.yn * Jig.P.xn;
+    idSgrp.fill(-1);
 }
 function set_boundaries(viewBox) {
     boundaryX1 = viewBox.minX;
@@ -76,23 +85,26 @@ function startDrag(evt) {
         offset.y -= transform.matrix.f;
 
         // No moving pieces outside the viewBox
-        drg.bb = selectedElement.getBBox();
-        minX = boundaryX1 - drg.bb.x;
-        maxX = boundaryX2 - drg.bb.x - drg.bb.width;
-        minY = boundaryY1 - drg.bb.y;
-        maxY = boundaryY2 - drg.bb.y - drg.bb.height;
+        selectedElement_isg = idSgrp[+selectedElement.id];
+        if (selectedElement_isg >= 0) {
+            // Selected element is part of a snap group.  Use group bb
+            minX = boundaryX1 - sgrps[selectedElement_isg].bb.minx;
+            maxX = boundaryX2 - sgrps[selectedElement_isg].bb.maxx;
+            minY = boundaryY1 - sgrps[selectedElement_isg].bb.miny;
+            maxY = boundaryY2 - sgrps[selectedElement_isg].bb.maxy;
+        } else {
+            drg.bb = selectedElement.getBBox();
+            minX = boundaryX1 - drg.bb.x;
+            maxX = boundaryX2 - drg.bb.x - drg.bb.width;
+            minY = boundaryY1 - drg.bb.y;
+            maxY = boundaryY2 - drg.bb.y - drg.bb.height;
+        }
 
         // Check snap tolerance
         drg.snap_tol = $('input[name=snap]:checked').val();
 
         // get row & col of dragging tile
-        let rc = selectedElement.id.split(',');
-        if (rc.length == 2) {
-            drg.r = +rc[0];
-            drg.c = +rc[1];
-        } else {
-            console.error('startDrag: bad id r/c');
-        }
+        Jig.id_to_rc(selectedElement.id, drg);
     }
 }
 
@@ -114,23 +126,135 @@ function drag(evt) {
             else if (dy > maxY) { dy = maxY; }
     
             // Check for drag snap to neighbor tile
+            let id_snap_to = -1;
             if (drg.snap_tol > 0) {
-                let ndelta = Jig.snap_to_neighbor(drg, dx, dy);
+                let ndelta = selectedElement_isg >= 0 ?
+                    Jig.snap_grp_to_neighbor(drg, dx, dy, sgrps[selectedElement_isg].neighbors)
+                    : Jig.snap_to_neighbor(drg, dx, dy);
                 if (ndelta) {
                     dx = ndelta.dx;
                     dy = ndelta.dy;
+                    id_snap_to = ndelta.rc;
                     // end drag since snapping
-                    selectedElement = false;
                     play_snap_sound();
                 }
             }
+            transform.setTranslate(dx, dy);
+            // if selected is part of a snap group, move entire group
+            if (selectedElement_isg >= 0) {
+                snap_grp_drag(selectedElement_isg, selectedElement.id, dx, dy);
+            }
+            if (id_snap_to >= 0) {
+                // if snapping, handle group merge or creation
+                let isg_new = snap_grp_merge(selectedElement.id, id_snap_to);
+                // Refresh snap group's neighbors list
+                snap_grp_find_neighbors(isg_new);
+                console.log('sn['+isg_new+'] has ids:'
+                    +sgrps[isg_new].ids.length+' neighbors:'
+                    +sgrps[isg_new].neighbors.length);
+                selectedElement = false;
+            }
+        }
+    }
+}
+
+// Move snap group other than given ID to new coordinates
+function snap_grp_drag(isg, id0, dx, dy) {
+    for (let id of sgrps[isg].ids) {
+        if (id != id0) {
+            let transform = svg.getElementById(id).transform.baseVal.getItem(0);
             transform.setTranslate(dx, dy);
         }
     }
 }
 
+// Look up snap group index for given id.  -1 if none
+function id_to_isg(id) {
+    return idSgrp[+id];
+}
+
+// Merge snap groups.  REturned isg of merged group
+function snap_grp_merge(id_dragging, id_snap_to) {
+    let isg = id_to_isg(id_dragging); // -1 means no group (since index into sgrps array)
+    let isg_to = id_to_isg(id_snap_to);
+
+    if (isg < 0 && isg_to < 0) {
+        // both previously unattached.  Create new group
+        isg = snap_grp_from_id(id_dragging);
+        return snap_grp_add(isg, id_snap_to);
+    } else if (isg < 0 && isg_to >= 0) {
+        // Add selected to existing group
+        return snap_grp_add(isg_to, id_dragging);
+    } else if (isg >= 0 && isg_to < 0) {
+        // Add target to existing group
+        return snap_grp_add(isg, id_snap_to);
+    } else {
+        // merge 2 existing groups.  Use smaller index
+        let isg_fr = (isg < isg_to ? isg_to : isg);
+        let isg_merged = (isg < isg_to ? isg : isg_to);
+        for (let id of sgrps[isg_fr].ids) {
+            snap_grp_add(isg_merged, id);
+        }
+        snap_grp_remove(isg_fr); // remove entire group
+        return isg_merged;
+    }
+}
+
+// Create new snap group from one id
+function snap_grp_from_id(id) {
+    let isg = sgrps.length;
+    let bb = svg.getElementById(id).getBBox();
+    let sg = {ids:[+id], bb:{minx:bb.x, maxx:(bb.x+bb.width), miny:bb.y, maxy:(bb.y+bb.height)}};
+    sgrps.push(sg);
+    idSgrp[+id] = isg; // allow lookup of sgrp from id
+    return isg;
+}
+
+// Add a tile to an existing snap group
+function snap_grp_add(isg, id) {
+    let bb = svg.getElementById(id).getBBox();
+    let sg = sgrps[isg];
+    sg.ids.push(+id);
+    idSgrp[+id] = isg; // allow lookup of sgrp from id
+    // Check for expanded bounding box
+    if (bb.x < sg.bb.minx) { sg.bb.minx = bb.x; }
+    if (bb.x+bb.width > sg.bb.maxx) { sg.bb.maxx = bb.x+bb.width; }
+    if (bb.y < sg.bb.miny) { sg.bb.miny = bb.y; }
+    if (bb.y+bb.height > sg.bb.maxy) { sg.bb.maxy = bb.y+bb.height; }
+    return isg;
+}
+
+// Remove a snap group completely
+function snap_grp_remove(isg) {
+    sgrps[isg] = null;
+    // Prune end of array
+}
+
 function endDrag(evt) {
     selectedElement = false;
+}
+
+// Get the list of all snap group neighbors to check
+function snap_grp_find_neighbors(isg) {
+    sgrps[isg].neighbors = []; // list of neighbors to check
+    let added = []; added.length = Jig.P.yn * Jig.P.xn; added.fill(false);
+    let drg = {};
+    for (let id of sgrps[isg].ids) {
+        Jig.id_to_rc(id, drg);
+        // Check all 4 neighbors.
+        // Stop if snap outside of the group is possible
+        for (let dd of [[-1,0], [0,-1], [0,1], [1,0]]) {
+            let r = drg.r + dd[0];
+            let c = drg.c + dd[1];
+            if (r >= 0 && r < Jig.P.yn && c >= 0 && c < Jig.P.xn) {
+                let rc = r*Jig.P.xn+c;
+                if (idSgrp[rc] != isg && !added[rc]) {
+                    sgrps[isg].neighbors.push(rc);
+                    added[rc] = true;
+                }
+            }
+        }
+    }
 }
 
 // When a resize happens, tiles may fall outside the new viewBox
@@ -170,5 +294,5 @@ function change_boundaries(viewBox) {
 }
 
 export {
-    drag_init, change_boundaries, play_snap_sound
+    drag_init, change_boundaries, play_snap_sound, snap_grp_clear_all
 };

@@ -7,6 +7,7 @@ const jopts = {
 var svg;
 
 function scramble_puzzle() {
+    Drag.snap_grp_clear_all();
     Jig.scramble_tiles();
 }
 

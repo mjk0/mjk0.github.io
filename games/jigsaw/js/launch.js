@@ -58,6 +58,9 @@ const sample_images = [
     
     // https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Katrinetorp_Mansion_close.jpg/180px-Katrinetorp_Mansion_close.jpg
     "https://upload.wikimedia.org/wikipedia/commons/1/1c/Katrinetorp_Mansion_close.jpg",
+
+    // media/Ottawa-200px-squish.jpg
+    "media/Ottawa-768px.jpg",
 ];
 
 // Function that executes jQuery code after page load is complete

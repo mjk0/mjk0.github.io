@@ -263,7 +263,7 @@ function create_tiles(edges, attributes) {
                     + edges['b'+r+'x'+c] // bottom
                     + edges['l'+r+'x'+c]; // left
             // Create path element
-            var path = svg_path({d, id: ''+r+','+c,
+            var path = svg_path({d, id: (r*P.xn+c),
                 stroke:P.stroke, 'stroke-width':sw,
                 fill:"url(#img1)"
             });
@@ -325,10 +325,31 @@ function scramble_tiles() {
     }
 }
 
+function id_to_rc(id, container) {
+    // get row & col of dragging tile
+    let rc = +id;
+    container.r = Math.floor(rc/P.xn);
+    container.c = rc%P.xn;
+    if (container.r >= P.yn) {
+        console.error('Bad id('+id+') => r('+r+')/c('+c+')');
+    }
+}
+
+// Check for any snaps outside current snap group
+function snap_grp_to_neighbor(drg, dx, dy, neighbors) {
+    for (let rc of neighbors) {
+        let ndelta = neighbor_rc_delta(drg, dx, dy, rc);
+        if (ndelta) { // null if no snap
+            return ndelta;
+        }
+    }
+    return null;
+}
+
 // Check if a neighboring tile is within the snap tolerance
 function snap_to_neighbor(drg, dx, dy) {
     // Check all 4 neighbors.  Stop if snap possible
-    for (let dd of [[0,-1], [0,1], [-1,0], [1,0]]) {
+    for (let dd of [[-1,0], [0,-1], [0,1], [1,0]]) {
         let ndelta = neighbor_delta(drg, dx, dy, dd);
         if (ndelta) { // null if no snap
             return ndelta;
@@ -343,20 +364,25 @@ function neighbor_delta(drg, dx, dy, dd) {
     let r = drg.r + dd[0];
     let c = drg.c + dd[1];
     if (r >= 0 && r < P.yn && c >= 0 && c < P.xn) {
-        let nEl = $(''+r+','+c);
-        let nTr = nEl.transform.baseVal.getItem(0);
-        // Percentage of original tile deltas
-        let pde = Math.abs(nTr.matrix.e - dx)/drg.bb.width;
-        let pdf = Math.abs(nTr.matrix.f - dy)/drg.bb.height;
-        // need non-zero, but less than tolerance
-        if (pde < drg.snap_tol && pdf < drg.snap_tol) {
-            //console.log('to#'+r+','+c+'('+Math.round(pde*100)+'%,'+Math.round(pdf*100)+'%) ');
-            return {r, c, dx: nTr.matrix.e, dy: nTr.matrix.f};
-        }
+        return neighbor_rc_delta(drg, dx, dy, r*P.xn+c);
+    }
+    return null;
+}
+function neighbor_rc_delta(drg, dx, dy, rc) {
+    let nEl = svg.getElementById(rc);
+    let nTr = nEl.transform.baseVal.getItem(0);
+    // Percentage of original tile deltas
+    let pde = Math.abs(nTr.matrix.e - dx)/drg.bb.width;
+    let pdf = Math.abs(nTr.matrix.f - dy)/drg.bb.height;
+    // need non-zero, but less than tolerance
+    if (pde < drg.snap_tol && pdf < drg.snap_tol) {
+        //console.log('to#'+r+','+c+'('+Math.round(pde*100)+'%,'+Math.round(pdf*100)+'%) ');
+        return {rc, dx: nTr.matrix.e, dy: nTr.matrix.f};
     }
     return null;
 }
 
 export {
-    update, options, svg_resize_handler, scramble_tiles, snap_to_neighbor
+    P, update, options, svg_resize_handler, scramble_tiles, id_to_rc,
+    snap_to_neighbor, snap_grp_to_neighbor
 };
