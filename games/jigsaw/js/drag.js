@@ -66,7 +66,11 @@ function getMousePosition(evt) {
 
 function startDrag(evt) {
     if (evt.target.classList.contains('draggable')) {
-        selectedElement = evt.target;
+        if (evt.target.classList.contains('dragparent')) {
+            selectedElement = evt.target.parentNode;
+        } else {
+            selectedElement = evt.target;
+        }
         offset = getMousePosition(evt);
 
         // Make sure the first transform on the element is a translate transform
@@ -85,7 +89,8 @@ function startDrag(evt) {
         offset.y -= transform.matrix.f;
 
         // No moving pieces outside the viewBox
-        selectedElement_isg = idSgrp[+selectedElement.id];
+        let idn = +selectedElement.id;
+        selectedElement_isg = idn < 0? -1 : idSgrp[idn];
         if (selectedElement_isg >= 0) {
             // Selected element is part of a snap group.  Use group bb
             minX = boundaryX1 - sgrps[selectedElement_isg].bb.minx;
@@ -101,10 +106,10 @@ function startDrag(evt) {
         }
 
         // Check snap tolerance
-        drg.snap_tol = $('input[name=snap]:checked').val();
+        drg.snap_tol = idn < 0? -1 : $('input[name=snap]:checked').val();
 
         // get row & col of dragging tile
-        Jig.id_to_rc(selectedElement.id, drg);
+        Jig.id_to_rc(idn, drg);
     }
 }
 

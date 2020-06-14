@@ -288,6 +288,71 @@ function create_tiles(edges, attributes) {
     console.log("puzzle tiles: "+P.xn+" x "+P.yn +", image: "+width+" x "+height);
 }
 
+/*
+    <g id="-1" class="draggable" transform="translate(0,0)" >
+        <rect id="prerect" x="-1000" y="0" width="2000" height="1500"
+            stroke="yellow" stroke-width="20" fill="url(#img1)"
+            transform="scale(0.5)" />
+        <circle cx="120" cy="120" r="110" stroke="black" stroke-width="20" fill="white" />
+    </g>
+*/
+function create_preview_tile(scale) {
+    // Remove existing preview, if it exists
+    rm_preview_tile();
+    // Set stroke-width to equivalent of given value on 1k width image
+    let sw = 40 * P.strokeW1k * width / 1000.0; // thick for preview image tile
+
+    // Create g and contents
+    let g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    svg_add_attributes(g, { id:-1, class: 'draggable'});
+    var rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    svg_add_attributes(rect, {
+        x:0, y:0, class: 'draggable dragparent',
+        width:(P.naturalWidth), height:(P.naturalHeight),
+        stroke:"yellow", 'stroke-width':sw, fill:"url(#img1)"
+    });
+    var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    let cx = (P.naturalWidth*scale-sw);
+    svg_add_attributes(circle, {
+        cx:cx, cy:sw, r:sw,
+        stroke:"black", 'stroke-width':(sw/4), fill:"inherit"
+    });
+    var xpath = svg_path({
+        d:"M"+(cx-sw/2)+" "+(sw/2)+" l"+sw+" "+sw+" M"+(cx-sw/2)+" "+(sw*1.5)+" l"+sw+" -"+sw,
+        id:'xpath', stroke:"inherit", 'stroke-width':(sw/4)
+    });
+    /*
+    let anim = document.createElementNS("http://www.w3.org/2000/svg", "animate");
+    svg_add_attributes(anim, { 'xlink:href':'#-1', restart:'always',
+        attributeName:'opacity', from:'0', to:'1', dur:'2s', begin:'0s', fill:'freeze'
+    }); */
+
+    // Scale preview by requested amount
+    let tr_scale = svg.createSVGTransform();
+    tr_scale.setScale(scale, scale);
+    rect.transform.baseVal.insertItemBefore(tr_scale, 0);
+
+    let tr_translate = svg.createSVGTransform();
+    tr_translate.setTranslate(P.viewBox.minX+P.viewBox.w-(P.naturalWidth*scale), P.viewBox.minY);
+    g.transform.baseVal.insertItemBefore(tr_translate, 0);
+
+    // Add elements to SVG
+    g.appendChild(rect);
+    g.appendChild(circle);
+    g.appendChild(xpath);
+    //g.appendChild(anim);
+    svg.appendChild(g);
+
+    circle.addEventListener('click', rm_preview_tile);
+    xpath.addEventListener('click', rm_preview_tile);
+}
+function rm_preview_tile(event) {
+    let g = svg.getElementById('-1');
+    if (g) {
+        svg.removeChild(g);
+    }
+}
+
 // randomize location of all PATH elements of the SVG
 function scramble_tiles() {
     let paths = svg.getElementsByTagName('path');
@@ -384,5 +449,5 @@ function neighbor_rc_delta(drg, dx, dy, rc) {
 
 export {
     P, update, options, svg_resize_handler, scramble_tiles, id_to_rc,
-    snap_to_neighbor, snap_grp_to_neighbor
+    snap_to_neighbor, snap_grp_to_neighbor, create_preview_tile
 };

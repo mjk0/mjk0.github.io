@@ -1,7 +1,7 @@
 body {
     background-color: rgb(159, 172, 185);
 }
-.draggable {
+.draggable, .dragparent {
     cursor: move;
 }
 button.btn > span > a {
@@ -115,4 +115,18 @@ button.menu-btn{
 }
 #puzzlecontainer {
     flex: 0 0 auto;
+}
+svg circle {
+    cursor: pointer;
+    fill: white;
+}
+svg circle:hover {
+    fill: red;
+}
+path#xpath {
+    cursor: pointer;
+    stroke: black;
+}
+path#xpath:hover {
+    stroke: red;
 }

@@ -10,6 +10,9 @@ function scramble_puzzle() {
     Drag.snap_grp_clear_all();
     Jig.scramble_tiles();
 }
+function show_preview_image() {
+    Jig.create_preview_tile(0.5); // 50% scale
+}
 
 function svg_init() {
     $('path').remove(); // remove all existing SVG path elements
@@ -44,4 +47,4 @@ $(document).ready(function(){
     svg_init();
 });
 
-export { jopts, Drag, scramble_puzzle };
+export { jopts, Drag, Jig, scramble_puzzle, show_preview_image };
