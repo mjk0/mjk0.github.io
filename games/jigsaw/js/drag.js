@@ -36,13 +36,24 @@ function drag_init(thesvg, viewBox) {
     svg.addEventListener('touchcancel', endDrag);
 
     snap_sound = document.getElementById('snap-sound');
-    snap_grp_clear_all();
+    snap_grp_clear_all({ 'create_for_original_image':true });
     set_boundaries(viewBox);
 }
-function snap_grp_clear_all() {
+function snap_grp_clear_all(opts) {
     sgrps.length = 0;   // empty the array
     idSgrp.length = Jig.P.yn * Jig.P.xn;
-    idSgrp.fill(-1);
+    if (opts && opts.create_for_original_image) {
+        // Create single snap group from initial completed image
+        let sg = {
+            ids:[...Array(Jig.P.yn * Jig.P.xn).keys()],
+            bb:{minx:0, maxx:Jig.P.naturalWidth, miny:0, maxy:Jig.P.naturalHeight},
+            neighbors: [] // no neighbors to check
+        };
+        sgrps.push(sg);
+        idSgrp.fill(0); // allow lookup of sgrp[0] from any id
+    } else {
+        idSgrp.fill(-1);
+    }
 }
 function set_boundaries(viewBox) {
     boundaryX1 = viewBox.minX;
