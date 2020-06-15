@@ -110,6 +110,10 @@ function startDrag(evt) {
 
         // get row & col of dragging tile
         Jig.id_to_rc(idn, drg);
+
+        // move to end of SVG element list
+        svg.removeChild(selectedElement);
+        svg.appendChild(selectedElement);
     }
 }
 
@@ -119,7 +123,8 @@ function drag(evt) {
         evt.preventDefault();
         let t = performance.now();
 
-        if (t - lastDragTime > 50) {
+        if (t - lastDragTime > 100) {
+            //console.log('drag '+Math.round(t - lastDragTime));
             lastDragTime = t;
             var coord = getMousePosition(evt);
             var dx = coord.x - offset.x;
@@ -154,13 +159,17 @@ function drag(evt) {
                 let isg_new = snap_grp_merge(selectedElement.id, id_snap_to);
                 // Refresh snap group's neighbors list
                 snap_grp_find_neighbors(isg_new);
-                console.log('sn['+isg_new+'] has ids:'
+                /* console.log('sn['+isg_new+'] has ids:'
                     +sgrps[isg_new].ids.length+' neighbors:'
-                    +sgrps[isg_new].neighbors.length);
+                    +sgrps[isg_new].neighbors.length); */
                 selectedElement = false;
             }
         }
     }
+}
+
+function endDrag(evt) {
+    selectedElement = false;
 }
 
 // Move snap group other than given ID to new coordinates
@@ -233,10 +242,6 @@ function snap_grp_add(isg, id) {
 function snap_grp_remove(isg) {
     sgrps[isg] = null;
     // Prune end of array
-}
-
-function endDrag(evt) {
-    selectedElement = false;
 }
 
 // Get the list of all snap group neighbors to check
