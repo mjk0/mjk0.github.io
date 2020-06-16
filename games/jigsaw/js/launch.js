@@ -1,3 +1,5 @@
+"use strict";
+const urlParams = new URLSearchParams(window.location.search);
 
 function pre_puzzle() {
     // Get number of pieces selection for puzzle
@@ -90,9 +92,14 @@ $(document).ready(function(){
     img_test.addEventListener("error", img_test_failed);
     img_test_result = document.getElementById("img_test_result");
 
+    // Image URL passed as URL parameter?
+    const img_url_param = urlParams.get('url');
+
     // Restore previous values if present in localStorage
     let carousel_i = 0;
-    if (localStorage.Jigsaw_img_url) {
+    if (img_url_param) {
+        img_url.value = img_url_param;
+    } else if (localStorage.Jigsaw_img_url) {
         img_url.value = localStorage.Jigsaw_img_url;
         carousel_i = sample_images.indexOf(localStorage.Jigsaw_img_url);
     }
@@ -110,7 +117,9 @@ $(document).ready(function(){
     if (carousel_i > 0) {
         $('.carousel').carousel('set', carousel_i);
     }
-    if (localStorage.Jigsaw_img_url) {
+    if (img_url_param) {
+        img_url.value = img_url_param;
+    } else if (localStorage.Jigsaw_img_url) {
         img_url.value = localStorage.Jigsaw_img_url;
     }
 });

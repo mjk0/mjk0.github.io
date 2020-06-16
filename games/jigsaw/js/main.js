@@ -1,5 +1,6 @@
 import * as Jig from './jigsaw.js';
 import * as Drag from './drag.js';
+"use strict";
 
 const jopts = {
     'pieces':   400, // target # of pieces
