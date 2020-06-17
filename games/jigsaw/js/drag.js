@@ -134,7 +134,7 @@ function drag(evt) {
         evt.preventDefault();
         let t = performance.now();
 
-        if (t - lastDragTime > 100) {
+        if (t - lastDragTime > 50) {
             //console.log('drag '+Math.round(t - lastDragTime));
             lastDragTime = t;
             var coord = getMousePosition(evt);
