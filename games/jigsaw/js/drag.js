@@ -7,7 +7,7 @@ import * as Jig from './jigsaw.js';
 var svg;
 var selectedElement, offset, transform,
     minX, maxX, minY, maxY;
-var snap_sound;
+var snap_sound, tada_sound;
 var drg = {
     r:          0,  // row of dragging tile
     c:          0,  // col of dragging tile
@@ -36,6 +36,7 @@ function drag_init(thesvg, viewBox) {
     svg.addEventListener('touchcancel', endDrag);
 
     snap_sound = document.getElementById('snap-sound');
+    tada_sound = document.getElementById('tada-sound');
     snap_grp_clear_all({ 'create_for_original_image':true });
     set_boundaries(viewBox);
 }
@@ -62,8 +63,16 @@ function set_boundaries(viewBox) {
     boundaryY2 = viewBox.minY + viewBox.h;
 }
 
-function play_snap_sound() {
+function sound_snap_play() {
     snap_sound.play();
+}
+function sound_snap_stop() {
+    snap_sound.pause();
+    snap_sound.currentTime = 0; // rewinds to beginning
+}
+
+function sound_tada_play() {
+    tada_sound.play();
 }
 
 function getMousePosition(evt) {
@@ -157,7 +166,7 @@ function drag(evt) {
                     dy = ndelta.dy;
                     id_snap_to = ndelta.rc;
                     // end drag since snapping
-                    play_snap_sound();
+                    sound_snap_play();
                 }
             }
             transform.setTranslate(dx, dy);
@@ -174,6 +183,12 @@ function drag(evt) {
                     +sgrps[isg_new].ids.length+' neighbors:'
                     +sgrps[isg_new].neighbors.length); */
                 selectedElement = false;
+
+                // all done with puzzle?
+                if (sgrps[isg_new].neighbors.length == 0) {
+                    sound_snap_stop();
+                    sound_tada_play();
+                }
             }
         }
     }
@@ -315,5 +330,5 @@ function change_boundaries(viewBox) {
 }
 
 export {
-    drag_init, change_boundaries, play_snap_sound, snap_grp_clear_all
+    drag_init, change_boundaries, sound_snap_play, snap_grp_clear_all
 };

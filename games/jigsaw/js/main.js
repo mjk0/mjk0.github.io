@@ -3,7 +3,8 @@ import * as Drag from './drag.js';
 "use strict";
 
 const jopts = {
-    'pieces':   400, // target # of pieces
+    'pieces':   50, // target # of pieces
+    'areaRatio': 2.5, // target area ratio (completed puzzle / viewbox)
 };
 var svg;
 
@@ -24,8 +25,9 @@ function svg_init() {
         svg_image.setAttribute('xlink:href', localStorage.Jigsaw_img_url);
     }
 
-    // Get/Set number of pieces
+    // Get/Set number of pieces, and zoom level (area ratio)
     jopts.pieces = +(localStorage.Jigsaw_numPieces || jopts.pieces);
+    jopts.areaRatio = +(localStorage.Jigsaw_areaRatio || jopts.areaRatio);
 
     // Create puzzle
     Jig.update(jopts, { class: 'draggable' }, (viewBox) => {
@@ -35,7 +37,7 @@ function svg_init() {
         // If SVG resizes, allow jigsaw viewBox to resize
         window.addEventListener('resize', (event) => {
             Jig.svg_resize_handler(event, (viewBox) => {
-                Drag.play_snap_sound();
+                Drag.sound_snap_play();
                 Drag.change_boundaries(viewBox);
             });
         });
