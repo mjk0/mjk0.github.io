@@ -99,6 +99,15 @@ const sample_images = [
     // https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Horsetram.jpg/320px-Horsetram.jpg
     "https://upload.wikimedia.org/wikipedia/commons/7/78/Horsetram.jpg",
 
+    // https://lh3.googleusercontent.com/5dDWnlh43Yr221fl0HasmrAAnuhPy-AimQJ3zoh8SxC3Ju-p8jMokoKYDNT5KmUk_qAU=s240
+    "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcQG1bEM8VfgBm2ecoy3nKH_xPe-1sD0CpQxVsoERa9Ghih-6Ks1lwtFOuFJfVJjRLDUR7EddRjLBTGRU__2Zux4xakU51cm7g&usqp=CAc",
+
+    // https://lh3.googleusercontent.com/HTFJvlKptaqXQ3RPSBA7EJ6qKo9ymCTdOb5KFKqsHq5QfBFNwusbfpAu904GtXTgxGI5lV4=s240
+    //"https://images-na.ssl-images-amazon.com/images/I/91LYxLjLyIL._AC_SL1500_.jpg",
+
+    // media/Maine_state_line-240x180.jpg
+    "media/Maine_state_line.jpg",
+
     // media/Ottawa-200px-squish.jpg
     "media/Ottawa-768px.jpg",
 ];
