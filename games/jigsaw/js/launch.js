@@ -22,6 +22,13 @@ function img_test_passed(event) {
 function img_test_failed(event) {
     img_test_result.innerHTML = "[Result: &#10060; Bad]";
 }
+function paste_from_clipboard() {
+    // navigator.clipboard.readText().then(text => img_url.value = text);
+    img_url.focus();
+    //img_url.select();
+    img_url.value = '';
+    document.execCommand("paste");
+}
 
 const sample_images = [
     // media/backyard-180px.jpg
@@ -132,4 +139,4 @@ $(document).ready(function(){
     }
 });
 
-export {pre_puzzle, test_image};
+export {pre_puzzle, test_image, paste_from_clipboard};
