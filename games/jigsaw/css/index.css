@@ -130,3 +130,34 @@ path#xpath {
 path#xpath:hover {
     stroke: red;
 }
+/* slide-out panel layout mechanics */
+.panel-wrap {
+    position: fixed;
+    top: 4.5vh;
+    bottom: 0;
+    left: 0;
+    width: 30em;
+    transform: translateX(-100%);
+    transition: .3s ease-out;
+}
+.panel {
+    position: absolute;
+    top: 0; bottom: 0; left: 0; right: 0;
+    background: #444; color: white;
+    overflow: auto; padding: 1em;
+    font-size: 1em;
+}
+.panel h3 {
+    font-size: 1.5em; color: wheat;
+}
+button.menu-btn.settings ~ .panel-wrap {
+    transform: translateX(0%);
+}
+.settings {
+    background-color: #ee6e73;
+}
+.j-divider {
+    height: 1px;
+    overflow: hidden;
+    background-color: #e0e0e0;
+}

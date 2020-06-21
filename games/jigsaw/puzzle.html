@@ -13,6 +13,9 @@
 <body class="zero">
     <div class="ptop zero"></div>
     <div class="pmenu zero">
+        <button id="settings" class="menu-btn" type="button"
+            onclick="$(this).toggleClass('settings')"><span><i
+            class="material-icons">settings</i></span>
         <button class="menu-btn" type="button" onclick="Main.scramble_puzzle()"><span><i
             class="material-icons">extension</i> Scramble</span>
         </button>
@@ -25,7 +28,34 @@
             --><input checked="checked" id="snap_on" type="radio" name="snap" value="0.06" /><!--
             --><label class="label-pm" for="snap_on">on</label>
         </div>
-</div>
+        <div class="panel-wrap"><div class="panel">
+            <h3>Scramble options:</h3>
+            <p>
+                <input id="scramble_no_center_area" type="checkbox"
+                    onclick="Main.set_scramble_no_center_area(this.checked)" />
+                <label for="scramble_no_center_area">Leave center area clear when scrambling</label>
+            </p><p>
+                <input id="scramble_no_preview_area" type="checkbox"
+                    onclick="Main.set_scramble_no_preview_area(this.checked)" />
+                <label for="scramble_no_preview_area">Leave preview area clear when scrambling</label>
+            </p>
+            <div class="j-divider"></div>
+            <h3>Preview image size:</h3>
+            <p>
+                <div class="cc-selector">
+                    <input checked="checked" id="i50" type="radio" name="preview_zoom"
+                        onclick="Main.set_preview_size(this.value)" value="0.5" />
+                    <label class="label-cc" for="i50">50%</label>
+                    <input id="i33" type="radio" name="preview_zoom"
+                        onclick="Main.set_preview_size(this.value)" value="0.33" />
+                    <label class="label-cc" for="i33">33%</label>
+                    <input id="i25" type="radio" name="preview_zoom"
+                        onclick="Main.set_preview_size(this.value)" value="0.25" />
+                    <label class="label-cc" for="i25">25%</label>
+                </div>
+            </p>
+        </div></div>
+    </div>
     <svg id="puzzlecontainer"
         version="1.1" baseProfile="full"
         xmlns="http://www.w3.org/2000/svg"

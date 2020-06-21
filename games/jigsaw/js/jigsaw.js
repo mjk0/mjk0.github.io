@@ -348,15 +348,46 @@ function create_preview_tile(scale) {
     xpath.addEventListener('click', rm_preview_tile);
 }
 function rm_preview_tile(event) {
+    resize_preview_tile(0);
+}
+// resize preview tile if it's present
+function resize_preview_tile(scale) {
+    // remove existing tile, if present
     let g = svg.getElementById('-1');
     if (g) {
         svg.removeChild(g);
+        if (scale > 0) {
+            create_preview_tile(scale);
+        }
     }
 }
-
 // randomize location of all PATH elements of the SVG
-function scramble_tiles() {
+function scramble_tiles(opts) {
     let paths = svg.getElementsByTagName('path');
+    let avoidCenter = opts.hasOwnProperty('scrAvoidCenter') ? opts.scrAvoidCenter : 0;
+    let avoidPreview = opts.hasOwnProperty('scrAvoidPreview') ? opts.scrAvoidPreview : 1;
+    let scale = opts.hasOwnProperty('previewSize') ? opts.previewSize : 0.5;
+    let previewTile = svg.getElementById('-1');
+
+    // initialize to default location of preview tile
+    let previewBbox = {
+        minX: (P.viewBox.minX+P.viewBox.w-(P.naturalWidth*scale)),
+        minY: P.viewBox.minY,
+        maxX: (P.viewBox.minX+P.viewBox.w),
+        maxY: (P.viewBox.minY+P.naturalHeight*scale)
+    };
+    let centerBbox = { minX: 0, minY:0, maxX: P.naturalWidth, maxY: P.naturalHeight };
+
+    // Get preview tile bbox if needed
+    if (avoidPreview && previewTile) {
+        let previewTr = previewTile.transform.baseVal.getItem(0);
+        let bbox = previewTile.getBBox();
+        previewBbox.minX = bbox.x + previewTr.matrix.e;
+        previewBbox.maxX = previewBbox.minX + bbox.width;
+        previewBbox.minY = bbox.y + previewTr.matrix.f;
+        previewBbox.maxY = previewBbox.minY + bbox.height;
+    }
+    //console.log(JSON.stringify(opts)+' aP:'+avoidPreview+' '+JSON.stringify(previewBbox));
 
     // viewBox defines valid coordinate space
     let minX = P.viewBox.minX;
@@ -365,30 +396,36 @@ function scramble_tiles() {
     let boundaryY2 = P.viewBox.minY + P.viewBox.h;
 
     for (let el of paths) {
-        let bbminx = +el.getAttribute('bbminx'); // '+' converts to numeric
-        let bbmaxx = +el.getAttribute('bbmaxx');
-        let bbminy = +el.getAttribute('bbminy');
-        let bbmaxy = +el.getAttribute('bbmaxy');
-        let el_w = bbmaxx - bbminx;
-        let el_h = bbmaxy - bbminy;
-        let transform = el.transform.baseVal.getItem(0);
+        if (el.id >= "0" && el.id < "A") {
+            let bbminx = +el.getAttribute('bbminx'); // '+' converts to numeric
+            let bbmaxx = +el.getAttribute('bbmaxx');
+            let bbminy = +el.getAttribute('bbminy');
+            let bbmaxy = +el.getAttribute('bbmaxy');
+            let el_w = bbmaxx - bbminx;
+            let el_h = bbmaxy - bbminy;
+            let transform = el.transform.baseVal.getItem(0);
 
-        // Generate random offsets
-        for (let offsetVerified=false; !offsetVerified; ) {
-            let randX = uniform(minX, boundaryX2-el_w);
-            let randY = uniform(minY, boundaryY2-el_h);
+            // Generate random offsets
+            for (let offsetVerified=false; !offsetVerified; ) {
+                let randX = uniform(minX, boundaryX2-el_w);
+                let randY = uniform(minY, boundaryY2-el_h);
 
-            // pattern image defines exclusion space
-            // (0,0) -> (P.naturalWidth, P.naturalHeight)
-            if (randY < 0 || randY+el_h > P.naturalHeight
-             || randX < 0 || randX+el_w > P.naturalWidth) {
-                let offsetX = randX - bbminx;
-                let offsetY = randY - bbminy;
-                transform.setTranslate(offsetX, offsetY);
-                offsetVerified = true;
+                // pattern image defines exclusion space
+                // (0,0) -> (P.naturalWidth, P.naturalHeight)
+                if ((!avoidCenter || isOutsideOf(randX, randY, el_w, el_h, centerBbox))
+                 && (!avoidPreview || isOutsideOf(randX, randY, el_w, el_h, previewBbox))) {
+                    let offsetX = randX - bbminx;
+                    let offsetY = randY - bbminy;
+                    transform.setTranslate(offsetX, offsetY);
+                    offsetVerified = true;
+                }
             }
         }
     }
+}
+
+function isOutsideOf(x, y, el_w, el_h, bbox) {
+    return (y+el_h < bbox.minY || y > bbox.maxY || x+el_w < bbox.minX || x > bbox.maxX);
 }
 
 function id_to_rc(id, container) {
@@ -450,5 +487,5 @@ function neighbor_rc_delta(drg, dx, dy, rc) {
 
 export {
     P, update, options, svg_resize_handler, scramble_tiles, id_to_rc,
-    snap_to_neighbor, snap_grp_to_neighbor, create_preview_tile
+    snap_to_neighbor, snap_grp_to_neighbor, create_preview_tile, resize_preview_tile
 };

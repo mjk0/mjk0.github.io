@@ -6,18 +6,44 @@ const jopts = {
     'pieces':   50, // target # of pieces
     'areaRatio': 2.5, // target area ratio (completed puzzle / viewbox)
 };
+const UIopts = {
+    'scrAvoidCenter': 0,
+    'scrAvoidPreview': 1,
+    'previewSize': 0.5, // scale each dimention by this amount for preview tile
+};
 var svg;
 
 function scramble_puzzle() {
     Drag.snap_grp_clear_all();
-    Jig.scramble_tiles();
+    Jig.scramble_tiles(UIopts);
 }
 function show_preview_image() {
-    Jig.create_preview_tile(0.5); // 50% scale
+    Jig.create_preview_tile(UIopts.previewSize); // max 50% scale
+}
+function set_scramble_no_center_area(val) {
+    UIopts.scrAvoidCenter = val ? 1 : 0;
+    localStorage.Jisaw_scrAvoidCenter = val ? 1 : 0;
+}
+function set_scramble_no_preview_area(val) {
+    UIopts.scrAvoidPreview = val ? 1 : 0;
+    localStorage.Jisaw_scrAvoidPreview = val ? 1 : 0;
+}
+function set_preview_size(val) {
+    UIopts.previewSize = val;
+    localStorage.Jigsaw_previewSize = val;
+    Jig.resize_preview_tile(val);
 }
 
 function svg_init() {
     $('path').remove(); // remove all existing SVG path elements
+
+    // Get/Set user options
+    UIopts.scrAvoidCenter = +(localStorage.Jigsaw_scrAvoidCenter || UIopts.scrAvoidCenter);
+    UIopts.scrAvoidPreview = +(localStorage.Jigsaw_scrAvoidPreview || UIopts.scrAvoidPreview);
+    UIopts.previewSize = +(localStorage.Jigsaw_previewSize || UIopts.previewSize);
+    $('#scramble_no_center_area')[0].checked = UIopts.scrAvoidCenter;
+    $('#scramble_no_preview_area')[0].checked = UIopts.scrAvoidPreview;
+    $('input[name="preview_zoom"][value="'+UIopts.previewSize+'"]').prop('checked', true);
 
     // Set puzzle image URL
     if (localStorage.Jigsaw_img_url) {
@@ -50,4 +76,9 @@ $(document).ready(function(){
     svg_init();
 });
 
-export { jopts, Drag, Jig, scramble_puzzle, show_preview_image };
+export {
+    jopts, Drag, Jig,
+    scramble_puzzle, show_preview_image,
+    set_scramble_no_center_area, set_scramble_no_preview_area, set_preview_size
+};
+

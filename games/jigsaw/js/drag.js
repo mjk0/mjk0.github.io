@@ -8,6 +8,7 @@ var svg;
 var selectedElement, offset, transform,
     minX, maxX, minY, maxY;
 var snap_sound, tada_sound;
+var settings_panel;
 var drg = {
     r:          0,  // row of dragging tile
     c:          0,  // col of dragging tile
@@ -37,6 +38,7 @@ function drag_init(thesvg, viewBox) {
 
     snap_sound = document.getElementById('snap-sound');
     tada_sound = document.getElementById('tada-sound');
+    settings_panel = document.getElementById('settings');
     snap_grp_clear_all({ 'create_for_original_image':true });
     set_boundaries(viewBox);
 }
@@ -85,6 +87,9 @@ function getMousePosition(evt) {
 }
 
 function startDrag(evt) {
+    if (settings_panel.classList.contains('settings')) {
+        settings_panel.classList.remove('settings');
+    }
     if (evt.target.classList.contains('draggable')) {
         if (evt.target.classList.contains('dragparent')) {
             selectedElement = evt.target.parentNode;

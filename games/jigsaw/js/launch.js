@@ -100,7 +100,10 @@ const sample_images = [
     "https://upload.wikimedia.org/wikipedia/commons/7/78/Horsetram.jpg",
 
     // https://lh3.googleusercontent.com/5dDWnlh43Yr221fl0HasmrAAnuhPy-AimQJ3zoh8SxC3Ju-p8jMokoKYDNT5KmUk_qAU=s240
-    "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcQG1bEM8VfgBm2ecoy3nKH_xPe-1sD0CpQxVsoERa9Ghih-6Ks1lwtFOuFJfVJjRLDUR7EddRjLBTGRU__2Zux4xakU51cm7g&usqp=CAc",
+    "https://images-na.ssl-images-amazon.com/images/I/81qPc6NtSEL._SL1200_.jpg",
+
+    // https://lh3.googleusercontent.com/GIWr181nD5PRv2Am9ZifEdZNeHZ8kOqJSzvqV-fm6u6AV9ToW_QiBOAm6mwYHCjCxSzJfg=s240
+    "https://images.fineartamerica.com/images-medium-large-5/serenity-eileen-fong.jpg",
 
     // https://lh3.googleusercontent.com/HTFJvlKptaqXQ3RPSBA7EJ6qKo9ymCTdOb5KFKqsHq5QfBFNwusbfpAu904GtXTgxGI5lV4=s240
     //"https://images-na.ssl-images-amazon.com/images/I/91LYxLjLyIL._AC_SL1500_.jpg",
