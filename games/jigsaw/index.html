@@ -15,17 +15,17 @@
             <div class="title">Jigsaw Puzzles</div>
             <div class="divider"></div>
         </div>
-        <div class="col s7">
+        <div class="col s7 tab-selector">
             <div class="nav-bg"><i class="material-icons">looks_one</i>Select Image</div>
-            <div>
-                <div class="input-field col s12">
-                    <input placeholder="Image URL" id="img_url" type="text">
-                    <label for="img_url" class="active">Image URL:
-                        <button class="btn-small" type="button"
-                            onclick="Launch.paste_from_clipboard()">Clear & Paste (Control-V)</button> 
-                    </label>
-                </div>
-                <p>Or select from sample images:</p>
+            <input checked="checked" id="isamples" type="radio" name="imgsel" value="samples"
+                onclick="Launch.tab_samples()" />
+            <label class="label-tab" for="isamples">Sample Images</label>
+            <input id="icustom" type="radio" name="imgsel" value="custom" />
+            <label class="label-tab" for="icustom">Custom Image</label>
+            <input id="iresume" type="radio" name="imgsel" value="resume"
+                onclick="Launch.tab_resume()" />
+            <label class="label-tab" for="iresume">Resume</label>
+            <div class="tab-samples">
                 <div class="carousel">
                     <a class="carousel-item"><img src="media/backyard-180px.jpg"></a>
                     <a class="carousel-item"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcQQ1suy6-l8tJt5pl0OrYA9W6H_ewrwnau6fA0alyMHsTNgIiX2&usqp=CAU"></img></a>
@@ -48,10 +48,27 @@
                     <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Horsetram.jpg/320px-Horsetram.jpg"></a>
                     <a class="carousel-item"><img src="https://lh3.googleusercontent.com/5dDWnlh43Yr221fl0HasmrAAnuhPy-AimQJ3zoh8SxC3Ju-p8jMokoKYDNT5KmUk_qAU=s240"/></a>
                     <a class="carousel-item"><img src="https://lh3.googleusercontent.com/GIWr181nD5PRv2Am9ZifEdZNeHZ8kOqJSzvqV-fm6u6AV9ToW_QiBOAm6mwYHCjCxSzJfg=s240"/></a>
+                    <a class="carousel-item"><img src="https://lh3.googleusercontent.com/KYWacyVfk8q-CJOeKK6tTO_6arXn18C0ZXoz5Z9JD14pZYKC0gRdOAPrkdrSAFgEaLRD8rI=s240" /></a>
                     <!--<a class="carousel-item"><img src="https://lh3.googleusercontent.com/HTFJvlKptaqXQ3RPSBA7EJ6qKo9ymCTdOb5KFKqsHq5QfBFNwusbfpAu904GtXTgxGI5lV4=s240"/></a>-->
                     <a class="carousel-item"><img src="media/Maine_state_line-240x180.jpg"/></a>
                     <a class="carousel-item"><img src="media/Ottawa-200px-squish.jpg"></a>
                 </div>
+            </div>
+            <div class="tab-custom">
+                <div class="input-field col s12">
+                    <input placeholder="Image URL" id="img_url" type="text"
+                        onkeypress="Launch.input_custom_keypress(event)"
+                        onfocusout="Launch.input_custom_onfocusout(event)">
+                    <label for="img_url" class="active">Image URL:
+                        <button class="btn-small btn-paste" type="button"
+                            onclick="Launch.paste_from_clipboard()">Clear & Paste (Control-V)</button> 
+                    </label>
+                </div>
+                <div class="img-wrap h50"><img id="img-custom" src="media/no-image.png" /></div>
+            </div>
+            <div class="tab-resume">
+                <p id="p-resume">No in-progress puzzle found</p>
+                <div class="img-wrap hrem"><img id="img-resume" src="media/no-image.png" /></div>
             </div>
         </div>
         <div class="col s5">

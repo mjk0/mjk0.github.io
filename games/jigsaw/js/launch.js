@@ -1,18 +1,24 @@
 "use strict";
 const urlParams = new URLSearchParams(window.location.search);
 
+function get_radio_group_value(group) {
+    return $('input[name="'+group+'"]:checked').val();
+}
+
 function pre_puzzle() {
     // Get number of pieces selection for puzzle
-    let numPieces = $('input[name=pieces]:checked').val() || 25;
+    let numPieces = get_radio_group_value('pieces') || 25;
     localStorage.Jigsaw_numPieces = numPieces;
-    let areaRatio = $('input[name=areaRatio]:checked').val() || 2.5;
+    let areaRatio = get_radio_group_value('areaRatio') || 2.5;
     localStorage.Jigsaw_areaRatio = areaRatio;
     localStorage.Jigsaw_img_url = img_url.value;
     //alert('in pre_puzzle()');
     return true;
 }
 
+const custom_no_img = "media/no-image.png";
 var img_url, img_test, img_test_result;
+var img_custom, img_resume, p_resume;
 function test_image() {
     img_test.src = img_url.value;
 }
@@ -21,13 +27,6 @@ function img_test_passed(event) {
 }
 function img_test_failed(event) {
     img_test_result.innerHTML = "[Result: &#10060; Bad]";
-}
-function paste_from_clipboard() {
-    // navigator.clipboard.readText().then(text => img_url.value = text);
-    img_url.focus();
-    //img_url.select();
-    img_url.value = '';
-    document.execCommand("paste");
 }
 
 const sample_images = [
@@ -105,6 +104,9 @@ const sample_images = [
     // https://lh3.googleusercontent.com/GIWr181nD5PRv2Am9ZifEdZNeHZ8kOqJSzvqV-fm6u6AV9ToW_QiBOAm6mwYHCjCxSzJfg=s240
     "https://images.fineartamerica.com/images-medium-large-5/serenity-eileen-fong.jpg",
 
+    // https://lh3.googleusercontent.com/KYWacyVfk8q-CJOeKK6tTO_6arXn18C0ZXoz5Z9JD14pZYKC0gRdOAPrkdrSAFgEaLRD8rI=s240
+    "https://st2.depositphotos.com/2031485/8390/i/950/depositphotos_83906902-stock-photo-chinese-garden-with-bridge-and.jpg",
+
     // https://lh3.googleusercontent.com/HTFJvlKptaqXQ3RPSBA7EJ6qKo9ymCTdOb5KFKqsHq5QfBFNwusbfpAu904GtXTgxGI5lV4=s240
     //"https://images-na.ssl-images-amazon.com/images/I/91LYxLjLyIL._AC_SL1500_.jpg",
 
@@ -114,6 +116,77 @@ const sample_images = [
     // media/Ottawa-200px-squish.jpg
     "media/Ottawa-768px.jpg",
 ];
+
+var input_custom_changed = false;
+function input_custom_keypress(event) {
+    //console.log(event);
+    if (event.key == "Enter") {
+        img_custom.src = img_url.value;
+        input_custom_changed = false;
+    } else {
+        input_custom_changed = true;
+    }
+}
+function input_custom_onfocusout(event) {
+    if (input_custom_changed) {
+        img_custom.src = img_url.value;
+    }
+}
+function paste_from_clipboard() {
+    // navigator.clipboard.readText().then(text => img_url.value = text);
+    img_url.focus();
+    //img_url.select();
+    img_url.value = '';
+    document.execCommand("paste");
+    input_custom_changed = true;
+}
+
+var carousel_i = 0;
+var carousel_needs_init = true;
+
+function tab_samples() {
+    // Is the carousel initialized yet?
+    if (carousel_needs_init) {
+        let last_carousel_i = carousel_i;
+        $('.carousel').carousel({
+            onCycleTo: function(data) {
+                //let img = data.getElementsByTagName('img')[0];
+                carousel_i = $(data).index();
+                img_url.value = sample_images[carousel_i];
+                if (img_custom.src != custom_no_img) {
+                    img_custom.src = custom_no_img;
+                }
+            }
+        });
+        if (last_carousel_i > 0) {
+            $('.carousel').carousel('set', last_carousel_i);
+        }
+        carousel_needs_init = true;
+    }
+}
+
+// Resume tab selected
+var resumeState = null;
+function tab_resume() {
+    // If anything to resume, will be in resumeState
+    if (resumeState !== null) {
+        let rs = JSON.parse(resumeState);
+        img_url.src = rs.url;
+        img_resume.src = rs.url;
+        let last_numPieces = rs.numPieces;
+        set_radio_group_value('pieces', last_numPieces);
+        let last_areaRatio = rs.areaRatio;
+        set_radio_group_value('areaRatio', last_areaRatio);
+
+        // Show resume puzzle options
+        p_resume.innerHTML = 'Puzzle options: '+last_numPieces+' pieces, '
+            +Math.round(100/last_areaRatio)+'% zoom';
+    }
+}
+
+function set_radio_group_value(group, val) {
+    $('input[name="'+group+'"][value="'+val+'"]').prop('checked', true);
+}
 
 // Function that executes jQuery code after page load is complete
 $(document).ready(function(){
@@ -127,37 +200,52 @@ $(document).ready(function(){
     img_test.addEventListener("load", img_test_passed);
     img_test.addEventListener("error", img_test_failed);
     img_test_result = document.getElementById("img_test_result");
+    // Custom & resume img preview
+    img_custom = document.getElementById("img-custom");
+    img_resume = document.getElementById("img-resume");
+    p_resume = document.getElementById("p-resume");
 
     // Image URL passed as URL parameter?
     const img_url_param = urlParams.get('url');
+    // If anything to resume, will be at hash with this key
+    resumeState = localStorage.getItem("Jigsaw_scramble");
 
     // Restore previous values if present in localStorage
-    let carousel_i = 0;
     if (img_url_param) {
         img_url.value = img_url_param;
+        set_radio_group_value('imgsel', 'custom');
+        img_custom.src = img_url.value;
     } else if (localStorage.Jigsaw_img_url) {
         img_url.value = localStorage.Jigsaw_img_url;
         carousel_i = sample_images.indexOf(localStorage.Jigsaw_img_url);
-    }
-    if (localStorage.Jigsaw_numPieces) {
-        $('input[name=pieces][value='+localStorage.Jigsaw_numPieces+']').prop('checked', true);
+        if (resumeState !== null) {
+            // Start with resume tab
+            set_radio_group_value('imgsel', 'resume');
+            tab_resume();
+        } else if (carousel_i < 0) {
+            // Image URL wasn't from the samples, so go back to custom
+            set_radio_group_value('imgsel', 'custom');
+            img_custom.src = img_url.value;
+        }
     }
 
-    // Init image thumbnail carousel
-    $('.carousel').carousel({
-        onCycleTo: function(data) {
-            //let img = data.getElementsByTagName('img')[0];
-            img_url.value = sample_images[$(data).index()];
-        }
-    });
-    if (carousel_i > 0) {
-        $('.carousel').carousel('set', carousel_i);
+    let tabVal = get_radio_group_value('imgsel');
+    if (tabVal == "samples") {
+        // Init image thumbnail carousel
+        tab_samples();
     }
-    if (img_url_param) {
-        img_url.value = img_url_param;
-    } else if (localStorage.Jigsaw_img_url) {
-        img_url.value = localStorage.Jigsaw_img_url;
+
+    // Restore option selections
+    if (localStorage.Jigsaw_numPieces) {
+        set_radio_group_value('pieces', localStorage.Jigsaw_numPieces);
     }
+    if (localStorage.Jigsaw_areaRatio) {
+        set_radio_group_value('areaRatio', localStorage.Jigsaw_areaRatio);
+    }
+
 });
 
-export {pre_puzzle, test_image, paste_from_clipboard};
+export {
+    pre_puzzle, test_image, paste_from_clipboard,
+    tab_samples, tab_resume, input_custom_keypress, input_custom_onfocusout
+};

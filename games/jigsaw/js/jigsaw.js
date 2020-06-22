@@ -55,6 +55,8 @@ const P = {
     'stroke':   "black",
     'strokeW1k': 0.3, // stroke-width scalled to a 1k width image
 };
+// Puzzle scramble state.  Set on scramble, updated on drag, cleared on completion
+var pss = null; // {url:, numPieces:, areaRatio:, trX:[], trY:[]}
 
 function options(opts) {
     Object.keys(opts).forEach((k) => {
@@ -255,16 +257,27 @@ function svg_add_attributes(el, attr) {
 function create_tiles(edges, attributes) {
     // Set stroke-width to equivalent of given value on 1k width image
     let sw = P.strokeW1k * width / 1000.0;
+    // Check if resuming an incomplete puzzle
+    let resumeState = localStorage.getItem("Jigsaw_scramble");
+    if (resumeState !== null) {
+        let rs = JSON.parse(resumeState);
+        // Does the saved state match the main parameters?
+        if (rs.url == localStorage.Jigsaw_img_url && rs.numPieces == P.pieces) {
+            pss = rs; // use this as the puzzle initial state
+        }
+    }
+
     // Create SVG path elements for each jigsaw tile
     for (let r=0; r < P.yn; ++r) {
         for (let c=0; c < P.xn; ++c) {
+            let idn = r*P.xn+c;
             // Get 4 edges for d property
             var d = edges['t'+r+'x'+c] // top
                     + edges['r'+r+'x'+c] // right
                     + edges['b'+r+'x'+c] // bottom
                     + edges['l'+r+'x'+c]; // left
             // Create path element
-            var path = svg_path({d, id: (r*P.xn+c),
+            var path = svg_path({d, id: idn,
                 stroke:P.stroke, 'stroke-width':sw,
                 fill:"url(#img1)"
             });
@@ -272,7 +285,11 @@ function create_tiles(edges, attributes) {
 
             // add translation transform to offset path coordinates by (0,0)
             var translate = svg.createSVGTransform();
-            translate.setTranslate(0, 0);
+            if (pss !== null) {
+                translate.setTranslate(pss.trX[idn], pss.trY[idn]);
+            } else {
+                translate.setTranslate(0, 0);
+            }
             path.transform.baseVal.insertItemBefore(translate, 0); // first transform
             // add to SVG
             var pathElement = svg.appendChild(path);
@@ -389,6 +406,15 @@ function scramble_tiles(opts) {
     }
     //console.log(JSON.stringify(opts)+' aP:'+avoidPreview+' '+JSON.stringify(previewBbox));
 
+    // Set puzzle scramble state in case user wants to resume after exiting
+    pss = {
+        numPieces: P.pieces,
+        areaRatio: P.areaRatio,
+        url: localStorage.Jigsaw_img_url,
+        trX: [], // translate X
+        trY: [], // translate Y
+    };
+
     // viewBox defines valid coordinate space
     let minX = P.viewBox.minX;
     let minY = P.viewBox.minY;
@@ -404,6 +430,7 @@ function scramble_tiles(opts) {
             let el_w = bbmaxx - bbminx;
             let el_h = bbmaxy - bbminy;
             let transform = el.transform.baseVal.getItem(0);
+            let idn = +el.id;
 
             // Generate random offsets
             for (let offsetVerified=false; !offsetVerified; ) {
@@ -417,15 +444,31 @@ function scramble_tiles(opts) {
                     let offsetX = randX - bbminx;
                     let offsetY = randY - bbminy;
                     transform.setTranslate(offsetX, offsetY);
+                    pss.trX[idn] = offsetX;
+                    pss.trY[idn] = offsetY;
                     offsetVerified = true;
                 }
             }
         }
     }
+    // Save initial scramble state
+    pss_checkpoint();
 }
 
 function isOutsideOf(x, y, el_w, el_h, bbox) {
     return (y+el_h < bbox.minY || y > bbox.maxY || x+el_w < bbox.minX || x > bbox.maxX);
+}
+
+// Save the current state pf pss (Puzzle scramble state) to localStorage
+function pss_checkpoint() {
+    if (pss !== null) {
+        localStorage['Jigsaw_scramble'] = JSON.stringify(pss);
+    }
+}
+// Puzzle complete, remove pss
+function pss_remove() {
+    pss = null;
+    localStorage.removeItem('Jigsaw_scramble');
 }
 
 function id_to_rc(id, container) {
@@ -487,5 +530,6 @@ function neighbor_rc_delta(drg, dx, dy, rc) {
 
 export {
     P, update, options, svg_resize_handler, scramble_tiles, id_to_rc,
+    pss, pss_checkpoint, pss_remove,
     snap_to_neighbor, snap_grp_to_neighbor, create_preview_tile, resize_preview_tile
 };

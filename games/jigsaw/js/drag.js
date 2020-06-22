@@ -39,6 +39,9 @@ function drag_init(thesvg, viewBox) {
     snap_sound = document.getElementById('snap-sound');
     tada_sound = document.getElementById('tada-sound');
     settings_panel = document.getElementById('settings');
+
+    // Initialize drag group data
+    drg.bb = {width:(Jig.P.naturalWidth/Jig.P.xn), height:(Jig.P.naturalHeight/Jig.P.yn)};
     snap_grp_clear_all({ 'create_for_original_image':true });
     set_boundaries(viewBox);
 }
@@ -46,18 +49,37 @@ function snap_grp_clear_all(opts) {
     sgrps.length = 0;   // empty the array
     idSgrp.length = Jig.P.yn * Jig.P.xn;
     if (opts && opts.create_for_original_image) {
-        // Create single snap group from initial completed image
-        let sg = {
-            ids:[...Array(Jig.P.yn * Jig.P.xn).keys()],
-            bb:{minx:0, maxx:Jig.P.naturalWidth, miny:0, maxy:Jig.P.naturalHeight},
-            neighbors: [] // no neighbors to check
-        };
-        sgrps.push(sg);
-        idSgrp.fill(0); // allow lookup of sgrp[0] from any id
+        if (Jig.pss === null) {
+            // Create single snap group from initial completed image
+            let sg = {
+                ids:[...Array(Jig.P.yn * Jig.P.xn).keys()],
+                bb:{minx:0, maxx:Jig.P.naturalWidth, miny:0, maxy:Jig.P.naturalHeight},
+                neighbors: [] // no neighbors to check
+            };
+            sgrps.push(sg);
+            idSgrp.fill(0); // allow lookup of sgrp[0] from any id
+        } else {
+            // find snap groups from restored tile layout
+            idSgrp.fill(-1);
+            snap_grp_restore();
+        }
     } else {
         idSgrp.fill(-1);
     }
 }
+// Create all new snap groups for restored layout
+function snap_grp_restore() {
+    // Discover snap groups
+    for (let idn=0; idn < idSgrp.length; ++idn) {
+        // uses recursion to trace connected neighbors
+        snap_grp_restore_neighbors(idn);
+    }
+    // Find neighbors for each found group
+    for (let isg=0; isg < sgrps.length; ++isg) {
+        snap_grp_find_neighbors(isg);
+    }
+}
+
 function set_boundaries(viewBox) {
     boundaryX1 = viewBox.minX;
     boundaryX2 = viewBox.minX + viewBox.w;
@@ -175,13 +197,19 @@ function drag(evt) {
                 }
             }
             transform.setTranslate(dx, dy);
+            let idn = +selectedElement.id;
+            if (Jig.pss !== null && idn >= 0) {
+                Jig.pss.trX[idn] = dx;
+                Jig.pss.trY[idn] = dy;
+            }
+
             // if selected is part of a snap group, move entire group
             if (selectedElement_isg >= 0) {
-                snap_grp_drag(selectedElement_isg, selectedElement.id, dx, dy);
+                snap_grp_drag(selectedElement_isg, idn, dx, dy);
             }
             if (id_snap_to >= 0) {
                 // if snapping, handle group merge or creation
-                let isg_new = snap_grp_merge(selectedElement.id, id_snap_to);
+                let isg_new = snap_grp_merge(idn, id_snap_to);
                 // Refresh snap group's neighbors list
                 snap_grp_find_neighbors(isg_new);
                 /* console.log('sn['+isg_new+'] has ids:'
@@ -193,6 +221,7 @@ function drag(evt) {
                 if (sgrps[isg_new].neighbors.length == 0) {
                     sound_snap_stop();
                     sound_tada_play();
+                    Jig.pss_remove();
                 }
             }
         }
@@ -201,6 +230,9 @@ function drag(evt) {
 
 function endDrag(evt) {
     selectedElement = false;
+    if (Jig.pss !== null) {
+        Jig.pss_checkpoint(); // checkpoint current Puzzle scramble state to localStorage
+    }
 }
 
 // Move snap group other than given ID to new coordinates
@@ -209,6 +241,10 @@ function snap_grp_drag(isg, id0, dx, dy) {
         if (id != id0) {
             let transform = svg.getElementById(id).transform.baseVal.getItem(0);
             transform.setTranslate(dx, dy);
+            if (Jig.pss !== null) {
+                Jig.pss.trX[id] = dx;
+                Jig.pss.trY[id] = dy;
+            }
         }
     }
 }
@@ -292,6 +328,29 @@ function snap_grp_find_neighbors(isg) {
                 if (idSgrp[rc] != isg && !added[rc]) {
                     sgrps[isg].neighbors.push(rc);
                     added[rc] = true;
+                }
+            }
+        }
+    }
+}
+// Discover snap groups in restored state
+function snap_grp_restore_neighbors(idn) {
+    let isg = id_to_isg(idn); // -1 means no group (since index into sgrps array)
+    let drg = {};
+    Jig.id_to_rc(idn, drg);
+    // Check all 4 neighbors.
+    // Stop if snap outside of the group is possible
+    for (let dd of [[-1,0], [0,-1], [0,1], [1,0]]) {
+        let r = drg.r + dd[0];
+        let c = drg.c + dd[1];
+        if (r >= 0 && r < Jig.P.yn && c >= 0 && c < Jig.P.xn) {
+            let rc = r*Jig.P.xn+c;
+            if (isg < 0 || isg != id_to_isg(rc)) {
+                let rx = Jig.pss.trX[idn] / Jig.pss.trX[rc];
+                let ry = Jig.pss.trY[idn] / Jig.pss.trY[rc];
+                if (rx > 0.99 && rx < 1.01 && ry > 0.99 && ry < 1.01) {
+                    isg = snap_grp_merge(idn, rc);
+                    snap_grp_restore_neighbors(rc); // recursive call to neighbors
                 }
             }
         }
