@@ -174,7 +174,7 @@ function tab_resume() {
     // If anything to resume, will be in resumeState
     if (resumeState !== null) {
         let rs = JSON.parse(resumeState);
-        img_url.src = rs.url;
+        img_url.value = rs.url;
         img_resume.src = rs.url;
         let last_numPieces = rs.numPieces;
         set_radio_group_value('pieces', last_numPieces);
