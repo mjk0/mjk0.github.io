@@ -531,5 +531,6 @@ function neighbor_rc_delta(drg, dx, dy, rc) {
 export {
     P, update, options, svg_resize_handler, scramble_tiles, id_to_rc,
     pss, pss_checkpoint, pss_remove,
-    snap_to_neighbor, snap_grp_to_neighbor, create_preview_tile, resize_preview_tile
+    snap_to_neighbor, snap_grp_to_neighbor,
+    create_preview_tile, resize_preview_tile, rm_preview_tile
 };

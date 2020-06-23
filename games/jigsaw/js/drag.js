@@ -222,6 +222,7 @@ function drag(evt) {
                     sound_snap_stop();
                     sound_tada_play();
                     Jig.pss_remove();
+                    Jig.rm_preview_tile();
                 }
             }
         }

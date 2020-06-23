@@ -107,8 +107,11 @@ const sample_images = [
     // https://lh3.googleusercontent.com/KYWacyVfk8q-CJOeKK6tTO_6arXn18C0ZXoz5Z9JD14pZYKC0gRdOAPrkdrSAFgEaLRD8rI=s240
     "https://st2.depositphotos.com/2031485/8390/i/950/depositphotos_83906902-stock-photo-chinese-garden-with-bridge-and.jpg",
 
+    // https://lh3.googleusercontent.com/Il2Ous7x3EqQ97RgmyRp_MFgA8IYVeaItc9ExPRZ8hG0drRrsb_eSzW2y4cGcSfDhqmPag=s200
+    "https://mk0spaceflightnoa02a.kinstacdn.com/wp-content/uploads/2020/06/49956109906_44a0b5541c_k.jpg",
+
     // https://lh3.googleusercontent.com/HTFJvlKptaqXQ3RPSBA7EJ6qKo9ymCTdOb5KFKqsHq5QfBFNwusbfpAu904GtXTgxGI5lV4=s240
-    //"https://images-na.ssl-images-amazon.com/images/I/91LYxLjLyIL._AC_SL1500_.jpg",
+    "https://images-na.ssl-images-amazon.com/images/I/91LYxLjLyIL._AC_SL1500_.jpg",
 
     // media/Maine_state_line-240x180.jpg
     "media/Maine_state_line.jpg",

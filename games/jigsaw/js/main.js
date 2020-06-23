@@ -16,6 +16,7 @@ var svg;
 function scramble_puzzle() {
     Drag.snap_grp_clear_all();
     Jig.scramble_tiles(UIopts);
+    Jig.create_preview_tile(UIopts.previewSize);
 }
 function show_preview_image() {
     Jig.create_preview_tile(UIopts.previewSize); // max 50% scale
