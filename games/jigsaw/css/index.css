@@ -205,3 +205,4 @@ label[for="iresume"], .tab-resume {
 }
 #p-resume { height: 1.5em; font-size: 80%; margin: 0.5em; }
 .carousel-item img { max-height: 180px;}
+.right { float: right; }

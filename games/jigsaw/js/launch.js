@@ -95,6 +95,9 @@ const sample_images = [
     //"https://upload.wikimedia.org/wikipedia/commons/1/1c/Katrinetorp_Mansion_close.jpg",
     "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Katrinetorp_Mansion_close.jpg/1280px-Katrinetorp_Mansion_close.jpg",
 
+    // https://lh3.googleusercontent.com/e37_djKWCAiCbRhxO5EUbAQ66F6w3izcv9F_C5jxd6nNLpok9q9CBKfa3fD1Hjwl4PK__bo=s240
+    "https://cdn.pixabay.com/photo/2017/08/27/15/09/moraine-lake-2686353_1280.jpg",
+
     // https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Horsetram.jpg/320px-Horsetram.jpg
     "https://upload.wikimedia.org/wikipedia/commons/7/78/Horsetram.jpg",
 

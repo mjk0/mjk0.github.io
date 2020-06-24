@@ -22,6 +22,10 @@
         <button class="menu-btn" type="button" onclick="Main.show_preview_image()"><span><i
             class="material-icons">image</i> Show preview image</span>
         </button>
+        <!--<button class="menu-btn right" type="button" id="fs_toggle"
+            onclick="Main.fullscreen_toggle()"><span><i
+            class="material-icons">zoom_out_map</i></span>
+        </button>-->
         <div class="cc-selector pm-selector" style="visibility: hidden;">Snap:
             <input id="snap_off" type="radio" name="snap" value="0" />
             <label class="label-pm" for="snap_off"><span>off</span></label><!--
@@ -75,6 +79,7 @@
 
     <!--JavaScript at end of body for optimized loading-->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <!--<script type="text/javascript" src="/js/screenfull.min.js"></script>-->
     <script type="module">
         import * as Main from './js/main.js';
         window.Main = Main;

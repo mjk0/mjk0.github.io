@@ -21,13 +21,18 @@ function scramble_puzzle() {
 function show_preview_image() {
     Jig.create_preview_tile(UIopts.previewSize); // max 50% scale
 }
+function fullscreen_toggle() {
+    if (screenfull.isEnabled) {
+		screenfull.toggle();
+	}
+}
 function set_scramble_no_center_area(val) {
     UIopts.scrAvoidCenter = val ? 1 : 0;
-    localStorage.Jisaw_scrAvoidCenter = val ? 1 : 0;
+    localStorage.Jigsaw_scrAvoidCenter = val ? 1 : 0;
 }
 function set_scramble_no_preview_area(val) {
     UIopts.scrAvoidPreview = val ? 1 : 0;
-    localStorage.Jisaw_scrAvoidPreview = val ? 1 : 0;
+    localStorage.Jigsaw_scrAvoidPreview = val ? 1 : 0;
 }
 function set_preview_size(val) {
     UIopts.previewSize = val;
@@ -75,11 +80,15 @@ $(document).ready(function(){
     console.log('main.js, document ready');
     svg = document.getElementsByTagName("svg")[0];
     svg_init();
+
+    /*if (!screenfull.isEnabled) {
+        document.getElementById('fs_toggle').disabled = true;
+    }*/
 });
 
 export {
     jopts, Drag, Jig,
-    scramble_puzzle, show_preview_image,
+    scramble_puzzle, show_preview_image, fullscreen_toggle,
     set_scramble_no_center_area, set_scramble_no_preview_area, set_preview_size
 };
 
