@@ -421,6 +421,10 @@ function scramble_tiles(opts) {
     let boundaryX2 = P.viewBox.minX + P.viewBox.w;
     let boundaryY2 = P.viewBox.minY + P.viewBox.h;
 
+    // for better spacing of random tiles, define spacing grid
+    let gscale = 1.67;
+    let gsp = { x:(P.viewBox.w*gscale/P.xn), y:(P.viewBox.h*gscale/P.yn), cnt:[]};
+
     for (let el of paths) {
         if (el.id >= "0" && el.id < "A") {
             let bbminx = +el.getAttribute('bbminx'); // '+' converts to numeric

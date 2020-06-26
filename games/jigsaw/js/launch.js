@@ -33,20 +33,41 @@ const sample_images = [
     // media/backyard-180px.jpg
     "media/backyard.jpg",
 
+    // Palm trees
     // https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcQQ1suy6-l8tJt5pl0OrYA9W6H_ewrwnau6fA0alyMHsTNgIiX2&usqp=CAU
     "https://gradivahotels.com/wp-content/uploads/2019/08/Tropical-Vacation.jpg",
 
+    // Green lake
     // https://lh6.googleusercontent.com/proxy/NT5fRkJDFMB4paWCbHagCrFFzE7MQMViavDkEjcGMK8v_EuuQL-Fd3ELft76_Z13WYDVdi9L6q6iMxeoCBajWpjeiKmvhlvDxXyJwsdhLLxg7cs22QwkPqrSoVxB_N6Un16hPtyxKjZqQ7NKo2yhtgyvcn1cPNejwSShGrwSY9KYSl3rXRXl6ISCKqfGIenjqK0wK8GM02Cp8tpambzoypj4X3ZZ_xIeNd-Xy3zl8PvjjfyvH8YyPQvmXUhTAZwsw8N5qw=s240-w240-h135-fcrop64=1,00001999fffff3c7-k-no-nd-mv
     "https://lh6.googleusercontent.com/proxy/NT5fRkJDFMB4paWCbHagCrFFzE7MQMViavDkEjcGMK8v_EuuQL-Fd3ELft76_Z13WYDVdi9L6q6iMxeoCBajWpjeiKmvhlvDxXyJwsdhLLxg7cs22QwkPqrSoVxB_N6Un16hPtyxKjZqQ7NKo2yhtgyvcn1cPNejwSShGrwSY9KYSl3rXRXl6ISCKqfGIenjqK0wK8GM02Cp8tpambzoypj4X3ZZ_xIeNd-Xy3zl8PvjjfyvH8YyPQvmXUhTAZwsw8N5qw=s1920-w1920-h1080-fcrop64=1,00001999fffff3c7-k-no-nd-mv",
 
-    // https://lh3.googleusercontent.com/jBiW5JY7CH4JNT8fP-fGQuzK3G1QghWndEVxuh1fxgeJnO6cJ3suVOKde1WsgwoHzs1uqow=s240
+    // media/Water_Wheel-240px.jpg
     "https://lh6.googleusercontent.com/proxy/FtgmdiIeWl-LD-il97L0_fVAqntwZZXPoOFW4LSyEdULdene1G6ZxT4_BruPzO5-y4kBFwADONpmRaAUO_-NNPjFL605jgjFvwmk1s8ywiC7QQzG8zhySz0hcVSdi-NNmgV_6yEPXm3zcD8C9CGVAcf-U_HRAq9BuqXl-CNAf00VIceVZlnoFHDTNFfp_W2K2wmVmbm4RkygpA_3Mql_BbXgcxXr8p0dGmDy1eg-dyGKQ3kNRMFg=s1920-w1920-h1080-p-k-no-nd-mv",
 
-    // https://lh3.googleusercontent.com/byQ-t5R54ayuA7SLBbB6G2Kd8YS2fNk4VJ3XrtdM8lvT0twi1IUiOV4g7WuST4Xoh1leIA=s240
-    "https://i.etsystatic.com/5451974/r/il/a9eb3b/2279803383/il_fullxfull.2279803383_gt2h.jpg",
-
+    // Lake 2
     // https://images.pexels.com/photos/371589/pexels-photo-371589.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=240
     "https://images.pexels.com/photos/371589/pexels-photo-371589.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+
+    // media/World_Map-240px.jpg
+    "https://i.etsystatic.com/5451974/r/il/a9eb3b/2279803383/il_fullxfull.2279803383_gt2h.jpg",
+
+    // media/Mason_Flowers-240px.jpg
+    "https://images-na.ssl-images-amazon.com/images/I/81qPc6NtSEL._SL1200_.jpg",
+
+    // media/Peach_Tree-240px.jpg
+    "https://images-na.ssl-images-amazon.com/images/I/91LYxLjLyIL._AC_SL1500_.jpg",
+
+    // media/Row_House-240px.jpg
+    "https://elviragallery.com/wp-content/uploads/2019/11/Copenhagen2.jpg",
+
+    // media/Garden_Serenity-240px.jpg
+    "https://images.fineartamerica.com/images-medium-large-5/serenity-eileen-fong.jpg",
+
+    // media/Chinese_Garden-240px.jpg
+    "https://st2.depositphotos.com/2031485/8390/i/950/depositphotos_83906902-stock-photo-chinese-garden-with-bridge-and.jpg",
+
+    // media/Falcon9-240px.jpg
+    "https://mk0spaceflightnoa02a.kinstacdn.com/wp-content/uploads/2020/06/49956109906_44a0b5541c_k.jpg",
 
     // https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Aerial_view_of_Love_valley_Cappadocia_from_hot_air_balloon_1510232_3_4_Compressor.jpg/180px-Aerial_view_of_Love_valley_Cappadocia_from_hot_air_balloon_1510232_3_4_Compressor.jpg
     //"https://upload.wikimedia.org/wikipedia/commons/7/71/Aerial_view_of_Love_valley_Cappadocia_from_hot_air_balloon_1510232_3_4_Compressor.jpg",
@@ -95,26 +116,12 @@ const sample_images = [
     //"https://upload.wikimedia.org/wikipedia/commons/1/1c/Katrinetorp_Mansion_close.jpg",
     "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Katrinetorp_Mansion_close.jpg/1280px-Katrinetorp_Mansion_close.jpg",
 
+    // Moraine Lake
     // https://lh3.googleusercontent.com/e37_djKWCAiCbRhxO5EUbAQ66F6w3izcv9F_C5jxd6nNLpok9q9CBKfa3fD1Hjwl4PK__bo=s240
     "https://cdn.pixabay.com/photo/2017/08/27/15/09/moraine-lake-2686353_1280.jpg",
 
     // https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Horsetram.jpg/320px-Horsetram.jpg
     "https://upload.wikimedia.org/wikipedia/commons/7/78/Horsetram.jpg",
-
-    // https://lh3.googleusercontent.com/5dDWnlh43Yr221fl0HasmrAAnuhPy-AimQJ3zoh8SxC3Ju-p8jMokoKYDNT5KmUk_qAU=s240
-    "https://images-na.ssl-images-amazon.com/images/I/81qPc6NtSEL._SL1200_.jpg",
-
-    // https://lh3.googleusercontent.com/GIWr181nD5PRv2Am9ZifEdZNeHZ8kOqJSzvqV-fm6u6AV9ToW_QiBOAm6mwYHCjCxSzJfg=s240
-    "https://images.fineartamerica.com/images-medium-large-5/serenity-eileen-fong.jpg",
-
-    // https://lh3.googleusercontent.com/KYWacyVfk8q-CJOeKK6tTO_6arXn18C0ZXoz5Z9JD14pZYKC0gRdOAPrkdrSAFgEaLRD8rI=s240
-    "https://st2.depositphotos.com/2031485/8390/i/950/depositphotos_83906902-stock-photo-chinese-garden-with-bridge-and.jpg",
-
-    // https://lh3.googleusercontent.com/Il2Ous7x3EqQ97RgmyRp_MFgA8IYVeaItc9ExPRZ8hG0drRrsb_eSzW2y4cGcSfDhqmPag=s200
-    "https://mk0spaceflightnoa02a.kinstacdn.com/wp-content/uploads/2020/06/49956109906_44a0b5541c_k.jpg",
-
-    // https://lh3.googleusercontent.com/HTFJvlKptaqXQ3RPSBA7EJ6qKo9ymCTdOb5KFKqsHq5QfBFNwusbfpAu904GtXTgxGI5lV4=s240
-    "https://images-na.ssl-images-amazon.com/images/I/91LYxLjLyIL._AC_SL1500_.jpg",
 
     // media/Maine_state_line-240x180.jpg
     "media/Maine_state_line.jpg",
