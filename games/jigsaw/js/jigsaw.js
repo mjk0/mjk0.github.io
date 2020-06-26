@@ -285,7 +285,7 @@ function create_tiles(edges, attributes) {
 
             // add translation transform to offset path coordinates by (0,0)
             var translate = svg.createSVGTransform();
-            if (pss !== null) {
+            if (pss !== null && pss.trX.length > idn) {
                 translate.setTranslate(pss.trX[idn], pss.trY[idn]);
             } else {
                 translate.setTranslate(0, 0);
@@ -378,6 +378,109 @@ function resize_preview_tile(scale) {
         }
     }
 }
+
+// for better spacing of random tiles, define spacing grid
+const gsp = {
+    gscale: 1.2,
+    gtilew:0, gtileh:0,
+    xn:0, yn:0,
+    cnt:[], limit:1,
+    init: function(opts) {
+        this.xn = Math.ceil((P.viewBox.w-P.naturalWidth/P.xn)*P.xn/(P.naturalWidth*this.gscale));
+        this.yn = Math.ceil((P.viewBox.h-P.naturalHeight/P.yn)*P.yn/(P.naturalHeight*this.gscale));
+        this.gtilew = (P.viewBox.w-P.naturalWidth/P.xn)/this.xn;
+        this.gtileh = (P.viewBox.h-P.naturalHeight/P.yn)/this.yn;
+        this.limit = 1;
+        //console.log('grid is '+this.xn+' x '+this.yn+' ('+this.gtilew+', '+this.gtileh+')');
+
+        // Size count array for each grid location
+        this.cnt.length = this.xn*this.yn;
+        this.cnt.fill(0);
+
+        // Block off alternating grid locations
+        let nogo = 99;
+        /*let nogomod = 1;
+        for (let r=0; r < this.yn; ++r) {
+            for (let c=0; c < this.xn; ++c) {
+                if ((c&0x1) == nogomod) {
+                    this.cnt[r*this.xn+c] = nogo;
+                }
+            }
+            nogomod = 1 - nogomod;
+        }*/
+        // Block off edge outline?
+        if (opts && opts.avoidEdgeOutline) {
+            let rc00 = this.rc({x:0,y:0});
+            let rc0m = this.rc({x:P.naturalWidth, y:0});
+            let rc0md = rc0m - rc00;
+            let rcm0 = this.rc({x:0, y:(P.naturalHeight-P.naturalHeight/P.yn)});
+            let rcm0d = rcm0 - rc00;
+            for (let rc=rc00; rc < rc0m; ++rc) {
+                //[-this.xn, 0, this.xn, rcm0d-this.xn, rcm0d, rcm0d+this.xn].forEach( v => {
+                [0, rcm0d].forEach( v => {
+                        if (rc+v >= 0 && rc+v < this.cnt.length) {
+                        this.cnt[rc+v] = nogo;
+                    }
+                });
+            }
+            for (let rc=rc00; rc < rcm0; rc += this.xn) {
+                //[-1, 0, 1, rc0md-1, rc0md, rc0md+1].forEach( v => {
+                [0, rc0md].forEach( v => {
+                    if (rc+v >= 0 && rc+v < this.cnt.length) {
+                        this.cnt[rc+v] = nogo;
+                    }
+                });
+            }
+        }
+    },
+    rc: function(pos) {
+        let c = Math.floor((pos.x-P.viewBox.minX) / this.gtilew);
+        let r = Math.floor((pos.y-P.viewBox.minY) / this.gtileh);
+        return (r*this.xn+c);
+    },
+    hasReachedLimit: function(pos) {
+        let rc = this.rc(pos);
+        return (this.cnt[rc] >= this.limit);
+    },
+    count: function(pos, idn) {
+        let rc = this.rc(pos);
+        ++this.cnt[rc];
+        //console.log('co: id='+idn+' cnt['+rc+']='+this.cnt[rc]+', ('+Math.round(pos.x)+', '+Math.round(pos.y)+')');
+    },
+    constrainCoords: function(pos) {
+        let cfloat = (pos.x-P.viewBox.minX) / this.gtilew;
+        let rfloat = (pos.y-P.viewBox.minY) / this.gtileh;
+        let c = Math.floor(cfloat);
+        let r = Math.floor(rfloat);
+        let tcnt = this.cnt[r*this.xn+c]; // how many tiles placed here so far?
+
+        // Constrain position into tile-cnt-dependent quadrants
+        if (c < this.xn-1 && tcnt < 4) {
+            let crem = cfloat%1;
+            while (crem >= ((tcnt == 0 || tcnt == 3)? 0.25 : 0.75)) {
+                crem -= 0.25;
+                pos.x -= this.gtilew * 0.25;
+            }
+            while (crem < 0.5 && (tcnt == 1 || tcnt == 2)) {
+                crem += 0.25;
+                pos.x += this.gtilew * 0.25;
+            }
+        }
+        if (r < this.yn-1 && tcnt < 4) {
+            let rrem = rfloat%1;
+            while (rrem >= ((tcnt == 0 || tcnt == 2)? 0.25 : 0.75)) {
+                rrem -= 0.25;
+                pos.y -= this.gtileh * 0.25;
+            }
+            while (rrem < 0.5 && (tcnt == 1 || tcnt == 3)) {
+                rrem += 0.25;
+                pos.y += this.gtileh * 0.25;
+            }
+        }
+        //console.log('cc: cnt['+(r*this.xn+c)+']='+this.cnt[r*this.xn+c]+', ('+Math.round(pos.x)+', '+Math.round(pos.y)+')');
+    }
+};
+
 // randomize location of all PATH elements of the SVG
 function scramble_tiles(opts) {
     let paths = svg.getElementsByTagName('path');
@@ -422,8 +525,8 @@ function scramble_tiles(opts) {
     let boundaryY2 = P.viewBox.minY + P.viewBox.h;
 
     // for better spacing of random tiles, define spacing grid
-    let gscale = 1.67;
-    let gsp = { x:(P.viewBox.w*gscale/P.xn), y:(P.viewBox.h*gscale/P.yn), cnt:[]};
+    gsp.init({avoidEdgeOutline: avoidCenter});
+    let rand = {x:0, y:0};
 
     for (let el of paths) {
         if (el.id >= "0" && el.id < "A") {
@@ -437,26 +540,41 @@ function scramble_tiles(opts) {
             let idn = +el.id;
 
             // Generate random offsets
+            let tryCnt = 0;
             for (let offsetVerified=false; !offsetVerified; ) {
-                let randX = uniform(minX, boundaryX2-el_w);
-                let randY = uniform(minY, boundaryY2-el_h);
+                rand.x = uniform(minX, boundaryX2-el_w);
+                rand.y = uniform(minY, boundaryY2-el_h);
+
+                // Check if that grid location has reached its tile limit
+                if (gsp.hasReachedLimit(rand)) {
+                    ++tryCnt;
+                    if (tryCnt < 100) {
+                        continue;
+                    } else {
+                        ++gsp.limit; // increase limit
+                        console.log('gsp limit:'+gsp.limit);
+                    }
+                }
+                gsp.constrainCoords(rand); // modifies coordinates, but only within tile area
 
                 // pattern image defines exclusion space
                 // (0,0) -> (P.naturalWidth, P.naturalHeight)
-                if ((!avoidCenter || isOutsideOf(randX, randY, el_w, el_h, centerBbox))
-                 && (!avoidPreview || isOutsideOf(randX, randY, el_w, el_h, previewBbox))) {
-                    let offsetX = randX - bbminx;
-                    let offsetY = randY - bbminy;
+                if ((true || isOutsideOf(rand.x, rand.y, el_w, el_h, centerBbox))
+                 && (!avoidPreview || isOutsideOf(rand.x, rand.y, el_w, el_h, previewBbox))) {
+                    let offsetX = rand.x - bbminx;
+                    let offsetY = rand.y - bbminy;
                     transform.setTranslate(offsetX, offsetY);
                     pss.trX[idn] = offsetX;
                     pss.trY[idn] = offsetY;
                     offsetVerified = true;
+                    gsp.count(rand, idn); // keep track of tiles added in this grid location
                 }
             }
         }
     }
     // Save initial scramble state
     pss_checkpoint();
+    //console.log(gsp.cnt);
 }
 
 function isOutsideOf(x, y, el_w, el_h, bbox) {
