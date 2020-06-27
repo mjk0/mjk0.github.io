@@ -39,9 +39,17 @@ function set_preview_size(val) {
     localStorage.Jigsaw_previewSize = val;
     Jig.resize_preview_tile(val);
 }
+function set_bg_color(val) {
+    document.body.style.background = val;
+    localStorage.Jigsaw_bgColor = val;
+}
 
 function svg_init() {
     $('path').remove(); // remove all existing SVG path elements
+    if (localStorage.Jigsaw_bgColor) {
+        set_bg_color(localStorage.Jigsaw_bgColor);
+        $('input[name="bgcolor"]')[0].value = localStorage.Jigsaw_bgColor;
+    }
 
     // Get/Set user options
     UIopts.scrAvoidCenter = +(localStorage.Jigsaw_scrAvoidCenter || UIopts.scrAvoidCenter);
@@ -89,6 +97,7 @@ $(document).ready(function(){
 export {
     jopts, Drag, Jig,
     scramble_puzzle, show_preview_image, fullscreen_toggle,
-    set_scramble_no_center_area, set_scramble_no_preview_area, set_preview_size
+    set_scramble_no_center_area, set_scramble_no_preview_area,
+    set_preview_size, set_bg_color
 };
 
