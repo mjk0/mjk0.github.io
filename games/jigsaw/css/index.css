@@ -16,6 +16,7 @@ div.logo.col { padding: 0px; }
     text-shadow: -1px 1px 4px #000, 1px 1px 4px #000, 1px -1px 0 #000, -1px -1px 0 #000;
     position: relative;
 }
+a.ahelp { font-size: 3vw; color: white;}
 .nav-bg, .opt-bg {
     margin-top: 0.3em;
     box-shadow: 0 0 1px 1px white; border-radius: 4px;
@@ -206,3 +207,15 @@ label[for="iresume"], .tab-resume {
 #p-resume { height: 1.5em; font-size: 80%; margin: 0.5em; }
 .carousel-item img { max-height: 180px;}
 .right { float: right; }
+.gspan {
+    background-color: lightgray;
+    outline: 1px solid black;
+    padding: 0 0.2em;
+}
+.bspan {
+    background-color: #26a69a; color: white; padding: 0 0.2em;
+    box-shadow: 0 0 2px 0px black;
+}
+.left { float: left; margin-right: 2em; }
+.ul-indent { overflow: hidden; }
+.clear-left { clear: left; }
