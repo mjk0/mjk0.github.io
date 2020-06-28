@@ -57,8 +57,14 @@ const sample_images = [
     // media/Peach_Tree-240px.jpg
     "https://images-na.ssl-images-amazon.com/images/I/91LYxLjLyIL._AC_SL1500_.jpg",
 
+    // media/Blue_hydrangea-180px.jpg
+    "https://i.etsystatic.com/6996104/r/il/a9e75a/1894452140/il_570xN.1894452140_nwll.jpg",
+
     // media/Row_House-240px.jpg
     "https://elviragallery.com/wp-content/uploads/2019/11/Copenhagen2.jpg",
+
+    // media/art_Paris-240px.jpg
+    "https://i.pinimg.com/originals/fd/67/8e/fd678ed3b23f4260e7fad075e3179950.jpg",
 
     // media/Garden_Serenity-240px.jpg
     "https://images.fineartamerica.com/images-medium-large-5/serenity-eileen-fong.jpg",
@@ -117,11 +123,18 @@ const sample_images = [
     "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Katrinetorp_Mansion_close.jpg/1280px-Katrinetorp_Mansion_close.jpg",
 
     // Moraine Lake
-    // https://lh3.googleusercontent.com/e37_djKWCAiCbRhxO5EUbAQ66F6w3izcv9F_C5jxd6nNLpok9q9CBKfa3fD1Hjwl4PK__bo=s240
+    // media/Moraine_Lake-240px.jpg
     "https://cdn.pixabay.com/photo/2017/08/27/15/09/moraine-lake-2686353_1280.jpg",
 
     // https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Horsetram.jpg/320px-Horsetram.jpg
     "https://upload.wikimedia.org/wikipedia/commons/7/78/Horsetram.jpg",
+
+    // Victory parliament
+    // https://i0.wp.com/fishingbooker.com/blog/media/victoria-bc-e1562251210497.jpg?fit=240%2C160&ssl=1
+    "https://i0.wp.com/fishingbooker.com/blog/media/victoria-bc-e1562251210497.jpg?fit=1440%2C960&ssl=1",
+
+    // media/St_Johns-240px.jpg
+    "https://www.nlhhn.org/wp-content/uploads/2020/02/stjohns.jpg",
 
     // media/Maine_state_line-240x180.jpg
     "media/Maine_state_line.jpg",

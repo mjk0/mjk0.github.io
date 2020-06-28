@@ -7,9 +7,9 @@ const jopts = {
     'areaRatio': 2.5, // target area ratio (completed puzzle / viewbox)
 };
 const UIopts = {
-    'scrAvoidCenter': 0,
+    'scrAvoidCenter': 1,
     'scrAvoidPreview': 1,
-    'previewSize': 0.5, // scale each dimention by this amount for preview tile
+    'previewSize': 0.33, // scale each dimention by this amount for preview tile
 };
 var svg;
 

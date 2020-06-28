@@ -219,3 +219,4 @@ label[for="iresume"], .tab-resume {
 .left { float: left; margin-right: 2em; }
 .ul-indent { overflow: hidden; }
 .clear-left { clear: left; }
+.mw25 { max-width: 25vw; }
