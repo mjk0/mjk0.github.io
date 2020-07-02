@@ -19,11 +19,11 @@ div.logo.col { padding: 0px; }
 a.ahelp { font-size: 3vw; color: white;}
 .nav-bg, .opt-bg {
     margin-top: 0.3em;
-    box-shadow: 0 0 1px 1px white; border-radius: 4px;
+    border-radius: 4px;
 }
-.nav-bg { background-color: #ee6e73; font-size: 2.3vw; }
+.nav-bg { font-size: 2.3vw; }
 .opt-bg { background-color: wheat; font-size: 1.6vw; }
-
+.nav-bg-min, .nav-bg { background-color: #ee6e73; box-shadow: 0 0 1px 1px white; }
 div.cc-selector, div.tab-selector {
     display: inline-block;
     font-size: 2.2vh;
@@ -220,3 +220,5 @@ label[for="iresume"], .tab-resume {
 .ul-indent { overflow: hidden; }
 .clear-left { clear: left; }
 .mw25 { max-width: 25vw; }
+#moreImages { max-height: 90%; }
+#moreImagesPreview { max-height: 70%; }

@@ -214,6 +214,23 @@ function set_radio_group_value(group, val) {
     $('input[name="'+group+'"][value="'+val+'"]').prop('checked', true);
 }
 
+function show_dialog_more_images() {
+    $('#moreImages').modal('open');
+    if (!js_moreImages) {
+        $.ajaxSetup({
+            cache: true
+        });
+        $('#div_mi_catalog').text('Loading catalog ...');
+        $.getScript( "js/moreImages.js" )
+        .done(function( script, textStatus ) {
+            console.log( textStatus );
+        })
+        .fail(function( jqxhr, settings, exception ) {
+            $('#div_mi_catalog').text('Catalog load failed.');
+        });
+    }
+}
+
 // Function that executes jQuery code after page load is complete
 $(document).ready(function(){
     //let a_start = document.getElementById("a_start");
@@ -269,9 +286,12 @@ $(document).ready(function(){
         set_radio_group_value('areaRatio', localStorage.Jigsaw_areaRatio);
     }
 
+    // Initialize modal dialogs
+    $('.modal').modal();
 });
 
 export {
     pre_puzzle, test_image, paste_from_clipboard,
-    tab_samples, tab_resume, input_custom_keypress, input_custom_onfocusout
+    tab_samples, tab_resume, input_custom_keypress, input_custom_onfocusout,
+    show_dialog_more_images
 };
