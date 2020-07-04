@@ -214,6 +214,7 @@ function set_radio_group_value(group, val) {
     $('input[name="'+group+'"][value="'+val+'"]').prop('checked', true);
 }
 
+var mi_preview;
 function show_dialog_more_images() {
     $('#moreImages').modal('open');
     if (!js_moreImages) {
@@ -222,19 +223,49 @@ function show_dialog_more_images() {
         });
         $('#div_mi_catalog').text('Loading catalog ...');
         $.getScript( "js/moreImages.js" )
-        .done(function( script, textStatus ) {
-            console.log( textStatus );
-        })
+        .done(fill_dialog_more_images)
         .fail(function( jqxhr, settings, exception ) {
             $('#div_mi_catalog').text('Catalog load failed.');
         });
     }
+}
+function fill_dialog_more_images( script, textStatus ) {
+    console.log( textStatus );
+    const micat_elem = document.getElementById('div_mi_catalog');
+    micat_elem.innerHTML = '';
+
+    // Create <img> tags for each js_moreImages entry
+    js_moreImages.forEach(e => {
+        //mi_cat.append('<img class="more-images" src="'+e+'"/>');
+        var img = document.createElement("img");
+        img.className = "more-images";
+        img.src = e;
+        img.addEventListener('click', function(event) {
+            mi_preview.src = event.target.src;
+        });
+        micat_elem.appendChild(img);
+    });
+}
+function mi_preview_accepted() {
+    select_custom(mi_preview.src);
+}
+function mi_preview_failed() {
+    mi_preview.src="media/exclamation-pink-300x158.png";
+}
+
+// Show custom tab, and pre-set url text field and preview
+function select_custom(theurl) {
+    img_url.value = theurl;
+    set_radio_group_value('imgsel', 'custom');
+    img_custom.src = img_url.value;
 }
 
 // Function that executes jQuery code after page load is complete
 $(document).ready(function(){
     //let a_start = document.getElementById("a_start");
     //a_start.addEventListener("click", pre_puzzle);
+    mi_preview = document.getElementById('moreImagesPreview');
+    mi_preview.addEventListener("error", mi_preview_failed);
 
     // Save img_url input field element ref
     img_url = document.getElementById("img_url");
@@ -255,9 +286,7 @@ $(document).ready(function(){
 
     // Restore previous values if present in localStorage
     if (img_url_param) {
-        img_url.value = img_url_param;
-        set_radio_group_value('imgsel', 'custom');
-        img_custom.src = img_url.value;
+        select_custom(img_url_param);
     } else if (localStorage.Jigsaw_img_url) {
         img_url.value = localStorage.Jigsaw_img_url;
         carousel_i = sample_images.indexOf(localStorage.Jigsaw_img_url);
@@ -267,8 +296,7 @@ $(document).ready(function(){
             tab_resume();
         } else if (carousel_i < 0) {
             // Image URL wasn't from the samples, so go back to custom
-            set_radio_group_value('imgsel', 'custom');
-            img_custom.src = img_url.value;
+            select_custom(img_url.value);
         }
     }
 
@@ -293,5 +321,5 @@ $(document).ready(function(){
 export {
     pre_puzzle, test_image, paste_from_clipboard,
     tab_samples, tab_resume, input_custom_keypress, input_custom_onfocusout,
-    show_dialog_more_images
+    show_dialog_more_images, mi_preview_accepted
 };

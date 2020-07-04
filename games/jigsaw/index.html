@@ -62,6 +62,8 @@
                     <a class="carousel-item"><img src="media/Maine_state_line-240x180.jpg"/></a>
                     <a class="carousel-item"><img src="media/Ottawa-200px-squish.jpg"></a>
                 </div>
+                <button class="btn-small more-images" type="button"
+                    onclick="Launch.show_dialog_more_images()">More Images</button>
             </div>
             <div class="tab-custom">
                 <div class="input-field col s12">
@@ -74,6 +76,8 @@
                     </label>
                 </div>
                 <div class="img-wrap h50"><img id="img-custom" src="media/no-image.png" /></div>
+                <button class="btn-small more-images" type="button"
+                    onclick="Launch.show_dialog_more_images()">More Images</button>
             </div>
             <div class="tab-resume">
                 <p id="p-resume">No in-progress puzzle found</p>
@@ -125,11 +129,17 @@
 
     <!-- Modal list of more images -->
     <div id="moreImages" class="modal">
-        <div class="row">
+        <div class="row dia-heading">
             <div class="col s4 nav-bg-min"><h5>Select an image</h5></div>
-            <div class="col s8 nav-bg-min"><h5>Preview <a class="modal-close btn-small right">Select</a></h5></div>
+            <div class="col s8 nav-bg-min"><h5>Preview
+                <a class="modal-close btn-small right ml1 dia-btn"><i
+                    class="material-icons">close</i></a>
+                <a class="modal-close btn-small right dia-btn"
+                    onclick="Launch.mi_preview_accepted()"><i
+                    class="material-icons">check</i></a>
+            </h5></div>
         </div>
-        <div class="row">
+        <div class="row dia-body">
             <div id="div_mi_catalog" class="col s4">Loading catalog ...</div>
             <div class="col s8"><img id="moreImagesPreview" src="media/no-image.png" width="100%" height="auto"/></div>
         </div>

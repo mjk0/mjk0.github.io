@@ -83,6 +83,14 @@ p { font-size: 1.2em; }
 div.carousel, div.tab-samples, div.tab-custom, div.tab-resume {
     height: 260px;
 }
+div.tab-samples, div.tab-custom {
+    position: relative;
+}
+button.more-images {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+}
 label[for="img_url"] {
     font-size: 1.3rem;
     color: black;
@@ -220,5 +228,17 @@ label[for="iresume"], .tab-resume {
 .ul-indent { overflow: hidden; }
 .clear-left { clear: left; }
 .mw25 { max-width: 25vw; }
-#moreImages { max-height: 90%; }
-#moreImagesPreview { max-height: 70%; }
+#moreImages { max-height: 90vh; }
+#moreImagesPreview { max-height: 73vh; }
+img.more-images {
+    width: 100%; height: auto; max-height: 180px;
+}
+.row.dia-heading { height: 11vh; margin-bottom: 1vh; }
+.row.dia-body { height: 76vh; margin-bottom: 1vh; }
+#div_mi_catalog {
+    height: 74vh;
+    overflow-x: hidden; 
+    overflow-y: auto;
+}
+.ml1 { margin-left: 0.3em; color: red; }
+.dia-btn { font-size: larger; }
