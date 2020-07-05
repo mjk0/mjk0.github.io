@@ -130,18 +130,20 @@
     <!-- Modal list of more images -->
     <div id="moreImages" class="modal">
         <div class="row dia-heading">
-            <div class="col s4 nav-bg-min"><h5>Select an image</h5></div>
-            <div class="col s8 nav-bg-min"><h5>Preview
+            <div class="col s6 nav-bg-min"><h5>Select an image</h5></div>
+            <div class="col s6 nav-bg-min"><h5>Preview
                 <a class="modal-close btn-small right ml1 dia-btn"><i
                     class="material-icons">close</i></a>
-                <a class="modal-close btn-small right dia-btn"
-                    onclick="Launch.mi_preview_accepted()"><i
-                    class="material-icons">check</i></a>
             </h5></div>
         </div>
         <div class="row dia-body">
-            <div id="div_mi_catalog" class="col s4">Loading catalog ...</div>
-            <div class="col s8"><img id="moreImagesPreview" src="media/no-image.png" width="100%" height="auto"/></div>
+            <div id="div_mi_catalog" class="col s6">Loading catalog ...</div>
+            <div class="col s6 mi-preview-container"><img
+                id="moreImagesPreview" src="media/no-image.png"
+                width="100%" height="auto"/><a
+                class="modal-close btn-small dia-btn"
+                onclick="Launch.mi_preview_accepted()">Select</a
+            ></div>
         </div>
     </div>
 

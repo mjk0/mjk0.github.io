@@ -230,7 +230,7 @@ function show_dialog_more_images() {
     }
 }
 function fill_dialog_more_images( script, textStatus ) {
-    console.log( textStatus );
+    //console.log( textStatus );
     const micat_elem = document.getElementById('div_mi_catalog');
     micat_elem.innerHTML = '';
 

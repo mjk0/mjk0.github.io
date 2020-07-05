@@ -10,8 +10,8 @@ const dFormat = {
 
 var Game = {
     server: [
-        "wss://pizzamonster.org:8082",
-        "wss://pizzamonster.org:8081",
+        "wss://pizzamonster.org:8082/games/A45s/",
+        "wss://pizzamonster.org:8081/games/A45s/",
         "wss://pizzamonster.org/games/A45s/wss/"
     ],
     ws: null,
