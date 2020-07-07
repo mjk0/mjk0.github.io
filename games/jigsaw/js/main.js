@@ -1,5 +1,6 @@
 import * as Jig from './jigsaw.js';
 import * as Drag from './drag.js';
+import * as Ws from './ws.js';
 "use strict";
 
 const jopts = {
@@ -95,7 +96,7 @@ $(document).ready(function(){
 });
 
 export {
-    jopts, Drag, Jig,
+    jopts, Drag, Jig, Ws,
     scramble_puzzle, show_preview_image, fullscreen_toggle,
     set_scramble_no_center_area, set_scramble_no_preview_area,
     set_preview_size, set_bg_color

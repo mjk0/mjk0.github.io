@@ -8,6 +8,8 @@
     <link type="text/css" rel="stylesheet" href="/css/materialize.css" media="screen,projection"/>
     <link type="text/css" rel="stylesheet" href="css/index.css">
     <link rel="modulepreload" href="js/launch.js">
+    <link rel="modulepreload" href="js/ws.js">
+    <link rel="modulepreload" href="js/l_lists.js">
 </head>
 <body>
     <div class="row">
@@ -19,69 +21,25 @@
         </div>
         <div class="col s7 tab-selector">
             <div class="nav-bg"><i class="material-icons">looks_one</i>Select Image</div>
-            <input checked="checked" id="isamples" type="radio" name="imgsel" value="samples"
-                onclick="Launch.tab_samples()" />
-            <label class="label-tab" for="isamples">Sample Images</label>
-            <input id="icustom" type="radio" name="imgsel" value="custom" />
-            <label class="label-tab" for="icustom">Custom Image</label>
-            <input id="iresume" type="radio" name="imgsel" value="resume"
-                onclick="Launch.tab_resume()" />
-            <label class="label-tab" for="iresume">Resume</label>
-            <div class="tab-samples">
-                <div class="carousel">
-                    <a class="carousel-item"><img src="media/backyard-180px.jpg"></a>
-                    <a class="carousel-item"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcQQ1suy6-l8tJt5pl0OrYA9W6H_ewrwnau6fA0alyMHsTNgIiX2&usqp=CAU"></img></a>
-                    <a class="carousel-item"><img src="https://lh6.googleusercontent.com/proxy/NT5fRkJDFMB4paWCbHagCrFFzE7MQMViavDkEjcGMK8v_EuuQL-Fd3ELft76_Z13WYDVdi9L6q6iMxeoCBajWpjeiKmvhlvDxXyJwsdhLLxg7cs22QwkPqrSoVxB_N6Un16hPtyxKjZqQ7NKo2yhtgyvcn1cPNejwSShGrwSY9KYSl3rXRXl6ISCKqfGIenjqK0wK8GM02Cp8tpambzoypj4X3ZZ_xIeNd-Xy3zl8PvjjfyvH8YyPQvmXUhTAZwsw8N5qw=s240-w240-h135-fcrop64=1,00001999fffff3c7-k-no-nd-mv"></a>
-                    <a class="carousel-item"><img src="media/Water_Wheel-240px.jpg"></a>
-                    <a class="carousel-item"><img src="https://images.pexels.com/photos/371589/pexels-photo-371589.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=240"/></a>
-                    <a class="carousel-item"><img src="media/World_Map-240px.jpg"></a>
-                    <a class="carousel-item"><img src="media/Mason_Flowers-240px.jpg"/></a>
-                    <a class="carousel-item"><img src="media/Peach_Tree-240px.jpg"/></a>
-                    <a class="carousel-item"><img src="media/Blue_hydrangea-180px.jpg"/></a>
-                    <a class="carousel-item"><img src="media/Row_House-240px.jpg"/></a>
-                    <a class="carousel-item"><img src="media/art_Paris-240px.jpg"/></a>
-                    <a class="carousel-item"><img src="media/Garden_Serenity-240px.jpg"/></a>
-                    <a class="carousel-item"><img src="media/Chinese_Garden-240px.jpg" /></a>
-                    <a class="carousel-item"><img src="media/Falcon9-240px.jpg"/></a>
-                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Aerial_view_of_Love_valley_Cappadocia_from_hot_air_balloon_1510232_3_4_Compressor.jpg/180px-Aerial_view_of_Love_valley_Cappadocia_from_hot_air_balloon_1510232_3_4_Compressor.jpg"></a>
-                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Amur_tiger_yawning_widescreen.jpg/180px-Amur_tiger_yawning_widescreen.jpg"></a>
-                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/BaylorLineTunnel.jpg/180px-BaylorLineTunnel.jpg"></a>
-                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Biltmore_Estate-27527-1.jpg/180px-Biltmore_Estate-27527-1.jpg"></a>
-                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Biltmore_Estate-27527-2.jpg/180px-Biltmore_Estate-27527-2.jpg"></a>
-                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Bisbee_Arizona-27527-1.jpg/180px-Bisbee_Arizona-27527-1.jpg"></a>
-                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Black_Spiny-tailed_Iguana-27527.jpg/180px-Black_Spiny-tailed_Iguana-27527.jpg"></a>
-                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Cathedral_Rock_Water-27527-1.jpg/180px-Cathedral_Rock_Water-27527-1.jpg"></a>
-                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Feeding_Recharging.png/180px-Feeding_Recharging.png"></a>
-                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Grayson_Highlands_Ponies-27527-2.jpg/180px-Grayson_Highlands_Ponies-27527-2.jpg"></a>
-                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Iller_water_stair.jpg/180px-Iller_water_stair.jpg"></a>
-                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Katrinetorp_Mansion_close.jpg/180px-Katrinetorp_Mansion_close.jpg"></a>
-                    <a class="carousel-item"><img src="media/Moraine_Lake-240px.jpg"/></a>
-                    <a class="carousel-item"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Horsetram.jpg/320px-Horsetram.jpg"></a>
-                    <a class="carousel-item"><img src="https://i0.wp.com/fishingbooker.com/blog/media/victoria-bc-e1562251210497.jpg?fit=240%2C160&ssl=1"/></a>
-                    <a class="carousel-item"><img src="media/St_Johns-240px.jpg"/></a>
-                    <a class="carousel-item"><img src="media/Maine_state_line-240x180.jpg"/></a>
-                    <a class="carousel-item"><img src="media/Ottawa-200px-squish.jpg"></a>
+            <div class="row">
+                <div class="col from-btns s1tall">
+                    <button class="btn btn-img-from" type="button"
+                        onclick="Launch.show_dialog_named_list('favorites')">Browse Samples</button> 
+                    <button class="btn btn-img-from" type="button"
+                        onclick="Launch.show_dialog_from_url()"><i
+                        class="material-icons">insert_link</i> From URL</button>
+                    <button class="btn btn-img-from" type="button"
+                        onclick="document.getElementById('file-input').click()"><i
+                        class="material-icons">computer</i> From Computer</button>
+                    <input id="file-input" type="file" name="name" style="display: none;" />
+                    <button class="btn btn-img-resume" type="button"
+                        id="resume_btn" style="display: none;"><span><a
+                        href="puzzle.html" onclick="Launch.start_resume()"><i
+                        class="material-icons">send</i> Resume Last</a></span></button> 
                 </div>
-                <button class="btn-small more-images" type="button"
-                    onclick="Launch.show_dialog_more_images()">More Images</button>
-            </div>
-            <div class="tab-custom">
-                <div class="input-field col s12">
-                    <input placeholder="Image URL" id="img_url" type="text"
-                        onkeypress="Launch.input_custom_keypress(event)"
-                        onfocusout="Launch.input_custom_onfocusout(event)">
-                    <label for="img_url" class="active">Image URL:
-                        <button class="btn-small btn-paste" type="button"
-                            onclick="Launch.paste_from_clipboard()">Clear & Paste (Control-V)</button> 
-                    </label>
+                <div class="col from-preview s1tall" id="div_custom">
+                    <img id="img-custom" class="img-tall" src="media/no-image.png" />
                 </div>
-                <div class="img-wrap h50"><img id="img-custom" src="media/no-image.png" /></div>
-                <button class="btn-small more-images" type="button"
-                    onclick="Launch.show_dialog_more_images()">More Images</button>
-            </div>
-            <div class="tab-resume">
-                <p id="p-resume">No in-progress puzzle found</p>
-                <div class="img-wrap hrem"><img id="img-resume" src="media/no-image.png" /></div>
             </div>
         </div>
         <div class="col s5">
@@ -122,8 +80,28 @@
                 <button class="btn-small" type="button" onclick="Launch.test_image()">Test</button>
                 ) <span id="img_test_result"></span>
             </div>
+            <input id="img_url" type="text" readonly="readonly">
             <img id="img_test" width="100%"
                 src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" >
+        </div>
+    </div>
+
+    
+    <!-- Modal URL entry dialog -->
+    <div id="pasteURL" class="modal">
+        <div class="row dia-heading">
+            <div class="col s12 nav-bg-min">
+                <h5>Paste an Image URL (Press Ctrl+V)
+                    <a class="modal-close btn-small right ml1 dia-btn"><i
+                        class="material-icons">close</i></a>
+                </h5>
+            </div>
+            <div class="col s12 paste-bg">
+                <input type="text" id="input_paste" placeholder="http://">
+                <div><a class="modal-close btn-small right dia-btn mb"
+                    onclick="Launch.input_paste_accept()">Select</a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -131,16 +109,15 @@
     <div id="moreImages" class="modal">
         <div class="row dia-heading">
             <div class="col s6 nav-bg-min"><h5>Select an image</h5></div>
-            <div class="col s6 nav-bg-min"><h5>Preview
+            <div class="col s6 nav-bg-min"><h5><span id='mi_preview_span'>Preview</span>
                 <a class="modal-close btn-small right ml1 dia-btn"><i
                     class="material-icons">close</i></a>
             </h5></div>
         </div>
         <div class="row dia-body">
             <div id="div_mi_catalog" class="col s6">Loading catalog ...</div>
-            <div class="col s6 mi-preview-container"><img
-                id="moreImagesPreview" src="media/no-image.png"
-                width="100%" height="auto"/><a
+            <div class="col s6 mi-preview-container"><img class="img-wide"
+                id="moreImagesPreview" src="media/no-image.png"/><br><a
                 class="modal-close btn-small dia-btn"
                 onclick="Launch.mi_preview_accepted()">Select</a
             ></div>

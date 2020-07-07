@@ -3,6 +3,7 @@
 // from: http://www.petercollingridge.co.uk/tutorials/svg/interactive/dragging/
 //
 import * as Jig from './jigsaw.js';
+import { Ws } from './main.js';
 
 var svg;
 var selectedElement, offset, transform,
@@ -219,6 +220,7 @@ function drag(evt) {
 
                 // all done with puzzle?
                 if (sgrps[isg_new].neighbors.length == 0) {
+                    Ws.sendPuzzleDone(localStorage.Jigsaw_img_url, Jig.P.pieces);
                     sound_snap_stop();
                     sound_tada_play();
                     Jig.pss_remove();
