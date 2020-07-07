@@ -165,9 +165,14 @@ button.menu-btn.settings ~ .panel-wrap {
     width: 100%;
     margin-bottom: 1em;
 }
-.btn-img-from { background-color: maroon; }
+.btn-img-from, .btn-img-from:focus, .b-img-span, .b-img-div { background-color: maroon; }
 .btn-img-from:hover { background-color: crimson; }
-.from-btns { width: 14em; }
+.from-btns, .b-img-div { width: 14em; }
+.b-img-div {
+    text-transform: uppercase; color: white; display: inline-block;
+    text-align: center; letter-spacing: .5px; cursor: pointer;
+    margin-bottom: 0.2em; padding: 0.2em 0px;
+}
 .from-preview {
     width: calc(100% - 14em);
     text-align: center;
@@ -185,10 +190,11 @@ button.menu-btn.settings ~ .panel-wrap {
     outline: 1px solid black;
     padding: 0 0.2em;
 }
-.bspan {
-    background-color: #26a69a; color: white; padding: 0 0.2em;
+.bspan, .b-img-span {
+    color: white; padding: 0 0.2em;
     box-shadow: 0 0 2px 0px black;
 }
+.bspan { background-color: #26a69a; }
 .left { float: left; margin-right: 2em; }
 .ul-indent { overflow: hidden; }
 .clear-left { clear: left; }

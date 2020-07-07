@@ -65,7 +65,7 @@ function mi_preview_accepted() {
     select_custom(mi_preview.src);
 }
 function mi_preview_failed() {
-    mi_preview.src="media/exclamation-pink-300x158.png";
+    mi_preview.src="media/exclamation-pink-300x300.png";
     mi_preview_span.innerHTML = "Preview";
 }
 var mi_list_in_catalog = ""; // no list fills div_mi_catalog
@@ -138,7 +138,7 @@ function img_aspect_onload(ev) {
     }
 }
 function img_custom_onerror(ev) {
-    img_custom.src = "media/exclamation-pink-300x158.png";
+    img_custom.src = "media/exclamation-pink-300x300.png";
 }
 
 // File chosen from computer local files
