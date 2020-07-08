@@ -126,19 +126,30 @@ function select_custom(theurl) {
 }
 // After img_custom load success, calls this event handler
 function img_aspect_onload(ev) {
+    img_aspect_resize(ev.target);
+}
+function img_aspect_resize(elem) {
     // image and container aspect ratios
-    let ic_ratio = ev.target.naturalWidth / ev.target.naturalHeight; // natural aspect ratio
-    let ct_ratio = ev.target.parentElement.clientWidth / ev.target.parentElement.clientHeight;
-    if (ic_ratio > ct_ratio && ev.target.classList.contains('img-tall')) {
-        ev.target.classList.remove('img-tall');
-        ev.target.classList.add('img-wide');
-    } else if (ic_ratio < ct_ratio && ev.target.classList.contains('img-wide')) {
-        ev.target.classList.remove('img-wide');
-        ev.target.classList.add('img-tall');
+    let ic_ratio = elem.naturalWidth / elem.naturalHeight; // natural aspect ratio
+    let ct_ratio = elem.parentElement.clientWidth / elem.parentElement.clientHeight;
+    if (ic_ratio > ct_ratio && elem.classList.contains('img-tall')) {
+        elem.classList.remove('img-tall');
+        elem.classList.add('img-wide');
+    } else if (ic_ratio < ct_ratio && elem.classList.contains('img-wide')) {
+        elem.classList.remove('img-wide');
+        elem.classList.add('img-tall');
     }
 }
 function img_custom_onerror(ev) {
     img_custom.src = "media/exclamation-pink-300x300.png";
+}
+function window_onresize(event) {
+    if (window.getComputedStyle(mi_preview).display != "none") {
+        // Allow aspect ratio check on selection dialog preview if open
+        img_aspect_resize(mi_preview);
+    }
+    // Allow img_custom aspect ratio check
+    img_aspect_resize(img_custom);
 }
 
 // File chosen from computer local files
@@ -228,6 +239,9 @@ $(document).ready(function(){
 
     // Initialize Ws module (does not establish WebSocket until sending first message)
     Ws.init(wsRcvList);
+
+    // When the main window resizes, check aspect ratios of preview images
+    window.addEventListener('resize', window_onresize);
 
     // Initialize modal dialogs
     $('.modal').modal();
