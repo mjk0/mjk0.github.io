@@ -228,11 +228,15 @@ img.more-images {
     animation: resume_btn_anim 1s linear 0s infinite alternate;
     box-shadow: 0 0 8px 0px yellow;
 }
+button.btn-small.nav-bg-min.right { font-size: 2vw; }
 .tbl-raw td { padding: 0px; }
 .tbl-raw td:nth-child(2) { text-align: center; }
 .tbl-raw td button {
     max-width: 15vw;
+}
+.tbl-raw td button, h5 {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+h5 { height: 1.5em; }
