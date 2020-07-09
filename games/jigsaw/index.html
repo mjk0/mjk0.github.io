@@ -20,7 +20,10 @@
             <div class="divider"></div>
         </div>
         <div class="col s7 tab-selector">
-            <div class="nav-bg"><i class="material-icons">looks_one</i>Select Image</div>
+            <div class="nav-bg"><i class="material-icons">looks_one</i>Select Image
+                <button class="btn-small nav-bg-min right" type="button"
+                    onclick="Launch.show_dialog_named_list('raw')">All Recent</button>
+            </div>
             <div class="row">
                 <div class="col from-btns s1tall">
                     <button class="btn btn-img-from" type="button"
@@ -108,7 +111,7 @@
     <!-- Modal list of more images -->
     <div id="moreImages" class="modal">
         <div class="row dia-heading">
-            <div class="col s6 nav-bg-min"><h5>Select an image</h5></div>
+            <div class="col s6 nav-bg-min"><h5 id="mi_heading">Select an image</h5></div>
             <div class="col s6 nav-bg-min"><h5><span id='mi_preview_span'>Preview</span>
                 <a class="modal-close btn-small right ml1 dia-btn"><i
                     class="material-icons">close</i></a>

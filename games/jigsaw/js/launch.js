@@ -60,7 +60,7 @@ function set_radio_group_value(group, val) {
     $('input[name="'+group+'"][value="'+val+'"]').prop('checked', true);
 }
 
-var mi_preview, mi_preview_span;
+var mi_heading, micat_elem, mi_preview, mi_preview_span;
 function mi_preview_accepted() {
     select_custom(mi_preview.src);
 }
@@ -68,21 +68,34 @@ function mi_preview_failed() {
     mi_preview.src="media/exclamation-pink-300x300.png";
     mi_preview_span.innerHTML = "Preview";
 }
+const mi_list_heading = {
+    'favorites': 'Browse Samples',
+    'raw':       'Recently Completed Puzzles',
+};
+const fill_dialog_fillers = {
+    'favorites': fill_dialog_from_favorites_list,
+    'raw':       fill_dialog_from_raw_list,
+};
 var mi_list_in_catalog = ""; // no list fills div_mi_catalog
 function show_dialog_named_list(name) {
     $('#moreImages').modal('open');
     if (mi_list_in_catalog != name) {
+        mi_heading.innerHTML = mi_list_heading[name] || "Images";
         if (Lists.exists(name)) {
             fill_dialog_from_server_list(name);
         } else {
+            micat_elem.innerHTML = 'Loading ...';
             Ws.getList(name);
         }
     }
 }
 function fill_dialog_from_server_list( name ) {
     const arr = Lists.getList(name);
-    const micat_elem = document.getElementById('div_mi_catalog');
     micat_elem.innerHTML = '';
+    fill_dialog_fillers[name](arr); // call handler for this list type
+    mi_list_in_catalog = name;
+}
+function fill_dialog_from_favorites_list( arr ) {
     let cnt = 0;
 
     // Create <img> tags for each server URL list entry
@@ -98,7 +111,48 @@ function fill_dialog_from_server_list( name ) {
         });
         micat_elem.appendChild(img);
     });
-    mi_list_in_catalog = name;
+}
+const dFormat = {
+    year:'numeric', month:'numeric', day:'numeric',
+    hour:'2-digit',minute:'2-digit',
+    //timeZoneName:'short'
+};
+// {"url":"https://...","pieces":50,"dt":"2020-07-08T05:48:02.311Z","title":"custom"}
+function fill_dialog_from_raw_list( arr ) {
+    var table = document.createElement("table");
+    table.className = "tbl-raw";
+    // Create table row for each raw list entry, newest (last entry) first
+    for (let i=arr.length-1; i >= 0; --i) {
+        let e = arr[i];
+        let row = table.insertRow(-1); // insert row at end
+        let cell = row.insertCell(-1);
+
+        // Cell 1, date of completion
+        const ti = new Date(e.dt);
+        cell.innerHTML = ti.toLocaleDateString(undefined, dFormat);
+
+        // Cell 2, title as a preview button
+        cell = row.insertCell(-1);
+        let title = e.title || e.origin || "custom";
+        if (title == "data") {
+            cell.innerHTML = title;
+        } else {
+            let btn = document.createElement('button');
+            btn.type = "button"; btn.className = "menu-btn";
+            btn.value = e.url;  btn.name = title;
+            btn.innerHTML = '<i class="material-icons">image</i>'+  title;
+            btn.onclick = function(event) {
+                mi_preview.src = event.target.value;
+                mi_preview_span.innerHTML = '"'+event.target.name+'"';
+            }
+            cell.appendChild(btn);
+        }
+
+        // Cell 3, number of pieces
+        cell = row.insertCell(-1);
+        cell.innerHTML = ''+e.pieces+' pcs';
+    };
+    micat_elem.appendChild(table);
 }
 
 // Allow user to Paste an image URL
@@ -186,6 +240,8 @@ function set_visibility(selector, bool) {
 $(document).ready(function(){
     //let a_start = document.getElementById("a_start");
     //a_start.addEventListener("click", pre_puzzle);
+    mi_heading = document.getElementById('mi_heading');
+    micat_elem = document.getElementById('div_mi_catalog');
     mi_preview = document.getElementById('moreImagesPreview');
     mi_preview_span = document.getElementById('mi_preview_span');
     mi_preview.addEventListener("error", mi_preview_failed);
@@ -245,10 +301,11 @@ $(document).ready(function(){
 
     // Initialize modal dialogs
     $('.modal').modal();
+    $('#moreImages').modal({endingTop: '5%'});
 });
 
 export {
-    pre_puzzle, test_image,
+    Lists, Ws, pre_puzzle, test_image,
     tab_resume, start_resume,
     show_dialog_from_url, input_paste_keypress, input_paste_accept,
     show_dialog_named_list, mi_preview_accepted

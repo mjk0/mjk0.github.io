@@ -11,7 +11,7 @@ const url_lists = {
     {title:'Winter village 2',url:"https://images.fineartamerica.com/images-medium-large-5/winter-village-stream-steve-crisp.jpg"},
     {title:'Canyon sun',url:"https://images.unsplash.com/photo-1526749837599-b4eba9fd855e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1650&q=80"},
 
-    {title:'Lake beach',url:"https://images.unsplash.com/photo-1561467059-f815ae1ef5eb?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1700&q=80"},
+    {title:'Picnic',url:"https://i.pinimg.com/originals/a3/f6/8c/a3f68c9cfef65dba0d79417aba614e5a.jpg"},
     {title:'Rainy night walk',url:"https://ae01.alicdn.com/kf/HTB1cjIiMpXXXXceXVXXq6xXFXXXw/Rainy-Night-Walk-The-wooden-puzzle-1000-pieces-paper-jigsaw-puzzle-white-card-adult-children-s.jpg"},
     {title:'Copenhagen 2',url:"https://bucketlistjourney.net/wp-content/uploads/2009/11/91g92vfAp3L._SL1500_.jpg"},
  
@@ -53,6 +53,8 @@ const url_lists = {
 
     {title:'Falcon 9 launch',url:"https://mk0spaceflightnoa02a.kinstacdn.com/wp-content/uploads/2020/06/49956109906_44a0b5541c_k.jpg"},
     {title:'Ottawa locks',url:"media/Ottawa-768px.jpg"},
+    {title:'Lake beach',url:"https://images.unsplash.com/photo-1561467059-f815ae1ef5eb?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1700&q=80"},
+    
     {title:'Tulips 1',url:"https://images.unsplash.com/photo-1488928741225-2aaf732c96cc?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1650&q=80"},
 
     /* {title:"", url:""}, */

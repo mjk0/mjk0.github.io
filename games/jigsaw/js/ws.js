@@ -14,6 +14,7 @@ const WsActionHandlers = {
 let ws = null;
 let rcvCallback = null;
 let sendQueue = [];
+let closeOnReceive = true;
 
 function wsInit() {
     const test = (urlParams.get('test') || 0);
@@ -76,6 +77,9 @@ function close() {
     ws.close();
     ws = null;
 }
+function setCloseOnReceive(bool) {
+    closeOnReceive = bool;
+}
 
 // {"action":"pzDone"}
 function sendPuzzleDone(url, pieces) {
@@ -95,6 +99,9 @@ function sendCloseMe() {
 
 // responds with: {"action":"list", "name":"favorites", "list":[] }
 function rcvUrlList(data) {
+    if (closeOnReceive) {
+        close();
+    }
     rcvCallback(data);
 }
 function getList(name) {
@@ -107,5 +114,5 @@ function init(cb) {
 }
 
 export {
-    init, close, sendPuzzleDone, sendCloseMe, getList
+    init, close, sendPuzzleDone, sendCloseMe, getList, setCloseOnReceive
 };
