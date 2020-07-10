@@ -188,7 +188,7 @@ function get_svg_image_set_viewBox(callback)
 
         // Scale down anough to make puzzle image use no more than half the SVG area (area_ratio >= 2)
         let area_ratio = Math.max(scale_max_x, scale_max_y) / Math.min(scale_max_x, scale_max_y);
-        let scale_xy = (area_ratio < P.areaRatio) ? Math.sqrt(P.areaRatio / area_ratio) : 1.05;
+        let scale_xy = Math.max(Math.sqrt(P.areaRatio / area_ratio), 1.05);
         P.viewBox = {
             minX: 0, minY: 0,
             w: puzzle_img.naturalWidth * scale_xy,
