@@ -70,10 +70,12 @@ function mi_preview_failed() {
 }
 const mi_list_heading = {
     'favorites': 'Browse Samples',
+    'recent':    'Recent URL Submissions',
     'raw':       'Recently Completed Puzzles',
 };
 const fill_dialog_fillers = {
     'favorites': fill_dialog_from_favorites_list,
+    'recent':    fill_dialog_from_recent_list,
     'raw':       fill_dialog_from_raw_list,
 };
 var mi_list_in_catalog = ""; // no list fills div_mi_catalog
@@ -101,16 +103,27 @@ function fill_dialog_from_favorites_list( arr ) {
     // Create <img> tags for each server URL list entry
     arr.forEach(e => {
         ++cnt;
-        var img = document.createElement("img");
-        img.className = "more-images";
-        img.src = e.url || e;
-        img.alt = e.title || ("image "+cnt);
-        img.addEventListener('click', function(event) {
-            mi_preview.src = event.target.src;
-            mi_preview_span.innerHTML = '"'+event.target.alt+'"';
-        });
-        micat_elem.appendChild(img);
+        micat_elem_append_img(e, cnt);
     });
+}
+function fill_dialog_from_recent_list( arr ) {
+    for (let i=arr.length-1; i >= 0; --i) {
+        let img = micat_elem_append_img(arr[i], i+1);
+        img.addEventListener('error', remove_private_URL);
+    }
+}
+function micat_elem_append_img(e, cnt) {
+    // Create img tag from server list entry, and append to dialog
+    var img = document.createElement("img");
+    img.className = "more-images";
+    img.src = e.url || e;
+    img.alt = e.title || ("image "+cnt);
+    img.addEventListener('click', function(event) {
+        mi_preview.src = event.target.src;
+        mi_preview_span.innerHTML = '"'+event.target.alt+'"';
+    });
+    micat_elem.appendChild(img);
+    return img;
 }
 const dFormat = {
     year:'numeric', month:'numeric', day:'numeric',
@@ -134,13 +147,19 @@ function fill_dialog_from_raw_list( arr ) {
         // Cell 2, title as a preview button
         cell = row.insertCell(-1);
         let title = e.title || e.origin || "custom";
+        if (title == "custom") { title = "from URL"; }
         if (title == "data") {
-            cell.innerHTML = title;
+            cell.innerHTML = "local";
         } else {
             let btn = document.createElement('button');
             btn.type = "button"; btn.className = "menu-btn";
             btn.value = e.url;  btn.name = title;
-            btn.innerHTML = '<i class="material-icons">image</i>'+  title;
+            if (title == "private") {
+                btn.innerHTML = '<i class="material-icons">block</i>'+ title;
+                btn.classList.add('color-red');
+            } else {
+                btn.innerHTML = '<i class="material-icons">image</i>'+  title;
+            }
             btn.onclick = function(event) {
                 mi_preview.src = event.target.value;
                 mi_preview_span.innerHTML = '"'+event.target.name+'"';
@@ -153,6 +172,12 @@ function fill_dialog_from_raw_list( arr ) {
         cell.innerHTML = ''+e.pieces+' pcs';
     };
     micat_elem.appendChild(table);
+}
+
+// Custom URL img load failed, mark as private on server
+function remove_private_URL(event) {
+    Ws.sendRmUrl([event.target.src]); // mark private on server
+    event.target.parentElement.removeChild(event.target); // remove image from dialog
 }
 
 // Allow user to Paste an image URL

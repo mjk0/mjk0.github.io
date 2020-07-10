@@ -97,6 +97,11 @@ function sendCloseMe() {
     wsSendMsg({'action': 'closeMe'});
 }
 
+function sendRmUrl(urlArr) {
+    wsSendMsg({'action': 'rmUrl', 'urls':urlArr});
+    sendCloseMe();
+}
+
 // responds with: {"action":"list", "name":"favorites", "list":[] }
 function rcvUrlList(data) {
     if (closeOnReceive) {
@@ -114,5 +119,5 @@ function init(cb) {
 }
 
 export {
-    init, close, sendPuzzleDone, sendCloseMe, getList, setCloseOnReceive
+    init, close, sendPuzzleDone, sendCloseMe, getList, setCloseOnReceive, sendRmUrl
 };

@@ -165,6 +165,7 @@ button.menu-btn.settings ~ .panel-wrap {
     width: 100%;
     margin-bottom: 1em;
 }
+.btn-img-smaller { font-size: 80%; }
 .btn-img-from, .btn-img-from:focus, .b-img-span, .b-img-div { background-color: maroon; }
 .btn-img-from:hover { background-color: crimson; }
 .from-btns, .b-img-div { width: 14em; }
@@ -240,3 +241,4 @@ button.btn-small.nav-bg-min.right { font-size: 2vw; }
     white-space: nowrap;
 }
 h5 { height: 1.5em; }
+.color-red { color: red; }
