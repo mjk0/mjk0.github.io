@@ -152,13 +152,14 @@ function fill_dialog_from_raw_list( arr ) {
             cell.innerHTML = "local";
         } else {
             let btn = document.createElement('button');
-            btn.type = "button"; btn.className = "menu-btn";
-            btn.value = e.url;  btn.name = title;
+            btn.type = "button"; btn.className = "menu-btn"; btn.name = title;
             if (title == "private") {
                 btn.innerHTML = '<i class="material-icons">block</i>'+ title;
                 btn.classList.add('color-red');
+                btn.value = "media/exclamation-pink-300x300.png";
             } else {
                 btn.innerHTML = '<i class="material-icons">image</i>'+  title;
+                btn.value = e.url;
             }
             btn.onclick = function(event) {
                 mi_preview.src = event.target.value;
