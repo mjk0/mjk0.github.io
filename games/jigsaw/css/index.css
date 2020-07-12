@@ -115,17 +115,27 @@ button.menu-btn{
 svg circle {
     cursor: pointer;
     fill: white;
-}
-svg circle:hover {
-    fill: red;
-}
-path#xpath {
-    cursor: pointer;
     stroke: black;
 }
-path#xpath:hover {
-    stroke: red;
+svg circle:hover {
+    fill: yellow;
 }
+.cbtn { visibility: hidden; font-size: x-large; }
+.showCbtn .cbtn {
+    visibility: visible;
+}
+path#xpath, svg text {
+    cursor: pointer;
+    pointer-events: none;
+}
+svg text {
+    stroke: black;
+}
+path#xpath {
+    stroke: white;
+}
+.cbtn.cbtnred { fill: red; }
+.cbtn.cbtnred:hover { fill: orangered; }
 /* slide-out panel layout mechanics */
 .panel-wrap {
     position: fixed;

@@ -295,11 +295,11 @@ function create_tiles(edges, attributes) {
             var pathElement = svg.appendChild(path);
 
             // Save bounding box width & height as attributes
-            let bbox = pathElement.getBBox();
+            /*let bbox = pathElement.getBBox();
             pathElement.setAttribute('bbminx', bbox.x);
             pathElement.setAttribute('bbmaxx', bbox.x + bbox.width);
             pathElement.setAttribute('bbminy', bbox.y);
-            pathElement.setAttribute('bbmaxy', bbox.y + bbox.height);
+            pathElement.setAttribute('bbmaxy', bbox.y + bbox.height);*/
         }
     }
     //let r1 = $('r1'); svg.removeChild(r1); svg.appendChild(r1); // move to end of list
@@ -314,15 +314,17 @@ function create_tiles(edges, attributes) {
         <circle cx="120" cy="120" r="110" stroke="black" stroke-width="20" fill="white" />
     </g>
 */
+var pt_g;
 function create_preview_tile(scale) {
     // Remove existing preview, if it exists
     rm_preview_tile();
     // Set stroke-width to equivalent of given value on 1k width image
-    let sw = 40 * P.strokeW1k * width / 1000.0; // thick for preview image tile
+    let sw = 80 * P.strokeW1k * width / 1000.0; // thick for preview image tile
+    let csw = sw/8;
 
     // Create g and contents
-    let g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    svg_add_attributes(g, { id:-1, class: 'draggable'});
+    pt_g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    svg_add_attributes(pt_g, { id:-1, class: 'draggable'});
     var rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
     svg_add_attributes(rect, {
         x:0, y:0, class: 'draggable dragparent',
@@ -331,13 +333,14 @@ function create_preview_tile(scale) {
     });
     var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     let cx = (P.naturalWidth*scale-sw);
+    let cy = sw+csw/2;
     svg_add_attributes(circle, {
-        cx:cx, cy:sw, r:sw,
-        stroke:"black", 'stroke-width':(sw/4), fill:"inherit"
+        cx:cx, cy:cy, r:sw,
+        'stroke-width':(csw), fill:"inherit", class:"cbtn cbtnred"
     });
     var xpath = svg_path({
-        d:"M"+(cx-sw/2)+" "+(sw/2)+" l"+sw+" "+sw+" M"+(cx-sw/2)+" "+(sw*1.5)+" l"+sw+" -"+sw,
-        id:'xpath', stroke:"inherit", 'stroke-width':(sw/4)
+        d:"M"+(cx-sw/2)+" "+(cy-sw/2)+" l"+sw+" "+sw+" M"+(cx-sw/2)+" "+(cy+sw/2)+" l"+sw+" -"+sw,
+        id:'xpath', stroke:"inherit", 'stroke-width':csw, class:"cbtn"
     });
     /*
     let anim = document.createElementNS("http://www.w3.org/2000/svg", "animate");
@@ -352,17 +355,34 @@ function create_preview_tile(scale) {
 
     let tr_translate = svg.createSVGTransform();
     tr_translate.setTranslate(P.viewBox.minX+P.viewBox.w-(P.naturalWidth*scale), P.viewBox.minY);
-    g.transform.baseVal.insertItemBefore(tr_translate, 0);
+    pt_g.transform.baseVal.insertItemBefore(tr_translate, 0);
 
     // Add elements to SVG
-    g.appendChild(rect);
-    g.appendChild(circle);
-    g.appendChild(xpath);
-    //g.appendChild(anim);
-    svg.appendChild(g);
+    pt_g.appendChild(rect);
+    pt_g.appendChild(circle);
+    pt_g.appendChild(xpath);
+    // Add zoom circle buttons
+    for (const [zi, zv] of ['S', 'M', 'L', 'H'].entries()) {
+        let cZoom = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        svg_add_attributes(cZoom, {
+            cx:(cx-sw*2*(1.5+zi)), cy:cy, r:sw, id:zv,
+            'stroke-width':(csw), fill:"inherit", class:"cbtn"
+        });
+        pt_g.appendChild(cZoom);
+        cZoom.addEventListener('click', cZoom_onclick);
+        let text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        svg_add_attributes(text, {
+            x:(cx-sw*2*(1.5+zi)), y:cy,
+            'dominant-baseline':"middle", 'text-anchor': "middle", class:"cbtn"
+        });
+        text.textContent = zv;
+        pt_g.appendChild(text);
+    }
+    svg.appendChild(pt_g);
 
+    pt_g.addEventListener('mouseenter', preview_tile_buttons_visible);
+    pt_g.addEventListener('mouseleave', preview_tile_buttons_hidden);
     circle.addEventListener('click', rm_preview_tile);
-    xpath.addEventListener('click', rm_preview_tile);
 }
 function rm_preview_tile(event) {
     resize_preview_tile(0);
@@ -378,7 +398,17 @@ function resize_preview_tile(scale) {
         }
     }
 }
-
+const cZoom_letter_to_scale = {H:0.75, L:0.5, M:0.33, S:0.25};
+function cZoom_onclick(event) {
+    let scale = cZoom_letter_to_scale[event.target.id] || 0.4;
+    resize_preview_tile(scale);
+}
+function preview_tile_buttons_visible(event) {
+    pt_g.classList.add('showCbtn');
+}
+function preview_tile_buttons_hidden(event) {
+    pt_g.classList.remove('showCbtn');
+}
 // for better spacing of random tiles, define spacing grid
 const gsp = {
     gscale: 1.2,
@@ -530,12 +560,11 @@ function scramble_tiles(opts) {
 
     for (let el of paths) {
         if (el.id >= "0" && el.id < "A") {
-            let bbminx = +el.getAttribute('bbminx'); // '+' converts to numeric
-            let bbmaxx = +el.getAttribute('bbmaxx');
-            let bbminy = +el.getAttribute('bbminy');
-            let bbmaxy = +el.getAttribute('bbmaxy');
-            let el_w = bbmaxx - bbminx;
-            let el_h = bbmaxy - bbminy;
+            let bbox = el.getBBox();
+            let bbminx = bbox.x;
+            let bbminy = bbox.y;
+            let el_w = bbox.width;
+            let el_h = bbox.height;
             let transform = el.transform.baseVal.getItem(0);
             let idn = +el.id;
 

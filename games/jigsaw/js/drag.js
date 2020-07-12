@@ -368,13 +368,18 @@ function change_boundaries(viewBox) {
     // Check that every path is within the viewbox
     let paths = svg.getElementsByTagName('path');
     for (let el of paths) {
+        if (el.id == "xpath") {
+            // for preview tile, move the parent g
+            el = el.parentNode;
+        }
         let transform = el.transform.baseVal.getItem(0);
         let offsetX = transform.matrix.e;
         let offsetY = transform.matrix.f;
-        let bbminx = +el.getAttribute('bbminx'); // '+' converts to numeric
-        let bbmaxx = +el.getAttribute('bbmaxx');
-        let bbminy = +el.getAttribute('bbminy');
-        let bbmaxy = +el.getAttribute('bbmaxy');
+        let bbox = el.getBBox();
+        let bbminx = bbox.x;
+        let bbmaxx = bbox.x + bbox.width;
+        let bbminy = bbox.y;
+        let bbmaxy = bbox.y + bbox.height;
 
         // Check all 4 edges
         if (bbminx + offsetX < boundaryX1) {
