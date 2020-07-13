@@ -427,17 +427,7 @@ const gsp = {
         this.cnt.length = this.xn*this.yn;
         this.cnt.fill(0);
 
-        // Block off alternating grid locations
         let nogo = 99;
-        /*let nogomod = 1;
-        for (let r=0; r < this.yn; ++r) {
-            for (let c=0; c < this.xn; ++c) {
-                if ((c&0x1) == nogomod) {
-                    this.cnt[r*this.xn+c] = nogo;
-                }
-            }
-            nogomod = 1 - nogomod;
-        }*/
         // Block off edge outline?
         if (opts && opts.avoidEdgeOutline) {
             let rc00 = this.rc({x:0,y:0});
@@ -445,7 +435,7 @@ const gsp = {
             let rc0md = rc0m - rc00;
             let rcm0 = this.rc({x:0, y:(P.naturalHeight-P.naturalHeight/P.yn)});
             let rcm0d = rcm0 - rc00;
-            for (let rc=rc00; rc < rc0m; ++rc) {
+            for (let rc=rc00; rc <= rc0m; ++rc) {
                 //[-this.xn, 0, this.xn, rcm0d-this.xn, rcm0d, rcm0d+this.xn].forEach( v => {
                 [0, rcm0d].forEach( v => {
                         if (rc+v >= 0 && rc+v < this.cnt.length) {
@@ -453,7 +443,7 @@ const gsp = {
                     }
                 });
             }
-            for (let rc=rc00; rc < rcm0; rc += this.xn) {
+            for (let rc=rc00+this.xn; rc < rcm0; rc += this.xn) {
                 //[-1, 0, 1, rc0md-1, rc0md, rc0md+1].forEach( v => {
                 [0, rc0md].forEach( v => {
                     if (rc+v >= 0 && rc+v < this.cnt.length) {
@@ -462,6 +452,7 @@ const gsp = {
                 });
             }
         }
+        //console.log(this.cnt);
     },
     rc: function(pos) {
         let c = Math.floor((pos.x-P.viewBox.minX) / this.gtilew);
