@@ -9,7 +9,7 @@ var svg;
 var selectedElement, offset, transform,
     minX, maxX, minY, maxY;
 var snap_sound, tada_sound;
-var settings_panel;
+var settings_panel, more_btn;
 var drg = {
     r:          0,  // row of dragging tile
     c:          0,  // col of dragging tile
@@ -40,6 +40,7 @@ function drag_init(thesvg, viewBox) {
     snap_sound = document.getElementById('snap-sound');
     tada_sound = document.getElementById('tada-sound');
     settings_panel = document.getElementById('settings');
+    more_btn = document.getElementById('more_btn');
 
     // Initialize drag group data
     drg.bb = {width:(Jig.P.naturalWidth/Jig.P.xn), height:(Jig.P.naturalHeight/Jig.P.yn)};
@@ -81,6 +82,112 @@ function snap_grp_restore() {
     }
 }
 
+// Return an array of sorted sgrps indices, with the largest group first
+function snap_grp_sorted_indices() {
+    let arr = [];
+    // removed snap groups are set to null
+    for (let sgi=0; sgi < sgrps.length; ++sgi) {
+        if (sgrps[sgi] !== null) {
+            arr.push(sgi);
+        }
+    }
+    // Sort by group size
+    arr.sort((a,b) => {
+        return sgrps[a].ids.length - sgrps[b].ids.length;
+    });
+    return arr;
+}
+
+// Show edge tiles by fading non-edge tiles
+function tiles_show_edges() {
+    let idrc = {r:-1, c:-1};
+    for(let el=svg.firstChild; el!==null; el=el.nextSibling) {
+        if (el.id >= "0" && el.id < "A") {
+            Jig.id_to_rc(el.id, idrc);
+            // Is it a non-edge piece?
+            if (idrc.r > 0 && idrc.r < Jig.P.yn-1 && idrc.c > 0 && idrc.c < Jig.P.xn-1) {
+                let anim = anim_create({attributeName:'opacity', values:'0.05;0.1;0.05'});
+                el.appendChild(anim);
+                anim.beginElement();
+            }
+        }
+    }
+
+}
+// Create SVG animate element, with preset duration and repeatCount
+function anim_create(attr) {
+    let anim = document.createElementNS("http://www.w3.org/2000/svg", "animate");
+    Jig.svg_add_attributes(anim, { dur:'1s', repeatCount:'indefinite' });
+    Jig.svg_add_attributes(anim, attr);
+    return anim;
+}
+
+// Find any tiles that are obstructed, and make them visible
+function tiles_show_hidden(opts) {
+    animate_stroke_tiles_cleanup();
+    let gsp = Jig.init_spacing_grid(opts);
+    let sgi = snap_grp_sorted_indices();
+    let pos = {x:0, y:0};
+    //const sws = 'stroke-width';
+    const sw = Jig.P.strokeW1k * Jig.P.naturalWidth / 1000.0;
+    var anim = null;
+
+    // Check a tile for obstruction.  If yes, raise and animate
+    function anim_raise_tile(el, arr_anim_parents) {
+        Jig.get_pos_for_tile(pos, el);
+        let cnt = gsp.count(pos);
+        if (cnt > 1) {
+            el.setAttribute('stroke', 'lawngreen');
+            //el.setAttribute(sws, sw);
+            // bubble to top for smaller snap groups
+            svg.removeChild(el);
+            svg.appendChild(el);
+            anim = anim_create({attributeName:'stroke-width', values:''+sw+';'+(sw*10)+';'+sw});
+            el.appendChild(anim);
+            anim.beginElement();
+            arr_anim_parents.push(el);
+        }
+    }
+
+    // Add each group to spacing grid
+    let arr_anim_el = []; // For each snap group, collect obscured member tiles
+    for (let i of sgi) {
+        for (let sid of sgrps[i].ids) {
+            let el = svg.getElementById(sid);
+            anim_raise_tile(el, arr_anim_el);
+        }
+        // If some snap group memners are not obstructed, remove animation
+        if (arr_anim_el.length != sgrps[i].ids.length) {
+            arr_anim_el.forEach(animate_cleanup);
+        }
+        arr_anim_el.length = 0;
+    }
+    // Add each loose tile to spacing grid
+    let loose_tiles = [];
+    for(let el=svg.firstChild; el!==null; el=el.nextSibling) {
+        if (el.id >= "0" && el.id < "A" && id_to_isg(el.id) < 0) {
+            loose_tiles.push(el); // collect list first, since must reorder to raise
+        }
+    }
+    for (let el of loose_tiles) {
+        anim_raise_tile(el, arr_anim_el);
+    }
+}
+function btn_mvObTiles_disable(bool) {
+    document.getElementById('mvObTiles').disabled = bool;
+}
+function animate_cleanup(el) {
+    if (el.lastChild && el.lastChild.tagName == "animate") {
+        el.removeChild(el.lastChild);
+        el.setAttribute('stroke', 'black');
+    }
+}
+function animate_stroke_tiles_cleanup() {
+    for(let el=svg.firstChild; el!==null; el=el.nextSibling) {
+        animate_cleanup(el);
+    }
+}
+
 function set_boundaries(viewBox) {
     boundaryX1 = viewBox.minX;
     boundaryX2 = viewBox.minX + viewBox.w;
@@ -109,10 +216,23 @@ function getMousePosition(evt) {
     };
 }
 
-function startDrag(evt) {
+// If more button dropdown is visible, hide it
+function menu_collapse() {
+    settings_collapse();
+    more_collapse();
+}
+function settings_collapse() {
     if (settings_panel.classList.contains('settings')) {
         settings_panel.classList.remove('settings');
     }
+}
+function more_collapse() {
+    if (more_btn.classList.contains('dropdown-trigger')) {
+        more_btn.classList.remove('dropdown-trigger');
+    }
+}
+function startDrag(evt) {
+    menu_collapse();
     if (evt.target.classList.contains('draggable')) {
         if (evt.target.classList.contains('dragparent')) {
             selectedElement = evt.target.parentNode;
@@ -193,8 +313,7 @@ function drag(evt) {
                     dx = ndelta.dx;
                     dy = ndelta.dy;
                     id_snap_to = ndelta.rc;
-                    // end drag since snapping
-                    sound_snap_play();
+                    // ends drag since snapping
                 }
             }
             transform.setTranslate(dx, dy);
@@ -216,15 +335,18 @@ function drag(evt) {
                 /* console.log('sn['+isg_new+'] has ids:'
                     +sgrps[isg_new].ids.length+' neighbors:'
                     +sgrps[isg_new].neighbors.length); */
+                animate_cleanup(selectedElement);
                 selectedElement = false;
 
                 // all done with puzzle?
                 if (sgrps[isg_new].neighbors.length == 0) {
                     Ws.sendPuzzleDone(localStorage.Jigsaw_img_url, Jig.P.pieces);
-                    sound_snap_stop();
                     sound_tada_play();
                     Jig.pss_remove();
                     Jig.rm_preview_tile();
+                    btn_mvObTiles_disable(true); // Disable "Raise hidden tiles" button
+                } else {
+                    sound_snap_play();
                 }
             }
         }
@@ -232,6 +354,9 @@ function drag(evt) {
 }
 
 function endDrag(evt) {
+    if (selectedElement) {
+        animate_cleanup(selectedElement);
+    }
     selectedElement = false;
     if (Jig.pss !== null) {
         Jig.pss_checkpoint(); // checkpoint current Puzzle scramble state to localStorage
@@ -402,5 +527,7 @@ function change_boundaries(viewBox) {
 }
 
 export {
-    drag_init, change_boundaries, sound_snap_play, snap_grp_clear_all
+    drag_init, change_boundaries, menu_collapse, more_collapse, settings_collapse,
+    sound_snap_play, snap_grp_clear_all, tiles_show_edges,
+    tiles_show_hidden, animate_stroke_tiles_cleanup, btn_mvObTiles_disable
 };

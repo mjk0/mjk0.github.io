@@ -409,13 +409,16 @@ function preview_tile_buttons_visible(event) {
 function preview_tile_buttons_hidden(event) {
     pt_g.classList.remove('showCbtn');
 }
+function clamp(num, min, max) {
+    return num <= min ? min : num >= max ? max : num;
+}
 // for better spacing of random tiles, define spacing grid
 const gsp = {
     gscale: 1.2,
     gtilew:0, gtileh:0,
     xn:0, yn:0,
-    cnt:[], limit:1,
-    init: function(opts) {
+    cnt:[], limit:1, nogo:99,
+    init: function() {
         this.xn = Math.ceil((P.viewBox.w-P.naturalWidth/P.xn)*P.xn/(P.naturalWidth*this.gscale));
         this.yn = Math.ceil((P.viewBox.h-P.naturalHeight/P.yn)*P.yn/(P.naturalHeight*this.gscale));
         this.gtilew = (P.viewBox.w-P.naturalWidth/P.xn)/this.xn;
@@ -426,46 +429,62 @@ const gsp = {
         // Size count array for each grid location
         this.cnt.length = this.xn*this.yn;
         this.cnt.fill(0);
-
-        let nogo = 99;
-        // Block off edge outline?
-        if (opts && opts.avoidEdgeOutline) {
-            let rc00 = this.rc({x:0,y:0});
-            let rc0m = this.rc({x:P.naturalWidth, y:0});
-            let rc0md = rc0m - rc00;
-            let rcm0 = this.rc({x:0, y:(P.naturalHeight-P.naturalHeight/P.yn)});
-            let rcm0d = rcm0 - rc00;
-            for (let rc=rc00; rc <= rc0m; ++rc) {
-                //[-this.xn, 0, this.xn, rcm0d-this.xn, rcm0d, rcm0d+this.xn].forEach( v => {
-                [0, rcm0d].forEach( v => {
-                        if (rc+v >= 0 && rc+v < this.cnt.length) {
-                        this.cnt[rc+v] = nogo;
-                    }
-                });
-            }
-            for (let rc=rc00+this.xn; rc < rcm0; rc += this.xn) {
-                //[-1, 0, 1, rc0md-1, rc0md, rc0md+1].forEach( v => {
-                [0, rc0md].forEach( v => {
+    },
+    reserveEdgeOutline: function() {
+        // Block off edge outline
+        let rc00 = this.rc({x:0,y:0});
+        let rc0m = this.rc({x:P.naturalWidth, y:0});
+        let rc0md = rc0m - rc00;
+        let rcm0 = this.rc({x:0, y:(P.naturalHeight-P.naturalHeight/P.yn)});
+        let rcm0d = rcm0 - rc00;
+        for (let rc=rc00; rc <= rc0m; ++rc) {
+            //[-this.xn, 0, this.xn, rcm0d-this.xn, rcm0d, rcm0d+this.xn].forEach( v => {
+            [0, rcm0d].forEach( v => {
                     if (rc+v >= 0 && rc+v < this.cnt.length) {
-                        this.cnt[rc+v] = nogo;
-                    }
-                });
-            }
+                    this.cnt[rc+v] = this.nogo;
+                }
+            });
+        }
+        for (let rc=rc00+this.xn; rc < rcm0; rc += this.xn) {
+            //[-1, 0, 1, rc0md-1, rc0md, rc0md+1].forEach( v => {
+            [0, rc0md].forEach( v => {
+                if (rc+v >= 0 && rc+v < this.cnt.length) {
+                    this.cnt[rc+v] = this.nogo;
+                }
+            });
         }
         //console.log(this.cnt);
     },
-    rc: function(pos) {
-        let c = Math.floor((pos.x-P.viewBox.minX) / this.gtilew);
-        let r = Math.floor((pos.y-P.viewBox.minY) / this.gtileh);
+    reserveBlock: function(bbox, cntVal) {
+        // bbox: {minX, minY, maxX, maxY}
+        let gmin = this.pos_to_r_c({x:bbox.minX, y:bbox.minY}, {});
+        let gmax = this.pos_to_r_c({x:bbox.maxX, y:bbox.maxY}, {});
+    
+        for (let r = gmin.r; r <= gmax.r; ++r) {
+            for (let c = gmin.c; c <= gmax.c; ++c) {
+                this.cnt[r*this.xn+c] += cntVal;
+            }
+        }
+    },
+    x_to_c: function(x) {return clamp(Math.floor((x-P.viewBox.minX) / this.gtilew),0,this.xn-1);},
+    y_to_r: function(y) {return clamp(Math.floor((y-P.viewBox.minY) / this.gtileh),0,this.yn-1);},
+    rc: function(p) {
+        let c = this.x_to_c(p.x);
+        let r = this.y_to_r(p.y);
         return (r*this.xn+c);
+    },
+    pos_to_r_c: function(pos, orc) {
+        orc.r = this.y_to_r(pos.y);
+        orc.c = this.x_to_c(pos.x);
+        return orc;
     },
     hasReachedLimit: function(pos) {
         let rc = this.rc(pos);
         return (this.cnt[rc] >= this.limit);
     },
-    count: function(pos, idn) {
+    count: function(pos) {
         let rc = this.rc(pos);
-        ++this.cnt[rc];
+        return ++this.cnt[rc];
         //console.log('co: id='+idn+' cnt['+rc+']='+this.cnt[rc]+', ('+Math.round(pos.x)+', '+Math.round(pos.y)+')');
     },
     constrainCoords: function(pos) {
@@ -502,32 +521,62 @@ const gsp = {
     }
 };
 
+// Find any tiles that are obstructed, and make them visible
+function init_spacing_grid(opts) {
+    // Construct a gsp grid of existing tile locations
+    gsp.init(); // initialize with empty grid to match viewBox & image dims
+
+    // Get current or default location of preview tile
+    let previewBbox = getPreviewBbox(opts);
+    gsp.reserveBlock(previewBbox, 1);
+    return gsp;
+}
+
+function get_pos_for_tile(pos, tElem) {
+    //let tElem = svg.getElementById(id);
+    if (tElem) {
+        let tTr = tElem.transform.baseVal.getItem(0);
+        let bbox = tElem.getBBox();
+        pos.x = bbox.x + tTr.matrix.e;
+        pos.y = bbox.y + tTr.matrix.f;
+    } else {
+        pos.x = NaN;
+        pos.y = NaN;
+    }
+}
+
+function getPreviewBbox(opts) {
+    // Get preview tile bbox if present
+    let previewTile = svg.getElementById('-1');
+    if (previewTile) {
+        let previewTr = previewTile.transform.baseVal.getItem(0);
+        let bbox = previewTile.getBBox();
+        return {
+            minX: bbox.x + previewTr.matrix.e,
+            maxX: bbox.x + previewTr.matrix.e + bbox.width,
+            minY: bbox.y + previewTr.matrix.f,
+            maxY: bbox.y + previewTr.matrix.f + bbox.height
+        };
+    } else {
+        // return default location of preview tile
+        let scale = opts.hasOwnProperty('previewSize') ? opts.previewSize : 0.5;
+        return {
+            minX: (P.viewBox.minX+P.viewBox.w-(P.naturalWidth*scale)),
+            minY: P.viewBox.minY,
+            maxX: (P.viewBox.minX+P.viewBox.w),
+            maxY: (P.viewBox.minY+P.naturalHeight*scale)
+        };
+    }
+}
+
 // randomize location of all PATH elements of the SVG
 function scramble_tiles(opts) {
     let paths = svg.getElementsByTagName('path');
-    let avoidCenter = opts.hasOwnProperty('scrAvoidCenter') ? opts.scrAvoidCenter : 0;
+    let avoidEdgeOutline = opts.hasOwnProperty('scrAvoidCenter') ? opts.scrAvoidCenter : 0;
     let avoidPreview = opts.hasOwnProperty('scrAvoidPreview') ? opts.scrAvoidPreview : 1;
-    let scale = opts.hasOwnProperty('previewSize') ? opts.previewSize : 0.5;
-    let previewTile = svg.getElementById('-1');
 
-    // initialize to default location of preview tile
-    let previewBbox = {
-        minX: (P.viewBox.minX+P.viewBox.w-(P.naturalWidth*scale)),
-        minY: P.viewBox.minY,
-        maxX: (P.viewBox.minX+P.viewBox.w),
-        maxY: (P.viewBox.minY+P.naturalHeight*scale)
-    };
-    let centerBbox = { minX: 0, minY:0, maxX: P.naturalWidth, maxY: P.naturalHeight };
-
-    // Get preview tile bbox if needed
-    if (avoidPreview && previewTile) {
-        let previewTr = previewTile.transform.baseVal.getItem(0);
-        let bbox = previewTile.getBBox();
-        previewBbox.minX = bbox.x + previewTr.matrix.e;
-        previewBbox.maxX = previewBbox.minX + bbox.width;
-        previewBbox.minY = bbox.y + previewTr.matrix.f;
-        previewBbox.maxY = previewBbox.minY + bbox.height;
-    }
+    // Get current or default location of preview tile
+    let previewBbox = getPreviewBbox(opts);
     //console.log(JSON.stringify(opts)+' aP:'+avoidPreview+' '+JSON.stringify(previewBbox));
 
     // Set puzzle scramble state in case user wants to resume after exiting
@@ -546,7 +595,10 @@ function scramble_tiles(opts) {
     let boundaryY2 = P.viewBox.minY + P.viewBox.h;
 
     // for better spacing of random tiles, define spacing grid
-    gsp.init({avoidEdgeOutline: avoidCenter});
+    gsp.init();
+    if (avoidEdgeOutline) {
+        gsp.reserveEdgeOutline();
+    }
     let rand = {x:0, y:0};
 
     for (let el of paths) {
@@ -579,15 +631,14 @@ function scramble_tiles(opts) {
 
                 // pattern image defines exclusion space
                 // (0,0) -> (P.naturalWidth, P.naturalHeight)
-                if ((true || isOutsideOf(rand.x, rand.y, el_w, el_h, centerBbox))
-                 && (!avoidPreview || isOutsideOf(rand.x, rand.y, el_w, el_h, previewBbox))) {
+                if (!avoidPreview || isOutsideOf(rand.x, rand.y, el_w, el_h, previewBbox)) {
                     let offsetX = rand.x - bbminx;
                     let offsetY = rand.y - bbminy;
                     transform.setTranslate(offsetX, offsetY);
                     pss.trX[idn] = offsetX;
                     pss.trY[idn] = offsetY;
                     offsetVerified = true;
-                    gsp.count(rand, idn); // keep track of tiles added in this grid location
+                    gsp.count(rand); // keep track of tiles added in this grid location
                 }
             }
         }
@@ -671,7 +722,8 @@ function neighbor_rc_delta(drg, dx, dy, rc) {
 }
 
 export {
-    P, update, options, svg_resize_handler, scramble_tiles, id_to_rc,
+    P, update, options, svg_resize_handler, svg_add_attributes,
+    scramble_tiles, id_to_rc, init_spacing_grid, get_pos_for_tile,
     pss, pss_checkpoint, pss_remove,
     snap_to_neighbor, snap_grp_to_neighbor,
     create_preview_tile, resize_preview_tile, rm_preview_tile

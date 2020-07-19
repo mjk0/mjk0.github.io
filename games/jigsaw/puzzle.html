@@ -14,19 +14,46 @@
 <body class="zero">
     <div class="ptop zero"></div>
     <div class="pmenu zero">
-        <button id="settings" class="menu-btn" type="button"
-            onclick="$(this).toggleClass('settings')"><span><i
+        <button id="settings" class="menu-btn" type="button" title="Settings menu"
+            onclick="$(this).toggleClass('settings');Main.more_collapse()"><span><i
             class="material-icons">settings</i></span>
-        <button class="menu-btn" type="button" onclick="Main.scramble_puzzle()"><span><i
+        <button class="menu-btn" type="button" onclick="Main.scramble_puzzle()"
+            title="Scramble the puzzle"><span><i
             class="material-icons">extension</i> Scramble</span>
         </button>
-        <button class="menu-btn" type="button" onclick="Main.show_preview_image()"><span><i
-            class="material-icons">image</i> Show preview image</span>
+        <button class="menu-btn right" type="button" id="more_btn" title="More"
+            onclick="$(this).toggleClass('dropdown-trigger');Main.settings_collapse()"><i
+            class="material-icons">more_vert</i>
         </button>
-        <!--<button class="menu-btn right" type="button" id="fs_toggle"
-            onclick="Main.fullscreen_toggle()"><span><i
-            class="material-icons">zoom_out_map</i></span>
-        </button>-->
+        <button class="menu-btn right" type="button"
+            onclick="Main.show_preview_image()" title="Show preview image"><i
+            class="material-icons">image</i>
+        </button>
+        <button class="menu-btn right edge-btn" type="button"
+            onclick="Main.tiles_show_edges()" title="Edge highlight toggle"><i
+            class="material-icons">crop_free</i>
+        </button>
+        <div class="dropdown-wrap">
+            <button class="menu-btn" type="button" onclick="Main.show_preview_image()"><span><i
+                class="material-icons">image</i> Show preview image</span>
+            </button><br>
+            <button class="menu-btn edge-btn" type="button"
+                onclick="Main.tiles_show_edges()"><span><i
+                class="material-icons">crop_free</i> Edge effect toggle</span>
+            </button><br>
+            <button class="menu-btn" type="button" id="mvObTiles"
+                onclick="Main.move_obscured_tiles()"><span><i
+                class="material-icons">publish</i> Raise hidden tiles</span>
+            </button><br>
+            <button class="menu-btn" type="button"
+                onclick="Main.remove_flashing_animation()"><span><i
+                class="material-icons">flash_off</i> Clear effects</span>
+            </button><br>
+            <button class="menu-btn" type="button"
+                onclick="Main.fullscreen_toggle()"><span><i
+                class="material-icons">zoom_out_map</i> Fullscreen toggle</span>
+            </button>
+        </div>
         <div class="cc-selector pm-selector" style="visibility: hidden;">Snap:
             <input id="snap_off" type="radio" name="snap" value="0" />
             <label class="label-pm" for="snap_off"><span>off</span></label><!--
@@ -87,7 +114,7 @@
 
     <!--JavaScript at end of body for optimized loading-->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <!--<script type="text/javascript" src="/js/screenfull.min.js"></script>-->
+    <script type="text/javascript" src="/js/screenfull.min.js"></script>
     <script type="module">
         import * as Main from './js/main.js';
         window.Main = Main;
