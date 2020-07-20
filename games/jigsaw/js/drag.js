@@ -82,6 +82,11 @@ function snap_grp_restore() {
     }
 }
 
+// Is there a puzzle in progress?  Ignore if just scrambled, but no snap groups
+function isPuzzleInProgress() {
+    return (Jig.pss !== null && sgrps.length > 0);
+}
+
 // Return an array of sorted sgrps indices, with the largest group first
 function snap_grp_sorted_indices() {
     let arr = [];
@@ -527,7 +532,8 @@ function change_boundaries(viewBox) {
 }
 
 export {
-    drag_init, change_boundaries, menu_collapse, more_collapse, settings_collapse,
+    drag_init, change_boundaries, isPuzzleInProgress,
+    menu_collapse, more_collapse, settings_collapse,
     sound_snap_play, snap_grp_clear_all, tiles_show_edges,
     tiles_show_hidden, animate_stroke_tiles_cleanup, btn_mvObTiles_disable
 };

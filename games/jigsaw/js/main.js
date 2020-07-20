@@ -14,12 +14,16 @@ const UIopts = {
 };
 var svg, ebtns;
 
+const scrConfText = 'Do you want to discard your current progress and scramble again?';
 function scramble_puzzle() {
-    Drag.menu_collapse();
-    Drag.snap_grp_clear_all();
-    Jig.scramble_tiles(UIopts);
-    Jig.create_preview_tile(UIopts.previewSize);
-    Drag.btn_mvObTiles_disable(false); // Enable "Raise hidden tiles" button
+    // Is there a puzzle in progress?
+    if (!Drag.isPuzzleInProgress() || confirm(scrConfText)) {
+        Drag.menu_collapse();
+        Drag.snap_grp_clear_all();
+        Jig.scramble_tiles(UIopts);
+        Jig.create_preview_tile(UIopts.previewSize);
+        Drag.btn_mvObTiles_disable(false); // Enable "Raise hidden tiles" button
+    }
 }
 function show_preview_image() {
     Drag.menu_collapse();
