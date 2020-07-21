@@ -16,9 +16,9 @@ var svg, ebtns;
 
 const scrConfText = 'Do you want to discard your current progress and scramble again?';
 function scramble_puzzle() {
+    Drag.menu_collapse();
     // Is there a puzzle in progress?
     if (!Drag.isPuzzleInProgress() || confirm(scrConfText)) {
-        Drag.menu_collapse();
         Drag.snap_grp_clear_all();
         Jig.scramble_tiles(UIopts);
         Jig.create_preview_tile(UIopts.previewSize);
@@ -34,7 +34,10 @@ function move_obscured_tiles() {
     Drag.tiles_show_hidden(UIopts);
 }
 function remove_flashing_animation() {
+    Drag.menu_collapse();
     Drag.animate_stroke_tiles_cleanup();
+    // Set edge effect toggle to off
+    ebtns.forEach((e) => {e.classList.remove('edge-effect')});
 }
 function tiles_show_edges() {
     Drag.menu_collapse();
