@@ -580,7 +580,7 @@ const UI = {
                 if (uses[Game.cardsPlayed.length].href.baseVal == 'cards0.svg#cyplay') {
                     uses[Game.cardsPlayed.length].href.baseVal = 'cards0.svg#cblank';
                 }
-                uses.eq(Game.cardsPlayed.length).removeClass(anim);
+                $('.'+anim).removeClass(anim);
             }
         }
     },
