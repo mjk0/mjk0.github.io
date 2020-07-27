@@ -207,6 +207,13 @@ function select_custom(theurl) {
 // After img_custom load success, calls this event handler
 function img_aspect_onload(ev) {
     img_aspect_resize(ev.target);
+    // Check for base-64 image that needs to be reduced
+    if (img_b64_scale < 1) {
+        let reduce_b64_url = resizeCustomImg(ev.target);
+        console.log('reduced base-64 image to '+reduce_b64_url.length);
+        img_b64_scale = 1;
+        select_custom(reduce_b64_url);
+    }
 }
 function img_aspect_resize(elem) {
     // image and container aspect ratios
@@ -222,6 +229,7 @@ function img_aspect_resize(elem) {
 }
 function img_custom_onerror(ev) {
     img_custom.src = "media/exclamation-pink-300x300.png";
+    img_b64_scale = 1;
 }
 function window_onresize(event) {
     if (window.getComputedStyle(mi_preview).display != "none") {
@@ -232,13 +240,30 @@ function window_onresize(event) {
     img_aspect_resize(img_custom);
 }
 
+function resizeCustomImg(elem) {
+    var canvas = document.createElement("canvas");
+    canvas.width = Math.floor(elem.naturalWidth * img_b64_scale);
+    canvas.height = Math.floor(elem.naturalHeight * img_b64_scale);
+    var context = canvas.getContext("2d");
+    context.scale(img_b64_scale, img_b64_scale);
+    context.drawImage(elem, 0, 0); // draw given image on cavas, with scaling applied
+    return canvas.toDataURL("image/jpeg");
+}
+
 // File chosen from computer local files
+const img_b64_max_bytes = 1.2e6;
+var img_b64_scale = 1;
 function file_open_dialog_onchange(e) {
     let file = e.target.files[0];
     const reader = new FileReader();
 
     reader.addEventListener("load", function () {
-        // convert image file to base64 string
+        // image file is now a base64 string
+        if (reader.result.length > img_b64_max_bytes) {
+            // Since greater than max size, reduce
+            img_b64_scale = Math.sqrt(img_b64_max_bytes / reader.result.length);
+            console.log('base-64 too big: '+reader.result.length);
+        }
         select_custom(reader.result);
     }, false);
 
