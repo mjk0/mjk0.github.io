@@ -120,6 +120,10 @@ var Game = {
     prepNextDeal() {
         this.declarer = 255;
     },
+    // Set clown names for robot players
+    clownNames() {
+        this.wsSendMsg({'action': 'setGameParams', 'robotNames': ['*Ratfink','*Homer','*Turd','*Donut']});
+    },
 
     // Get 5 cards for deck as {'cards': [...]}
     dealCards: function(n) {
