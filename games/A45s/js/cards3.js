@@ -515,16 +515,16 @@ const UI = {
         }
         this.updateSeatDirs();
     },
-    // we are waiting on a just-abondoned seat.  Robot can play for that player
+    // we are waiting on a just-abandoned seat.  Robot can play for that player
     robotOffer(data) {
         // {"action":"robotOffer","fromSeat":0}
         const oSeat = (data.fromSeat-Game.ourSeat+3)&3;
-        $('.namebar > div').eq(oSeat).removeClass('hide-me');
+        $('.namebar > div.robotPlayBtn').eq(oSeat).removeClass('hide-me');
     },
     // someone gave robot permission to take over for missing player
     robotTookOver(data) {
         // {"action":"robotTookOver"}
-        $('.namebar > div').addClass('hide-me');
+        $('.namebar > div.robotPlayBtn').addClass('hide-me');
     },
 
     otherPlayerCfan: [],
