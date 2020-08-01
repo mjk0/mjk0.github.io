@@ -111,7 +111,9 @@ function tiles_show_edges() {
             Jig.id_to_rc(el.id, idrc);
             // Is it a non-edge piece?
             if (idrc.r > 0 && idrc.r < Jig.P.yn-1 && idrc.c > 0 && idrc.c < Jig.P.xn-1) {
-                let anim = anim_create({attributeName:'opacity', values:'0.05;0.1;0.05'});
+                let anim = anim_create({
+                    attributeName:'opacity', values:'1;0.1', repeatCount:'1', fill:'freeze'
+                });
                 el.appendChild(anim);
                 anim.beginElement();
             }
