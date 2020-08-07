@@ -485,7 +485,7 @@ const UI = {
         // Update player names
         const seats = Game.games[Game.ourGame-1].seats;
         const names = $('.seatname');
-        const rPlayBtns = $('.namebar > div');
+        const rPlayBtns = this.robotPlayBtns();
         for (var i=2; i<6; ++i) {
             var si = (Game.ourSeat+i-1)&3;
             names.eq(i).text(this.seatWhoSimple(si));
@@ -515,16 +515,17 @@ const UI = {
         }
         this.updateSeatDirs();
     },
+    robotPlayBtns() { return $('.namebar > div.robotPlayBtn'); },
     // we are waiting on a just-abandoned seat.  Robot can play for that player
     robotOffer(data) {
         // {"action":"robotOffer","fromSeat":0}
         const oSeat = (data.fromSeat-Game.ourSeat+3)&3;
-        $('.namebar > div.robotPlayBtn').eq(oSeat).removeClass('hide-me');
+        this.robotPlayBtns().eq(oSeat).removeClass('hide-me');
     },
     // someone gave robot permission to take over for missing player
     robotTookOver(data) {
         // {"action":"robotTookOver"}
-        $('.namebar > div.robotPlayBtn').addClass('hide-me');
+        this.robotPlayBtns().addClass('hide-me');
     },
 
     otherPlayerCfan: [],
@@ -616,15 +617,22 @@ const UI = {
         }
     },
     playInProgress(data) {
-        this.biddingEnded();
-        Game.fore = data.fore;
-        if (data.score)
-            this.updateScoreDisplay(data.score[0], data.score[1]);
-        this.showPlayArea(2); // show card play area
-        this.prepForePlayOrder();
-        // Move non-trump back into hand since joining in-progress
-        Array.prototype.push.apply(Game.hand, Game.discards);
-        this.updateCardsDisplay();
+        if ("handSelection" in data) {
+            // in-progress, but hand selection for other players not complete
+            this.showPlayArea(3); // show discards
+            this.handSelected({noSendMsg:1});
+        } else {
+            // card play has started
+            this.biddingEnded();
+            Game.fore = data.fore;
+            if (data.score)
+                this.updateScoreDisplay(data.score[0], data.score[1]);
+            this.showPlayArea(2); // show card play area
+            this.prepForePlayOrder();
+            // Move non-trump back into hand since joining in-progress
+            Array.prototype.push.apply(Game.hand, Game.discards);
+            this.updateCardsDisplay();
+        }
     },
     rcvPastTricks(data) {
         for (var pp of data.plays) {
@@ -989,13 +997,15 @@ const UI = {
         this.show('#b-done', true);
         $('#b-done').addClass('animated pulse infinite'); // choice made
     },
-    handSelected: function() {
+    handSelected: function(opts) {
         // Make sure trump suit has been chosen before chosing discards
         var ts = this.getTrumpSuit();
         if (ts) {
             $('#b-done').removeClass('animated pulse infinite'); // choice made
-            const r = {'action':'handSelected', 'cards': Game.hand, 'trumpSuit': ts};
-            Game.wsSendMsg(r);
+            if (!opts || !opts.noSendMsg) {
+                const r = {'action':'handSelected', 'cards': Game.hand, 'trumpSuit': ts};
+                Game.wsSendMsg(r);
+            }
             this.biddingEnded();
             //this.showPlayArea(0, {'showKitty':false});
             this.updateCards($("#discards .card-lg").find("use"), []); // clear discards
