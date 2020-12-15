@@ -1,0 +1,99 @@
+body, .body-bg {
+    background-color: #9FACB9;
+}
+div.logo.col { padding: 0px; }
+.title {
+    font-size: 6vw; height: 1.3em; line-height: 1.3em;
+    color: white; /* background-color: #ee6e73; */
+    padding-left: 0.2em;
+    text-shadow: -1px 1px 4px #000, 1px 1px 4px #000, 1px -1px 0 #000, -1px -1px 0 #000;
+    position: relative;
+}
+.title svg { width: 6.5vw; height: 8.4vw; vertical-align: middle; }
+.tilem {
+    width: 6.5vw; height: 8.4vw;
+    max-width: 13vh; max-height: 16.8vh;
+}
+.tilem3 {
+    width: 19.5vw; height: 8.4vw;
+    max-width: 39vh; max-height: 16.8vh;
+}
+.margin-r2 { margin-right: 2vw; }
+nav i.material-icons {
+    display: inline-block; vertical-align: bottom;
+}
+.card-bgg { background-color: #546e7a; } /* blue-grey darken-1 */
+.card-content button {
+    background-color: #ee6e73;
+    border-radius: 1em;
+    box-shadow: 0 0 1px 1px yellow;
+}
+input#username.in-uname { border: thin solid red; }
+input#email.flag-err { box-shadow: 1px 1px 10px 4px red; }
+.flag-err::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+    color: red;
+    opacity: 1; /* Firefox */
+}
+.panelright { background-color: forestgreen; color: white; }
+.panelleft { background-color: antiquewhite; }
+span.card-title a { color: white; }
+p.card-title {
+    font-size: 24px; font-weight: 300;
+    margin-block-start: 0em; margin-block-end: 0em;
+}
+i.material-icons.icon-inherit { font-size: inherit; }
+.nav-bg {
+    background-color: #ee6e73; box-shadow: 0 0 1px 1px white; border-radius: 8px;
+}
+.j-divider {
+    height: 1px;
+    overflow: hidden;
+    background-color: #e0e0e0;
+}
+.gamepanel {
+    display: none;
+    background-color: white; padding: .2em;
+}
+.gamepanel div.divider { margin: 8px 0 0 0; }
+.openTable th {background-color: lightslategrey; color: white; }
+.privTable th {background-color: peru; color: white; }
+.usersTable th {background-color: green; color: white; }
+.cTable table, .cTable th, .cTable td { border: 1px solid black; }
+.cTable td, .cTable th {
+    padding: 5px 5px; text-align: center;
+    border-radius: 0px;
+}
+.privTable td[colspan] { text-align: left; }
+.privTable td { background-color: #e4d2bf; }
+.usersTable td { background-color: palegreen; }
+.gameTableDir { padding: 0px 0.3em; box-shadow: 0 0 1pt 1pt; border-radius: 5px; }
+.East, .East.gameTableDir { background-color: white; color: black; }
+.South, .South.gameTableDir { background-color: green; color: white; }
+.West, .West.gameTableDir { background-color: orange; color: black; }
+.North, .North.gameTableDir { background-color: darkred; color: white; }
+th.gameSectionTitle { text-align: left; font-style: italic; }
+button.inviteBtn, button.privKillBtn {
+    height: 1.6em; line-height: 1;
+    border-radius: 15px;
+    margin: 0px 5px 0px 0px; padding: 0px 1em;
+}
+button.inviteBtn { background-color: darkblue; }
+.iconBtn { color:darkred; cursor: pointer;}
+.iconBtn:hover { color: red; cursor: pointer;}
+.play-lg { font-size: xx-large !important; }
+td.bordbot { border-bottom: black solid 2px; }
+.userspanel {
+    display: none;
+    background-color: white; padding: .2em;
+}
+#diaInvite { width: max-content; max-height: 85%; }
+#diaInvite h5 {
+    background-color: lightblue; margin: 0px; padding: 10px;
+}
+#diaInviteTable th {
+    background-color: blue; margin: 0px; padding: 0.3em; color: white; text-align: center;
+}
+#diaInviteUsers td:nth-child(2) { text-align: center; color: #9e9e9e }
+#diaInvite label > span { margin-left: 1em; width: calc(100% - 2em); }
+.invitee { background-color: #e6faff ; }
+.invitee span { font-weight: bold; }

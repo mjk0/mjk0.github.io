@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MJ Lobby</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="/css/materialize.css" media="screen,projection"/>
+    <link type="text/css" rel="stylesheet" href="css/index.css">
+    <link rel="modulepreload" href="js/lmj.js">
+    <link rel="modulepreload" href="js/lui.js">
+    <link rel="modulepreload" href="js/ws.js">
+    <link rel="modulepreload" href="js/st.js">
+</head>
+<body>
+    <div class="row">
+        <div class="logo col s12">
+            <div class="title">Mahjong Beta
+                <svg><use href="media/stiles.svg#CN" /></svg>
+            </div>
+            <div class="divider"></div>
+            <nav>
+                <div class="nav-wrapper">
+                    <ul id="nav-mobile" class="left">
+                        <li><a href="rules.html"><i class="material-icons">school</i> Rules</a></li>
+                        <li><a href="help.html"><i class="material-icons">help</i> Help</a></li>
+                    </ul>
+                    <ul id="nav-mobile" class="right">
+                        <li><a onclick="LMj.signOut()">Sign out</a></li>
+                    </ul>
+                </div>
+            </nav>
+            <div class="col s8">
+                <div class="card-panel panelleft signin">
+                    <p class="card-title">Sign in</p>
+                    <form onsubmit="return LMj.submit(event)">
+                        <label for="username">Select a username:</label>
+                        <input type="text" id="username" name="username" placeholder="username">
+                        <label for="email">Email (optional):</label>
+                        <input type="email" id="email" name="email" placeholder="email@...">
+                        <input type="submit">
+                    </form>
+                    <p><i>Entering your email address reserves your username</i></p>
+                </div>
+                <div class="card-panel gamepanel">
+                    <table class="privTable cTable"><thead>
+                        <tr><th colspan="7" class="gameSectionTitle">
+                            Invitational Games
+                            <button id="privCreate" class="btn-small inviteBtn right"
+                                type="button" onclick="LMj.privCreate()">
+                                Create game
+                            </button>
+                        </th></tr>
+                        <tr id="privTableHeading"><th>Owner</th>
+                        <th><span class='East gameTableDir'>East</span></th>
+                        <th><span class='South gameTableDir'>South</span></th>
+                        <th><span class='West gameTableDir'>West</span></th>
+                        <th><span class='North gameTableDir'>North</span></th>
+                        <th colspan="2">Status</th></tr></thead>
+                        <tbody id="privgtable">
+                        <tr><td colspan="7" class="bordbot"><button
+                            class="btn-small inviteBtn" type="button"
+                            onclick="alert('preview')" > Invite
+                        </button></td></tr>
+                        </tbody>
+                    </table>
+                    <div class="divider"></div>
+                    <table class="openTable cTable"><thead>
+                        <tr><th colspan="6" class="gameSectionTitle">
+                            Public Games - open to all</th></tr>
+                        <tr><th>Game</th>
+                        <th><span class='East gameTableDir'>East</span></th>
+                        <th><span class='South gameTableDir'>South</span></th>
+                        <th><span class='West gameTableDir'>West</span></th>
+                        <th><span class='North gameTableDir'>North</span></th>
+                        <th>Status</th></tr></thead>
+                        <tbody id="opengtable"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col s4">
+                <div class="card-panel panelright" id="changelog">
+                    <p class="card-title">Notices</p>
+                    <p>The game server reboots every night at 2:45am Pacific Time.
+                        In-progress games will be flushed.</p>
+                    <p>This game does not work at all with Internet Explorer.  Chrome is recommended.</p>
+                </div>
+                <div class="card-panel userspanel">
+                    <table class="usersTable cTable"><thead>
+                        <tr><th colspan="2" class="gameSectionTitle">
+                            Players</th></tr>
+                        <tr><th>username</th>
+                        <th>last seen</th></tr></thead>
+                        <tbody id="userstable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row"><div class="col s12">
+        <div class="divider"></div>
+        <div class="card card-bgg">
+            <div class="card-content white-text">
+                <svg class="tilem left margin-r2"><use href="media/stiles.svg#F1"/></svg>
+                <svg class="tilem right"><use href="media/stiles.svg#F2"/></svg>
+                <span class="card-title">About</span>
+                <p>This is a 4-player Mahjong game.  After selecting your username,
+                    you will be able to join any open game, or create a private
+                    invitational game.  During gameplay, unfilled seats will be
+                    filled by robot players.
+                </p>
+                <p><i>Author Contact(Gmail): Marcel.A.LeBlanc@</i></p>
+            </div>
+        </div>
+    </div></div>
+
+    <!-- Modal player invitations to private game -->
+    <div id="diaInvite" class="modal">
+        <h5>Select players..
+            <input id="inv-done" class="btn-small modal-close blue darken-4"
+            type="button" value="done" onclick="LMj.privInviteSelected()" />
+        </h5>
+        <table id='diaInviteTable'>
+            <thead><th>username</th><th>last seen</th><th></th></thead>
+            <tbody id='diaInviteUsers'></tbody>
+        </table>
+    </div>
+
+    <!--JavaScript at end of body for optimized loading-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/materialize.min.js"></script>
+    <script type="module">
+        import * as LMj from './js/lmj.js';
+        window.LMj = LMj;
+        import * as LUI from './js/lui.js';
+        window.LUI = LUI;
+        import * as Ws from './js/ws.js';
+        window.Ws = Ws;
+        import * as St from './js/st.js';
+        window.St = St;
+    </script>
+</body>
+</html>
