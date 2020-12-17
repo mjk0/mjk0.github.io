@@ -17,12 +17,19 @@ const WsOptions = {
 };
 
 function rcvUuid(data) {
-    St.rcvUuid(data, LUI.uname_dom().value); // if UUID is valid, also set username with login value
+    // if UUID is valid, also set username & email with login value
+    St.rcvUuid(
+        data,
+        LUI.uname_dom().value || sessionStorage.getItem("mj_username"),
+        LUI.email_dom().value || sessionStorage.getItem("mj_email") || ""
+    );
+    LUI.welcome_username();
     LUI.set_sign_in_state(St.uuid); // truthy values enable post-sign-in UI
 }
 function rcvErr(data) {
-    if (data.err == "username_taken") {
+    if (data.err == "username_taken") { // login attempt failed, but can try again
         LUI.sign_in_err_state_email();
+        St.clrUuid(); // sets to null
     }
 }
 
@@ -78,6 +85,16 @@ function rcvUsers(data) {
     LUI.update_users_display();
 }
 
+// If already had been assigned a UUID, try auto-login
+function try_autologin() {
+    let mjuname = sessionStorage.getItem("mj_username");
+    let mjuuid = sessionStorage.getItem("mj_uuid");
+    let mjemail = sessionStorage.getItem("mj_email") || "";
+    if (mjuname && mjuuid) {
+        Ws.sendMsg({"action":"login", "username":mjuname, "email":mjemail});
+    }
+}
+
 function submit(e) {
     e.preventDefault();
     LUI.sign_in_err_state_clear()
@@ -101,6 +118,9 @@ $(document).ready(function(){
     //a_start.addEventListener("click", pre_puzzle);
     Ws.init(WsOptions);
     LUI.init();
+
+    LUI.set_sign_in_state(false); // start with sign-in UI
+    try_autologin();
 });
 
 export {

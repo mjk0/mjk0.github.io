@@ -2,17 +2,20 @@
 //const urlParams = new URLSearchParams(window.location.search);
 import * as St from './st.js';
 
-var gamepanel, signinpanel;
+var gamepanel, signinpanel, signin_right;
 var notices, userspanel;
 var email_placeholder;
 
 function set_sign_in_state(f) { // f is truthy if already signed in
     jshow(gamepanel, f);
     jshow(userspanel, f);
+    jshow(signin_right, f);
     jshow(signinpanel, !f);
     jshow(notices, !f);
 }
-
+function welcome_username() {
+    $('#span_username').text(St.username);
+}
 function update_users_display() {
     fill_users_table('#userstable', false);
 }
@@ -182,6 +185,7 @@ function email_dom() { return document.getElementById('email') }
 function init() {
     gamepanel = $('.gamepanel');
     signinpanel = $('.signin');
+    signin_right = $('#signin-right');
     notices = $('#changelog');
     userspanel = $('.userspanel');
     email_placeholder = $('#email')[0].getAttribute('placeholder');
@@ -193,7 +197,7 @@ function init() {
 }
 
 export {
-    init, set_sign_in_state, uname_dom, email_dom,
+    init, set_sign_in_state, uname_dom, email_dom, welcome_username,
     sign_in_err_state_clear, sign_in_err_state_username, sign_in_err_state_email,
     update_games_display, update_users_display,
     update_invites_display, get_priv_invite_selection,

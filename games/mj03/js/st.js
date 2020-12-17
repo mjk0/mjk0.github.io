@@ -9,10 +9,13 @@ var ourGame = null;
 var ourSeat = -1;
 var pastInvited = {}; // keys are usernames, values are bool to show recent inclusion
 
-function rcvUuid(data, uname) {
+function rcvUuid(data, uname, email0) {
     if ('uuid' in data && data.uuid) {
         uuid = data.uuid;
         username = uname;
+        sessionStorage.setItem("mj_username", username);
+        sessionStorage.setItem("mj_uuid", uuid);
+        sessionStorage.setItem("mj_email", email0);
     }
     console.info('UUID is ', uuid, 'username is ', username);
 }
@@ -20,6 +23,8 @@ function rcvUuid(data, uname) {
 function clrUuid() {
     uuid = null;
     username = null;
+    sessionStorage.removeItem("mj_username");
+    sessionStorage.removeItem("mj_uuid");
     console.info('UUID is ', uuid);
 }
 
