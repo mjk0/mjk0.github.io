@@ -18,6 +18,11 @@
         <use x="0" y="0" width="100%" height="100%" xlink:href="#tileback" />
         <text x="12" y="68" fill="white" stroke="black" stroke-width="3" font-size="500%">?</text>
     </symbol>
+    <symbol id="out" viewBox="0 0 65 84" >
+        <rect fill="transparent" stroke-width="2"
+        stroke-linecap="round" stroke-dasharray="0,6"
+        x="0.5" y="0.5" rx="12" ry="12" width="64" height="83" />
+    </symbol>
 
     <!-- Suit 'circle', a.k.a. 'cakes' -->
     <symbol id="bcakel" viewBox="0 0 100 100">
@@ -353,5 +358,22 @@
   <image x="0" y="0" width="65" height="84"  xlink:href="media/mjs/dragonred.svg" />
   <image x="65" y="0" width="65" height="84"  href="media/mjs/dragonred.svg" />
   <use x="130" y="0" width="65" height="84" href="#CN" />
+</symbol>
+
+<!-- Drag and drop outlines -->
+<symbol id="OutTgt" viewBox="0 0 65 84" >
+  <use stroke="yellow" href="#out" />
+</symbol>
+<symbol id="arrowright" viewBox="0 0 65 112" >
+  <line x1="33" y1="10" x2="48" y2="10" stroke="yellow" stroke-width="4" />
+  <polygon points="47 2, 64 12, 47 12" fill="yellow" />
+  <line x1="33" y1="102" x2="48" y2="102" stroke="yellow" stroke-width="4" />
+  <polygon points="47 110, 64 100, 47 100" fill="yellow" />
+</symbol>
+<symbol id="arrowleft" viewBox="0 0 65 112" >
+  <line x1="17" y1="10" x2="32" y2="10" stroke="yellow" stroke-width="4" />
+  <polygon points="18 2, 1 12, 18 12" fill="yellow" />
+  <line x1="17" y1="102" x2="32" y2="102" stroke="yellow" stroke-width="4" />
+  <polygon points="18 110, 18 100, 1 100" fill="yellow" />
 </symbol>
 </svg>

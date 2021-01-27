@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mahjong Play</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="/css/materialize.css" media="screen,projection"/>
+    <link type="text/css" rel="stylesheet" href="/css/animate.min.css">
+    <link type="text/css" rel="stylesheet" href="css/play.css">
+    <link rel="modulepreload" href="js/pst.js">
+    <link rel="modulepreload" href="js/pmj.js">
+    <link rel="modulepreload" href="js/ws.js">
+    <link rel="modulepreload" href="js/punpl.js">
+    <link rel="modulepreload" href="js/pui.js">
+    <style>
+        html, body {
+            height: 90vh;
+            min-height: 90vh;
+        }
+    </style>
+</head>
+<body>
+    <!-- Dropdown Structure -->
+    <ul id="dropdown_h" class="dropdown-content">
+        <li><a href="rules.html" target="_blank">Rules</a></li>
+        <li><a href="help.html" target="_blank">Game Help</a></li>
+    </ul>
+    <ul id="dropdown_g" class="dropdown-content">
+        <li><a onclick="Game.replayHand()">Trick 1</a></li>
+        <li><a onclick="Game.clownNames()">Trick 2</a></li>
+    </ul>
+    <nav><div class="nav-wrapper">
+            <a class="brand-logo left">Mahjong Beta</a>
+            <a data-target="sidenav-r"
+                class="sidenav-trigger right hide-on-med-and-up"><i
+                class="material-icons">menu</i></a>
+            <ul class="right">
+                <li><a href="./">Stand</a></li>
+                <li><a class="dropdown-trigger hide-on-small-only"
+                     data-target="dropdown_h">Help<i
+                    class="material-icons right helpdd">arrow_drop_down</i></a></li>
+                <li><a class="dropdown-trigger hide-on-small-only"
+                     data-target="dropdown_g"><i
+                    id="logi-state" class="material-icons">warning</i></a></li>
+            </ul>
+        </div>
+    </nav>
+    <ul id="sidenav-r" class="sidenav sidenav-close">
+        <li><a href="rules.html" target="_blank">Rules</a></li>
+        <li><a href="help.html" target="_blank">Game Help</a></li>
+        <li class="divider"></li>
+        <li><a onclick="Game.replayHand()">Trick 1</a></li>
+        <li><a onclick="Game.clownNames()">Trick 2</a></li>
+    </ul>
+
+    <div class="flex-container greenStripes">
+        <div class="box box-2 row w100p">
+            <!-- Left column -->
+            <div class="col s4">
+                <div class="flex-container">
+                    <div class="box box-2"></div>
+                    <div class="box box-svg-m">
+                        <table id="lhand" class="table-svg-m"><tr>
+                            <td>flower</td>
+                        </tr>
+                        <tr><td class="namebar nb-inactive"><span
+                            class="seatdir">L</span><span class="seatname">Lefty</span>
+                            <img class="crowncl svg-icon" src="media/Dice-2r1-Icon.svg"/>
+                            </td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- Middle column -->
+            <div class="col s4">
+                <div class="flex-container">
+                    <div class="box box-svg-m mt1p">
+                            <table id="ohand" class="table-svg-m"><tr>
+                                <td>flower</td>
+                            </tr>
+                        </tr>
+                        <tr><td class="namebar nb-inactive"><span
+                            class="seatdir">O</span><span class="seatname">Oppo</span>
+                            <img class="crowncl svg-icon" src="media/Dice-2r1-Icon.svg"/>
+                        </td></tr>
+                        </table>
+                    </div>
+                    <div class="box box-2"></div>
+                    <div class="box box-play">
+                        play cmds selection
+                    </div>
+                </div>
+            </div>
+            <!-- Right column -->
+            <div class="col s4">
+                <div class="flex-container">
+                    <div class="box box-2"></div>
+                    <div class="box box-svg-m">
+                        <table id="rhand" class="table-svg-m"><tr>
+                            <td>flower</td>
+                        </tr>
+                        <tr><td class="namebar nb-inactive"><span
+                            class="seatdir">R</span><span class="seatname">Righty</span>
+                            <img class="crowncl svg-icon" src="media/Dice-2r1-Icon.svg"/>
+                        </td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="box box-hand">
+            <div class="flex-container">
+                <svg id="RefLg" class="tile-lg tile-ref"><use href="media/stiles.svg#OutTgt"/></svg>
+                <div class="box box-2">
+                    <div class="bid-self">
+                        local played tiles
+                    </div>
+                </div>
+                <div class="box box-svg-lg">
+                    <div id="unplayed" class="unplayed-lg tile-anchor">
+                        <svg id="OutTgt" class="tile-lg tile-ref"><use href="media/stiles.svg#OutTgt"/></svg>
+                        <svg id="ArrowR" class="tile-lgo tile-ref"><use href="media/stiles.svg#arrowright"/></svg>
+                        <svg class="tile-lg tile-mv"><use href="media/stiles.svg#F2"/></svg>
+                    </div>
+                    <table id="hand" class="table-svg-lg"><tr><td class="namebar nb-active"><!--
+                            --><span class="seatdir">H</span><span class="seatname">Human</span><span>
+                                <img class="crowncl svg-icon" src="media/Dice-2r1-Icon.svg"/>
+                            </span><!--
+                        --></td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal score history -->
+    <div id="scoreHistory" class="modal diaTable">
+        <h3>Score History</h3>
+        <table id='scoreHTable' class='gameTable'>
+            <thead><th>Game</th><th>E-W</th><th>N-S</th></thead>
+            <tbody id='scoreHbody'></tbody>
+        </table>
+        <div class="modal-footer">
+            <a class="modal-close btn">Close</a>
+        </div>
+    </div>
+
+    <!--JavaScript at end of body for optimized loading-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/materialize.min.js"></script>
+    <script type="module">
+        import * as PSt from './js/pst.js';
+        window.PSt = PSt;
+        import * as PMj from './js/pmj.js';
+        window.PMj = PMj;
+        import * as Ws from './js/ws.js';
+        window.Ws = Ws;
+        import * as PUnpl from './js/punpl.js';
+        window.PUnpl = PUnpl;
+        import * as PUI from './js/pui.js';
+        window.PUI = PUI;
+    </script>
+    
+</body>
