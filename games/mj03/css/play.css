@@ -2,13 +2,14 @@ use { width: 100%; height: 100%; }
 .tile-lg, .tile-lgo { display: inline-block; }
 .tile-lg, .tile-lg svg { width: 9vh; height: 12vh; max-width: 12vw; max-height: 16vw; }
 .tile-lgo, .tile-lgo svg { width: 9vh; height: 16vh; max-width: 12vw; max-height: 21.33vw; }
+.tile-lgp, .tile-lgp svg { width: 12vh; height: 16vh; max-width: 16vw; max-height: 21.33vw; }
 .tile-m, .tile-m svg { width: 6.75vh; height: 9vh; max-width: 7.8vw; max-height: 10.4vw; }
 td.tile-m, td.tile-lg { display: contents; }
 .unplayed-lg { width: 98vw; height: 29vh; }
 .tile-anchor { position: relative; }
 .tile-mv { position: absolute; top: 1vh; left: 9vh; cursor: move; }
 .tile-out { position: absolute; top: 1vh; left: 1vh; }
-.tile-ref { position: absolute; top: 0; left: -10vh; }
+.tile-ref { position: absolute; top: 0; left: -13vh; }
 .tile-lg, .tile-lg svg,
 .tile-m, .tile-m svg { margin: 0px; padding: 0px; }
 #ArrowR, #ArrowL { opacity: 50% }

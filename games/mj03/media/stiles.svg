@@ -364,6 +364,11 @@
 <symbol id="OutTgt" viewBox="0 0 65 84" >
   <use stroke="yellow" href="#out" />
 </symbol>
+<symbol id="SymDTgt" viewBox="0 0 86 112" >
+  <rect fill="red" stroke-width="0" opacity="50%"
+    x="0.5" y="0.5" rx="6" ry="6" width="84" height="111" />
+  <text x="4" y="12" fill="pink" font-size="11px" stroke="white" stroke-width="0.4">Discard / 出牌</text>
+</symbol>
 <symbol id="arrowright" viewBox="0 0 65 112" >
   <line x1="33" y1="10" x2="48" y2="10" stroke="yellow" stroke-width="4" />
   <polygon points="47 2, 64 12, 47 12" fill="yellow" />

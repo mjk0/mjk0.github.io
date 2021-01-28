@@ -6,7 +6,7 @@ let mdown = {
     elem:null, cx:0, cy:0, left:0, top:0, scoord:{x:0,y:0},
     tgt:null, gcoord:{x:0,y:0}, gleft:0, shifts:null
 };
-let grid = {nw:8, nh:2, wpx: 1, hpx: 1, left: 1, top: 1, toplgo: -1};
+let grid = {nw:8, nh:2, wpx: 1, hpx: 1, left: 1, top: 1, toplgo: -1, leftlgp: -1};
 
 function getUnplayed() { return document.getElementById('unplayed')}
 function updateGrid() {
@@ -15,8 +15,10 @@ function updateGrid() {
     let unprect = unp.getBoundingClientRect();
     let reflg = document.getElementById('RefLg'); // off-display tile-lg
     let lgrect = reflg.getBoundingClientRect();
-    let reflgo = document.getElementById('ArrowR'); // off-display tile-lgo (oversize)
+    let reflgo = document.getElementById('ArrowR'); // off-display tile-lgo (vert oversize)
     let lgorect = reflgo.getBoundingClientRect();
+    let reflgp = document.getElementById('DiscardTgt'); // off-display tile-lgp (h & v oversize)
+    let lgprect = reflgp.getBoundingClientRect();
 
     let nw = Math.floor(unprect.width / lgrect.width);
     let nh = Math.floor(unprect.height / lgrect.height);
@@ -25,9 +27,11 @@ function updateGrid() {
     grid.left = (grid.wpx - lgrect.width) / 2;
     grid.top = (grid.hpx - lgrect.height) / 2;
     grid.toplgo = (lgrect.height - lgorect.height) / 2; // offset to grid.top
+    grid.leftlgp = (lgrect.width - lgprect.width) / 2; // offset to grid.left
     // don't allow grid off-screen
     grid.leftmax = (grid.nw - 0.5) * grid.wpx -2;
     grid.leftmin = grid.left +1;
+    grid.topmax = (grid.nh - 0.75) * grid.hpx -2;
     console.log(grid);
     if (grid.nw != nw || grid.nh != nh) {
         // TODO: grid dimensions changed
@@ -41,7 +45,7 @@ function nearGrid(left, top) {
 }
 function toGridXY(tgt, xy) {
     let tgtleft = xy.x * grid.wpx + grid.left;
-    tgt.style.left = tgtleft;
+    tgt.style.left = tgtleft + (xy.xoff || 0);
     tgt.style.top = xy.y * grid.hpx + grid.top + (xy.yoff || 0);
     return tgtleft;
 }
@@ -50,6 +54,7 @@ function tileLeftTop(e) {
     let top = mdown.top + (e.clientY - mdown.cy);
     if (left > grid.leftmax) left = grid.leftmax;
     if (left < grid.leftmin) left = grid.leftmin;
+    if (top > grid.topmax) top = grid.topmax;
     return {left, top, xy:nearGrid(left, top)};
 }
 
@@ -64,6 +69,7 @@ function startDrag(e) {
     mdown.gcoord.x = -9999; // last grid coords, forces update on drag
     mdown.shifts = null; // nothing to shift yet
     mdown.tgt = document.getElementById('OutTgt');
+    mdown.dun = document.getElementById('DiscardTgt'); // discard underlay
     mdown.elem.style['z-index'] = 9;
     //let rect = svg.getBoundingClientRect();
     //console.log(rect);
@@ -84,14 +90,28 @@ function drag(e) {
         if (mdown.tgt) {
             // Show grid target for drop
             if (lt.xy.x != mdown.gcoord.x || lt.xy.y != mdown.gcoord.y) {
-                mdown.gleft = toGridXY(mdown.tgt, lt.xy);
+                if (lt.xy.y < 0) {
+                    mdown.gleft = 0;
+                    unDragStyle(mdown.tgt);
+                } else {
+                    mdown.gleft = toGridXY(mdown.tgt, lt.xy);
+                }
                 mdown.gcoord.x = lt.xy.x; // update last grid coords
                 mdown.gcoord.y = lt.xy.y;
                 mdown.shifts = dragShifts(lt.xy);
                 //console.log(mdown.shifts);
+
+                if (lt.xy.y >= 0) {
+                    unDragStyle(mdown.dun); // hide discard underlay
+                }
             }
             showDragArrow('ArrowR', lt.xy, isDragMoveRight(mdown.gleft >= lt.left));
             showDragArrow('ArrowL', lt.xy, isDragMoveLeft(mdown.gleft >= lt.left));
+            // Discard underlay?
+            if (lt.xy.y < 0) {
+                mdown.dun.style.left = lt.left + grid.leftlgp;
+                mdown.dun.style.top = lt.top + grid.toplgo;
+            }
         }
     }
 }
@@ -109,9 +129,12 @@ function showDragArrow(id, xy, doMove) {
         xy.yoff = grid.toplgo;
         toGridXY(arrow, xy);
     } else {
-        arrow.style.left = null;
-        arrow.style.top = null;
+        unDragStyle(arrow);
     }
+}
+function unDragStyle(elem) {
+    elem.style.left = null;
+    elem.style.top = null;
 }
 
 function endDrag(e) {
@@ -122,12 +145,12 @@ function endDrag(e) {
         dragMoves(lt.xy, (gleft >= lt.left));
         mdown.elem.style['z-index'] = null;
 
-        if (mdown.tgt) {
-            mdown.tgt.style.left = null;
-            mdown.tgt.style.top = null;
+        for (const e of [mdown.tgt, mdown.dun]) {
+            if (e) unDragStyle(e);
         }
         mdown.elem = null;
         mdown.tgt = null;
+        mdown.dun = null;
         mdown.shifts = null;
     }
 }
@@ -146,10 +169,14 @@ function dragMoves(to, shRight) {
     } else if (mdown.shifts) { // target loc is occupied but no valid shifts
         // row is full, swap target location occupant to drag origin
         toGridXY(mdown.shifts.r[0], mdown.scoord);
+    } else if (to.y < 0) {
+        // TODO: Discarding this tile
+        console.log("discarding", svgArrToTileString([mdown.elem]));
     }
     // Hide the drag arrows
     showDragArrow('ArrowR', null, false);
     showDragArrow('ArrowL', null, false);
+    showDragArrow('DiscardTgt', null, false);
 }
 
 // For tile drag, check if destination is occupied, and if so, which other
@@ -161,7 +188,7 @@ function dragShifts(to) {
     let unp = getUnplayed();
 
     for(let child=unp.firstChild; child!==null; child=child.nextSibling) {
-        if (child != mdown.elem && child.classList.contains("tile-mv")) {
+        if (child != mdown.elem && child.classList && child.classList.contains("tile-mv")) {
             let cstyle = getComputedStyle(child);
             let left = parseFloat(cstyle.left);
             let top = parseFloat(cstyle.top);
@@ -224,13 +251,23 @@ function gridAutoPlacement() {
     return coords;
 }
 
+// Remove all DOM children that contain the given class
+function rmChildrenOfClass(elem, cl) {
+    let chnext = null;
+    for(let child=elem.firstChild; child!==null; child=chnext) {
+        chnext=child.nextSibling;
+        if (child.classList && child.classList.contains(cl)) {
+            elem.removeChild(child);
+        }
+    }
+}
+
 function refreshUnplayed(seat) {
     let coords = gridAutoPlacement(); // initial tile grid coords
     let u = PSt.hands[PSt.ourSeat].u;
     let unp = getUnplayed();
-    unp.innerHTML = '<svg id="OutTgt" class="tile-lg tile-ref"><use href="media/stiles.svg#OutTgt"/></svg>'
-    +'<svg id="ArrowR" class="tile-lgo tile-ref"><use href="media/stiles.svg#arrowright"/></svg>'
-    +'<svg id="ArrowL" class="tile-lgo tile-ref"><use href="media/stiles.svg#arrowleft"/></svg>';
+    rmChildrenOfClass(unp, 'tile-mv'); // remove any previously added tiles
+
     for (let i = 0; i < coords.length; i++) {
         // <svg class="tile-lg tile-mv"><use href="media/stiles.svg#CN"/></svg>
         let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
