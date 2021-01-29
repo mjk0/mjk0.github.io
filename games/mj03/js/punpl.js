@@ -69,7 +69,6 @@ function startDrag(e) {
     mdown.gcoord.x = -9999; // last grid coords, forces update on drag
     mdown.shifts = null; // nothing to shift yet
     mdown.tgt = document.getElementById('OutTgt');
-    mdown.dun = document.getElementById('DiscardTgt'); // discard underlay
     mdown.elem.style['z-index'] = 9;
     //let rect = svg.getBoundingClientRect();
     //console.log(rect);
@@ -93,6 +92,14 @@ function drag(e) {
                 if (lt.xy.y < 0) {
                     mdown.gleft = 0;
                     unDragStyle(mdown.tgt);
+
+                    // Which underlay to show outside of unplayed tile area?
+                    unDragStyle(mdown.dun); // hide previous underlay
+                    if (lt.xy.y == -1) {
+                        mdown.dun = document.getElementById('DiagOY'); // warning underlay
+                    } else {
+                        mdown.dun = document.getElementById('DiscardTgt'); // discard underlay
+                    }
                 } else {
                     mdown.gleft = toGridXY(mdown.tgt, lt.xy);
                 }
@@ -133,16 +140,23 @@ function showDragArrow(id, xy, doMove) {
     }
 }
 function unDragStyle(elem) {
-    elem.style.left = null;
-    elem.style.top = null;
+    if (elem && elem.style) {
+        elem.style.left = null;
+        elem.style.top = null;
+    }
 }
 
 function endDrag(e) {
     if (mdown.elem) {
         let lt = tileLeftTop(e);
-        // Snap tile to grid target
-        let gleft = toGridXY(mdown.elem, lt.xy);
-        dragMoves(lt.xy, (gleft >= lt.left));
+        if (lt.xy.y == -1) {
+            // In no-drag area, snap back to start location
+            toGridXY(mdown.elem, mdown.scoord);
+        } else {
+            // Snap tile to grid target
+            let gleft = toGridXY(mdown.elem, lt.xy);
+            dragMoves(lt.xy, (gleft >= lt.left));
+        }
         mdown.elem.style['z-index'] = null;
 
         for (const e of [mdown.tgt, mdown.dun]) {
