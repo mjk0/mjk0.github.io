@@ -190,7 +190,7 @@ function dragMoves(to, shRight) {
     // Hide the drag arrows
     showDragArrow('ArrowR', null, false);
     showDragArrow('ArrowL', null, false);
-    showDragArrow('DiscardTgt', null, false);
+    //showDragArrow('DiscardTgt', null, false);
 }
 
 // For tile drag, check if destination is occupied, and if so, which other

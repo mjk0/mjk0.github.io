@@ -27,11 +27,12 @@
         <li><a href="help.html" target="_blank">Game Help</a></li>
     </ul>
     <ul id="dropdown_g" class="dropdown-content">
-        <li><a onclick="Game.replayHand()">Trick 1</a></li>
-        <li><a onclick="Game.clownNames()">Trick 2</a></li>
+        <li><a onclick="alert('trick 1')">Trick 1</a></li>
+        <li><a onclick="alert('trick 2')">Trick 2</a></li>
     </ul>
     <nav><div class="nav-wrapper">
-            <a class="brand-logo left">Mahjong Beta</a>
+            <a class="brand-logo left">Mahjong Beta<i id="ws-status"
+                    class="material-icons right">sync_problem</i></a>
             <a data-target="sidenav-r"
                 class="sidenav-trigger right hide-on-med-and-up"><i
                 class="material-icons">menu</i></a>
@@ -41,8 +42,8 @@
                      data-target="dropdown_h">Help<i
                     class="material-icons right helpdd">arrow_drop_down</i></a></li>
                 <li><a class="dropdown-trigger hide-on-small-only"
-                     data-target="dropdown_g"><i
-                    id="logi-state" class="material-icons">warning</i></a></li>
+                    data-target="dropdown_g"><i
+                    class="material-icons">more_vert</i></a></li>
             </ul>
         </div>
     </nav>

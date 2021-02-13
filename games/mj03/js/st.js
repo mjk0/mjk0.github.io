@@ -23,8 +23,12 @@ function rcvUuid(data, uname, email0) {
 function clrUuid() {
     uuid = null;
     username = null;
+    ourGame = null;
+    ourSeat = -1;
     sessionStorage.removeItem("mj_username");
     sessionStorage.removeItem("mj_uuid");
+    sessionStorage.removeItem("mj_game");
+    sessionStorage.removeItem("mj_seat");
     console.info('UUID is ', uuid);
 }
 
@@ -54,12 +58,21 @@ function isInvited(gname) {
 }
 // {"action":"sitat","game":"Marcel","seat":2} // server ack of seat request being granted
 function rcvSitAt(data) {
-    if ('game' in data && data.game) {
+    if (data.hasOwnProperty('game')) {
         ourGame = data.game;
+        sessionStorage.setItem("mj_game", ourGame);
     }
-    if ('seat' in data && data.seat) {
+    if (data.hasOwnProperty('seat') && data.seat >= 0 && data.seat <= 3) {
         ourSeat = data.seat;
+        sessionStorage.setItem("mj_seat", ourSeat);
     }
+}
+function hasOurGameStarted() {
+    return (
+        username && uuid && ourGame && ourSeat >= 0 // game & seat defined?
+        && games[ourGame].seats[ourSeat] == username
+        && games[ourGame].status > 0 // game started?
+    );
 }
 
 function rcvUsers(data) {
@@ -103,5 +116,5 @@ function privForget(u) {
 export {
     games, users, username, uuid, ourGame, ourSeat, pastInvited,
     rcvUuid, clrUuid, rcvGames, isOpen, isPrivate, isInvited, setPastInvited,
-    rcvSitAt, rcvUsers, rcvPrivInv, privForget,
+    rcvSitAt, rcvUsers, rcvPrivInv, privForget, hasOurGameStarted,
 };

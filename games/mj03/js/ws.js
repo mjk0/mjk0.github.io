@@ -14,7 +14,7 @@ function wsInit() {
         ws.onmessage = wsOnMsg;
     } catch (e) {
         console.error(e);
-        ws = null;
+        wsClosed();
     }
 }
 
@@ -28,7 +28,13 @@ function wsOnOpen(ev) {
 
 function wsOnClose(ev) {
     console.info("Ws close: "+ev.target.url);
+    wsClosed();
+}
+function wsClosed() {
     ws = null;
+    if (WsOptions.hasOwnProperty('onClose')) {
+        WsOptions.onClose();
+    }
 }
 
 function wsOnError(ev) {
@@ -59,9 +65,13 @@ function sendMsg(data) {
         }
     }
 }
+// Allow login function to clear queued msgs on re-connect
+function wsClrSendQ() {
+    sendQueue.length = 0;
+}
 
 function close() {
-    ws.close();
+    ws.close(); // Triggers onClose event if was previously open
     ws = null;
 }
 
@@ -75,5 +85,5 @@ function init(opts) {
 }
 
 export {
-    init, close, sendMsg, sendCloseMe,
+    init, close, sendMsg, sendCloseMe, wsClrSendQ,
 };

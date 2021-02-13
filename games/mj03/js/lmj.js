@@ -30,6 +30,9 @@ function rcvErr(data) {
     if (data.err == "username_taken") { // login attempt failed, but can try again
         LUI.sign_in_err_state_email();
         St.clrUuid(); // sets to null
+    } else if (data.err == "authenticate") {
+        LUI.set_sign_in_state(false);
+        try_autologin();
     }
 }
 
@@ -42,7 +45,22 @@ function signOut() {
 function rcvGames(data) {
     St.rcvGames(data);
     LUI.update_games_display();
+    goPlayIfGameStarted();
 }
+function goPlayIfGameStarted() {
+    // If our game has started, jump to game play URL
+    if (St.hasOurGameStarted()) {
+        document.location.href = "./play.html";
+    }
+}
+function startGame() {
+    if (St.ourGame && St.ourSeat >= 0) {
+        Ws.sendMsg({"action":"start"});
+    } else {
+        alert("Select a seat before starting the game");
+    }
+}
+
 function sitAt(game, seat, elem) {
     console.log('sitAt('+game+', '+seat+', '+ elem +')');
     Ws.sendMsg({"action":"sitat", game, seat}); // response from server triggers UI refresh
@@ -50,6 +68,7 @@ function sitAt(game, seat, elem) {
 function rcvSitAt(data) { // server confirmation of seat request
     St.rcvSitAt(data);
     LUI.update_games_display(); // start button now enabled on our game
+    goPlayIfGameStarted();
 }
 function rcvPrivInv(data) {
     St.rcvPrivInv(data); // {"action":"privinv","list":["Marcel"]}
@@ -124,6 +143,6 @@ $(document).ready(function(){
 });
 
 export {
-    submit, signOut, sitAt,
+    submit, signOut, sitAt, startGame,
     privCreate, privKill, privInvite, privInviteSelected, privForget,
 };
