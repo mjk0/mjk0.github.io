@@ -14,6 +14,7 @@ const WsOptions = {
     actionHandlers: {
         'sitat': rcvSitAt,
         'err':   rcvErr,
+        'chat':  rcvChat,
     },
 };
 
@@ -42,7 +43,16 @@ function rcvErr(data) {
         }
     }
 }
-
+function rcvChat(data) {
+    console.log(data);
+    PUI.chatIncoming(data.text); // notify user of incoming chat message
+}
+function chatsubmit(event) {
+    let chat = document.getElementById('chattext');
+    Ws.sendMsg({"action":"chat", "text": chat.value});
+    chat.value = '';
+    event.preventDefault();
+}
 // Set the WebSocket URL to include our connection UUID
 function wsUuidInit() {
     WsOptions.serverUrl = WsOptions.serverBase + PSt.uuid;
@@ -76,5 +86,5 @@ $(document).ready(function(){
 });
 
 export {
-    loginAndSit,
+    loginAndSit, chatsubmit,
 };

@@ -104,6 +104,36 @@ td.tile-m, td.tile-lg { display: contents; }
 .dropdown-content { background-color: #ee6e73; }
 .dropdown-content li > a { color: white; }
 i.material-icons.right.helpdd { margin-left: 0px; }
+.chatMsg {
+    animation-name: chatMsg;
+    animation-duration: 1s;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;  
+}
+@keyframes chatMsg {
+    from {color: greenyellow;}
+    to {color: yellowgreen;}
+}
+#chatWindow {
+    background-color: bisque; width: 100%; box-shadow: 0 0 1pt 1pt red;
+    height: fit-content;
+}
+.chatH { text-align: left; display: inline-block; width: 100%;
+    background-color: yellowgreen; color: black;
+}
+.chatH a { cursor: pointer; }
+.chatE { background-color: brown; }
+#chatLog { display: block; overflow: auto; height: 20vh; }
+.chatBubble {
+    border-radius: 0.1em; box-shadow: 0 0 1pt 1pt black;
+    font-size: 2vmin;
+    display: table; margin: 0.3em 0; clear: both;
+}
+.East, .seat0 { background-color: white; color: black; }
+.South, .seat1 { background-color: green; color: white; }
+.West, .seat2 { background-color: orange; color: black; }
+.North, .seat3 { background-color: darkred; color: white; }
 .gameTable th {background-color: lightslategrey; color: white; }
 .privTable th {background-color: peru; color: white; }
 .gameTable table, .privTable table,

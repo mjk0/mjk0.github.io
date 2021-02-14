@@ -37,6 +37,8 @@
                 class="sidenav-trigger right hide-on-med-and-up"><i
                 class="material-icons">menu</i></a>
             <ul class="right">
+                <li><a onclick="PUI.chatShow(-1)"><i id="chat-icon"
+                    class="material-icons">chat</i></a></li>
                 <li><a href="./">Stand</a></li>
                 <li><a class="dropdown-trigger hide-on-small-only"
                      data-target="dropdown_h">Help<i
@@ -51,8 +53,8 @@
         <li><a href="rules.html" target="_blank">Rules</a></li>
         <li><a href="help.html" target="_blank">Game Help</a></li>
         <li class="divider"></li>
-        <li><a onclick="Game.replayHand()">Trick 1</a></li>
-        <li><a onclick="Game.clownNames()">Trick 2</a></li>
+        <li><a onclick="alert('trick 1')">Trick 1</a></li>
+        <li><a onclick="alert('trick 2')">Trick 2</a></li>
     </ul>
 
     <div class="flex-container greenStripes">
@@ -60,7 +62,23 @@
             <!-- Left column -->
             <div class="col s4">
                 <div class="flex-container">
-                    <div class="box box-2"></div>
+                    <div class="box box-2">
+                        <!-- Chat window -->
+                        <div id="chatWindow" class="hide-me">
+                            <div class="chatH"><span>Messages</span>
+                                <a class="right"
+                                onclick="PUI.chatShow(0)"><i
+                                class="material-icons">close</i></a>
+                            </div>
+                            <div id="chatLog"></div>
+                            <div class="chatE">
+                                <form onsubmit="return PMj.chatsubmit(event)">
+                                    <input type="text" id="chattext"
+                                    placeholder="type message">
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                     <div class="box box-svg-m">
                         <table id="lhand" class="table-svg-m"><tr>
                             <td>flower</td>
