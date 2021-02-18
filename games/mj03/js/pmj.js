@@ -15,6 +15,8 @@ const WsOptions = {
         'sitat': rcvSitAt,
         'err':   rcvErr,
         'chat':  rcvChat,
+        'hands': rcvHands,
+        'unplayed':  rcvUnplayed,
     },
 };
 
@@ -53,6 +55,20 @@ function chatsubmit(event) {
     chat.value = '';
     event.preventDefault();
 }
+
+// Played sets for one or more players
+function rcvHands(data) {
+    console.log(data);
+    PSt.rcvHands(data);
+    PUI.refreshPlayed(data.ibase || 0, data.h.length);
+}
+// Unplayed tiles in our hand
+function rcvUnplayed(data) {
+    console.log(data);
+    PSt.rcvUnplayed(data);
+    PUI.refreshUnplayed();
+}
+
 // Set the WebSocket URL to include our connection UUID
 function wsUuidInit() {
     WsOptions.serverUrl = WsOptions.serverBase + PSt.uuid;
@@ -78,8 +94,9 @@ $(document).ready(function(){
     PUI.init(); // initializes unplayed tile grid
 
     // Stub tile set for testing
-    PSt.setHand(PSt.ourSeat, {u:["CN", "FA", "BB"], s:[], r:false});
-    PUI.refreshHand(PSt.ourSeat);
+    PSt.setUnplayed(["CN", "FA", "BB"]);
+    PSt.setHand(PSt.ourSeat, {nu:PSt.unplayed.length, s:[], r:false});
+    PUI.refreshUnplayed();
 
     // Initiate login and seating at running game
     loginAndSit();

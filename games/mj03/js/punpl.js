@@ -8,10 +8,11 @@ let mdown = {
 };
 let grid = {nw:8, nh:2, wpx: 1, hpx: 1, left: 1, top: 1, toplgo: -1, leftlgp: -1};
 
-function getUnplayed() { return document.getElementById('unplayed')}
+function domUnplayed() { return document.getElementById('unplayed')}
 function updateGrid() {
+    let grid = {};
     // working area for the grid is #unplayed
-    let unp = getUnplayed();
+    let unp = domUnplayed();
     let unprect = unp.getBoundingClientRect();
     let reflg = document.getElementById('RefLg'); // off-display tile-lg
     let lgrect = reflg.getBoundingClientRect();
@@ -29,15 +30,13 @@ function updateGrid() {
     grid.toplgo = (lgrect.height - lgorect.height) / 2; // offset to grid.top
     grid.leftlgp = (lgrect.width - lgprect.width) / 2; // offset to grid.left
     // don't allow grid off-screen
-    grid.leftmax = (grid.nw - 0.5) * grid.wpx -2;
+    grid.leftmax = (nw - 0.5) * grid.wpx -2;
     grid.leftmin = grid.left +1;
-    grid.topmax = (grid.nh - 0.75) * grid.hpx -2;
-    console.log(grid);
-    if (grid.nw != nw || grid.nh != nh) {
-        // TODO: grid dimensions changed
-        grid.nw = nw;
-        grid.nh = nh;
-    }
+    grid.topmax = (nh - 0.75) * grid.hpx -2;
+    //console.log(grid);
+    grid.nw = nw;
+    grid.nh = nh;
+    return grid;
 }
 // Translate from drag tile style left+top to grid tgt outline
 function nearGrid(left, top) {
@@ -166,6 +165,7 @@ function endDrag(e) {
         mdown.tgt = null;
         mdown.dun = null;
         mdown.shifts = null;
+        deselectAll(); // in case drag accidentally selected text
     }
 }
 
@@ -196,31 +196,12 @@ function dragMoves(to, shRight) {
 // For tile drag, check if destination is occupied, and if so, which other
 // tiles would need to be moved for left or right shifts
 function dragShifts(to) {
-    // Search tile coords for 'to' coords
-    //let ulen = PSt.hands[PSt.ourSeat].u.length;
-    let ri = []; ri.length = grid.nw; // empty matches == null
-    let unp = getUnplayed();
-
-    for(let child=unp.firstChild; child!==null; child=child.nextSibling) {
-        if (child != mdown.elem && child.classList && child.classList.contains("tile-mv")) {
-            let cstyle = getComputedStyle(child);
-            let left = parseFloat(cstyle.left);
-            let top = parseFloat(cstyle.top);
-            let c = nearGrid(left, top);
-
-            if (c.y == to.y) { // same row?
-                ri[c.x] = child; // save tile indices from same unplayed row
-                if (c.x > grid.nw || c.x < 0) {
-                    console.error("Bad X coordinate: (%d,%d), %s",
-                        c.x, c.y, JSON.stringify(child));
-                }
-            }
-        }
-    }
+    let allrows = discoverUnplayedInGrid();
+    let ri = allrows[to.y]; // tiles on same row as destination (to)
 
     // Is the 'to' spot occupied?
     //console.log(to, ri);
-    if (ri[to.x] == null) { return null; } // currently empty
+    if (ri == null || ri[to.x] == null) { return null; } // currently empty
 
     // At least tgt location tile must move
     let shs = {l:[ri[to.x]], r:[ri[to.x]]};
@@ -249,7 +230,7 @@ function shiftX(arr, xoffset) {
 function gridAutoPlacement() {
     let x=0, y=0;
     let coords = []; // each entry is {x,y}
-    let u = PSt.hands[PSt.ourSeat].u;
+    let u = PSt.unplayed;
     for (let i = 0; i < u.length; ++i) {
         if (i > 0 && !PSt.isSameSuitConsecutive(u, i-1)) {
             x += 1; // inter-suit gap
@@ -276,10 +257,107 @@ function rmChildrenOfClass(elem, cl) {
     }
 }
 
+// Discover the grid coordinates of each unplayed tile
+function discoverUnplayedInGrid() {
+    let ri = [];
+    for (let i = 0; i < grid.nh; ++i) {
+        let arow = []; arow.length = grid.nw; // empty matches == null
+        ri.push(arow); // sub-array for each row
+    }
+    let unp = domUnplayed();
+
+    for(let child=unp.firstChild; child!==null; child=child.nextSibling) {
+        if (child != mdown.elem && child.classList && child.classList.contains("tile-mv")) {
+            let cstyle = getComputedStyle(child);
+            let left = parseFloat(cstyle.left);
+            let top = parseFloat(cstyle.top);
+            let c = nearGrid(left, top);
+
+            if (c.y >= grid.nh || c.y < 0 || c.x < 0 || c.x >= grid.nw) {
+                console.log("Ignoring tile at grid %s", JSON.stringify(c));
+            } else if (ri[c.y][c.x] == null) {
+                ri[c.y][c.x] = child; // Mark tile spot in grid
+            } else {
+                console.error("Multiple tiles at grid %s", JSON.stringify(c));
+            }
+        }
+    }
+    return ri;
+}
+
+// left shift grid spots of tiles until right-most spot is open
+function leftShiftGridRow(allrows, xy) {
+    let tgtx = grid.nw-1;
+    while (tgtx >= 0 && allrows[xy.y][tgtx] != null) {
+        --tgtx;
+    }
+    if (allrows[xy.y][tgtx] == null) {
+        while (tgtx < grid.nw-1) {
+            // Move any tiles that need left shifting
+            allrows[xy.y][tgtx] = allrows[xy.y][tgtx+1];
+            toGridXY(allrows[xy.y][tgtx], {y:xy.y, x:tgtx});
+            ++tgtx;
+        }
+        // Move requested tile to the end of the row
+        allrows[xy.y][tgtx] = allrows[xy.y][xy.x];
+        allrows[xy.y][xy.x] = null;
+        toGridXY(allrows[xy.y][tgtx], {y:xy.y, x:tgtx});
+    } else {
+        console.error("leftShiftGridRow: no space");
+    }
+}
+
+// When the display area resizes, re-position tiles as needed
+function refreshGrid() {
+    let allrows = discoverUnplayedInGrid();
+    let oldgrid = grid; // remember old grid bounds
+    grid = updateGrid();
+    let emptySpots = []; // track the number of empty spots per row
+    let overflow = []; // tiles that cannot be fit into their original row
+    for (let xy={x:0, y:0}; xy.y < oldgrid.nh; ++xy.y) {
+        emptySpots[xy.y] = 0;
+        for (xy.x=0; xy.x < oldgrid.nw; ++xy.x) {
+            if (allrows[xy.y][xy.x] == null) {
+                if (xy.x < grid.nw) {
+                    ++emptySpots[xy.y]; // available spot in new grid
+                }
+            } else {
+                if (xy.x < grid.nw) {
+                    toGridXY(allrows[xy.y][xy.x], xy); // spot is valid in new grid
+                } else {
+                    if (emptySpots[xy.y] > 0) {
+                        leftShiftGridRow(allrows, xy);
+                        --emptySpots[xy.y]; // mark spot used
+                    } else {
+                        overflow.push({y:xy.y, x:xy.x});
+                    }
+                }
+            }
+        }
+    }
+
+    // Move overflow tiles to end of other row
+    for (const ov of overflow) {
+        for (let y=0; y< grid.nh; ++y) {
+            if (emptySpots[y] > 0) {
+                // Move tile to this row, then do left shifts
+                allrows[y][ov.x] = allrows[ov.y][ov.x];
+                allrows[ov.y][ov.x] = null;
+                leftShiftGridRow(allrows, {y, x:ov.x});
+                --emptySpots[y]; // mark spot used
+                break; // stop empty spot search for this overflow tile
+            }
+        }
+        if (allrows[ov.y][ov.x] != null) {
+            console.error("Failed to move overflow tile at (%d,%d)",ov.x,ov.y);
+        }
+    }
+}
+
 function refreshUnplayed(seat) {
     let coords = gridAutoPlacement(); // initial tile grid coords
-    let u = PSt.hands[PSt.ourSeat].u;
-    let unp = getUnplayed();
+    let u = PSt.unplayed;
+    let unp = domUnplayed();
     rmChildrenOfClass(unp, 'tile-mv'); // remove any previously added tiles
 
     for (let i = 0; i < coords.length; i++) {
@@ -305,15 +383,29 @@ function svgArrToTileString(arr) {
     return ss;
 }
 
+// Clear any text selection in the webpage
+// https://stackoverflow.com/questions/3169786/clear-text-selection-with-javascript
+function deselectAll() {
+    if (window.getSelection) {
+        if (window.getSelection().empty) {  // Chrome
+          window.getSelection().empty();
+        } else if (window.getSelection().removeAllRanges) {  // Firefox
+          window.getSelection().removeAllRanges();
+        }
+      } else if (document.selection) {  // IE?
+        document.selection.empty();
+    }
+}
+
 function tileMvListeners(el) {
     el.addEventListener('mousedown', startDrag);
     el.addEventListener('mousemove', drag);
     el.addEventListener('mouseup', endDrag);
-    el.addEventListener('mouseleave', endDrag);
+    //el.addEventListener('mouseleave', endDrag);
     el.addEventListener('touchstart', startDrag);
     el.addEventListener('touchmove', drag);
     el.addEventListener('touchend', endDrag);
-    el.addEventListener('touchleave', endDrag);
+    //el.addEventListener('touchleave', endDrag);
     el.addEventListener('touchcancel', endDrag);
 }
 
@@ -321,8 +413,9 @@ function init() {
     // Register event handlers for all movable tiles
     var tile_mvs = document.getElementsByClassName("tile-mv");
     Array.from(tile_mvs).forEach(tileMvListeners);
+    grid = updateGrid(); // initialize the unplayed tiles grid
 }
 
 export {
-    init, updateGrid, refreshUnplayed,
+    init, refreshGrid, refreshUnplayed, deselectAll,
 }
