@@ -3,8 +3,10 @@
 
 const urlParams = new URLSearchParams(window.location.search);
 
+var players = []; // player 0 is East
 var hands = []; // hand 0 is East, then S W N. {nu:3, r:0, sets:[{"s":"","secret":0}]}
 var unplayed = []; // unplayed tiles, e.g. ["CN", "FA", "BB"]
+var curr = {}; // current position, wind, and dealer
 var ourGame = null;
 var ourSeat = 0;
 var username = null;
@@ -46,6 +48,13 @@ function rcvSitAt(data) {
     }
 }
 
+// {"action":"players","seats":[null,null,"Marcel",null]}
+function rcvPlayers(data) {
+    if (data.hasOwnProperty("seats")) {
+        players = data.seats;
+    }
+}
+
 // {"action":"hands","ibase":0,"h":[
 //   {"sets":[{"s":"","secret":0}],"nu":13,"r":0},
 //   {"sets":[{"s":"","secret":0}],"nu":13,"r":0},
@@ -70,6 +79,13 @@ function rcvUnplayed(data) {
     }
 }
 
+// {"action":"current","pos":0,"wind":0,"dealer":0}
+function rcvCurrent(data) {
+    curr.pos = data.pos;
+    curr.wind = data.wind;
+    curr.dealer = data.dealer;
+}
+
 function getSessionInfo() {
     username = sessionStorage.getItem("mj_username") || null;
     uuid = sessionStorage.getItem("mj_uuid") || null;
@@ -82,8 +98,8 @@ function init() {
 }
 
 export {
-    hands, unplayed, ourGame, ourSeat, username, uuid, email,
+    players, hands, unplayed, curr, ourGame, ourSeat, username, uuid, email,
     init, getUrlParam, getSessionInfo,
     setHand, setUnplayed, isSameSuitConsecutive, tileSuit,
-    rcvSitAt, rcvHands, rcvUnplayed,
+    rcvSitAt, rcvPlayers, rcvHands, rcvUnplayed, rcvCurrent,
 };

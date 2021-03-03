@@ -11,12 +11,16 @@ const WsOptions = {
     serverUrl: "ws://localhost:3030/games/mahjong/",
     autoReconnectInterval: 5000, // in milliseconds
     'onClose': wsOnClose,
+    'online' : netOnOnline,
+    'offline': netOnOffline,
     actionHandlers: {
         'sitat': rcvSitAt,
         'err':   rcvErr,
         'chat':  rcvChat,
-        'hands': rcvHands,
-        'unplayed':  rcvUnplayed,
+        'players': rcvPlayers,
+        'hands':   rcvHands,
+        'unplayed': rcvUnplayed,
+        'current' : rcvCurrent,
     },
 };
 
@@ -29,12 +33,11 @@ function loginAndSit() {
     Ws.sendMsg({"action":"sitat", "game":PSt.ourGame, "seat":parseInt(PSt.ourSeat)}); // response from server triggers UI refresh
 }
 function rcvSitAt(data) { // server confirmation of seat request
-    console.log(data);
     PSt.rcvSitAt(data);
+    PUI.refreshPlayerDirs(); // show which seat is E, S, W, N
     PUI.showWsOn(true);
 }
 function rcvErr(data) {
-    console.log(data);
     if (data.err == "authenticate") {
         if (params.auto) {
             document.location.href = "./";
@@ -46,7 +49,6 @@ function rcvErr(data) {
     }
 }
 function rcvChat(data) {
-    console.log(data);
     PUI.chatIncoming(data.text); // notify user of incoming chat message
 }
 function chatsubmit(event) {
@@ -56,17 +58,26 @@ function chatsubmit(event) {
     event.preventDefault();
 }
 
+// List of seated players for this game
+function rcvPlayers(data) {
+    PSt.rcvPlayers(data);
+    PUI.refreshPlayerNames();
+}
 // Played sets for one or more players
 function rcvHands(data) {
-    console.log(data);
     PSt.rcvHands(data);
     PUI.refreshPlayed(data.ibase || 0, data.h.length);
 }
 // Unplayed tiles in our hand
 function rcvUnplayed(data) {
-    console.log(data);
     PSt.rcvUnplayed(data);
     PUI.refreshUnplayed();
+}
+// Current position, wind, and dealer
+function rcvCurrent(data) {
+    PSt.rcvCurrent(data);
+    PUI.refreshCurrWind();
+    PUI.refreshCurrDealer();
 }
 
 // Set the WebSocket URL to include our connection UUID
@@ -81,6 +92,14 @@ function wsOnClose() {
             (new Date()).toLocaleTimeString(), WsOptions.autoReconnectInterval);
         setTimeout(loginAndSit, WsOptions.autoReconnectInterval);
     }
+}
+function netOnOffline() {
+    PUI.showWsOn(false); // offline, just show not connected
+    console.log('%s: offline', (new Date()).toLocaleTimeString());
+}
+function netOnOnline() {
+    PUI.showWsOn(false); // show WebSocket disconnected until reconnect attempt
+    console.log('%s: online', (new Date()).toLocaleTimeString());
 }
 
 // Function that executes jQuery code after page load is complete

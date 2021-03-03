@@ -3,9 +3,9 @@ use { width: 100%; height: 100%; }
 .tile-lg, .tile-lg svg { width: 9vh; height: 12vh; max-width: 10.8vw; max-height: 14.4vw; }
 .tile-lgo, .tile-lgo svg { width: 9vh; height: 16vh; max-width: 10.8vw; max-height: 19.2vw; }
 .tile-lgp, .tile-lgp svg { width: 12vh; height: 16vh; max-width: 14.4vw; max-height: 19.2vw; }
-.tile-m, .tile-m svg { width: 6.75vh; height: 9vh; max-width: 4.2vw; max-height: 5.6vw; }
+.tile-m, .tile-m svg { width: 5.4vh; height: 7.2vh; max-width: 4.2vw; max-height: 5.6vw; }
 td.tile-m, td.tile-lg { display: contents; }
-.unplayed-lg { width: 98vw; height: 29vh; }
+.unplayed-lg { width: 98vw; height: 26vh; }
 .tile-anchor { position: relative; }
 .tile-mv { position: absolute; top: 1vh; left: 9vh; cursor: move; }
 .tile-out { position: absolute; top: 1vh; left: 1vh; }
@@ -15,8 +15,9 @@ td.tile-m, td.tile-lg { display: contents; }
 #ArrowR, #ArrowL { opacity: 50% }
 .tile-set {
     background-color: sandybrown; padding: 0.3vw;
-    border-radius: 1vw; display: inline-block;
+    border-radius: 1vw; display: inline-flex;
 }
+#tilesp0 div.tile-set { border-radius: 2vw; }
 .tile-set-secret {
     /* animation: tile-bg-secret 2s ease-in-out 0s infinite alternate; */
     box-shadow: 0 0 1pt 1pt deeppink;
@@ -24,6 +25,11 @@ td.tile-m, td.tile-lg { display: contents; }
 @keyframes tile-bg-secret {
     from {background-color: brown;}
     to {background-color: white;}
+}
+.wide-middle {
+    margin-left: -5vw;
+    overflow: visible;
+    width: 43.3333vw;
 }
 .robotPlayBtn {
     position: absolute; left: 3px; bottom: -0.5em;
@@ -40,6 +46,10 @@ td.tile-m, td.tile-lg { display: contents; }
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
+}
+#discard-line { position: absolute; top: 0.2vh; left:0.5vw; right: 0.5vw;
+    background-color: red; line-height: 1.1em;
+    border-radius: 0.4em; opacity: 95%;
 }
 #discards {
     border: white solid 2px; background-color: burlywood;
@@ -67,6 +77,7 @@ td.tile-m, td.tile-lg { display: contents; }
     background: repeating-linear-gradient(
         45deg, green, green 10px, #208020 10px, #208020 20px
     );
+    z-index: -2;
 }
 .row .col { padding: 0px; }
 .box {
@@ -85,6 +96,7 @@ td.tile-m, td.tile-lg { display: contents; }
     flex: 1;
     flex-direction: row;
     box-shadow: 0.2px 0.1px yellow;
+    position: relative;
 }
 .box-3 {
     min-height: 30%;
@@ -121,8 +133,8 @@ i.material-icons.right.helpdd { margin-left: 0px; }
     to {color: yellowgreen;}
 }
 #chatWindow {
+    position: absolute; top: 0; left: 0; bottom: 0; right: 0;
     background-color: bisque; width: 100%; box-shadow: 0 0 1pt 1pt red;
-    height: fit-content;
 }
 .chatH { text-align: left; display: inline-block; width: 100%;
     background-color: yellowgreen; color: black;
@@ -167,11 +179,16 @@ th.gameSectionTitle { text-align: left; font-style: italic; }
 .aRight { align-self: flex-end; }
 .mt1p { margin: 1vh 1vh; }
 .h100p { height: 100%; }
-.w100p { width: 100%; }
+.w100p { width: 99.9%; }
 .row { margin-bottom: 0px; }
+.div-wind { display: inline-block; margin-right: auto; height: fit-content;
+    background-color: darkgreen; color: white; border-radius: 1em;
+}
+.curr-wind { width: auto; }
+.curr-wind td { padding: 0px 0.5em; }
+.curr-wind svg { margin-top: 0.2em; }
 .nb-active { background-color: yellow; }
 .nb-inactive { background-color: lightsteelblue; }
-.nb-kitty { background-color: burlywood; }
 .namebar {
     position: relative;
     font-size: 3vh; line-height: normal;
@@ -179,11 +196,8 @@ th.gameSectionTitle { text-align: left; font-style: italic; }
 }
 .box-svg-m .namebar { max-width: 27vw; }
 .namebar i { font-size: 3vh; }
-.seatdir {background-color: teal; color: white; padding: 0px 0.2em; }
-.seatdir.NS, .seatdir.EW { border-right: double; }
+.seatdir { padding-left: 0.5em; border-right: 2px solid black; }
 .seatname { margin-left: 0.2em; color: black; }
-.NS, .NS.gameTableDir { background-color: darkred; color: white; }
-.EW, .EW.gameTableDir { background-color: white; color: black; }
 .table-svg-m, .table-svg-k {
     width: auto; height: fit-content;
     font-size: 0px; border: none;
@@ -201,15 +215,20 @@ th.gameSectionTitle { text-align: left; font-style: italic; }
     font-size: 2.5vh; text-align: center; line-height: 5vh;
 }
 .hide-me { display: none; }
-.bid-self {
-    background-color: bisque; border: white solid 2px; border-radius: 9px;
-    font-size: 5vh; height: 1.9em; padding: 0px 0.4em; margin-top: 0.2em;
+.played-local {
+    background-color: bisque; color: white;
+    border: white solid 0.5vw; border-radius: 2vw;
+    font-size: 7vh; width: 99vw; min-height: 12vh; margin-top: 1vh;
 }
-@media only screen and (max-width: 800px) {
-    div.bid-self button.btn {
-        height: 6vmin; line-height: 6vmin;
-        font-size: 2.2vmin;
-    }
+.HoverBtn, .HoverBtnW {
+    background-color: lightsteelblue; color: black;
+    border: 2px solid black; border-radius: 0.7em;
+    padding: 2px 4px;
+}
+.HoverBtn:hover { background-color :#393939; color:#f3f3f3; }
+.HoverBtnW:hover { border-color: white;}
+.rainbow {
+    background: linear-gradient(to bottom, red, orange, yellow, lime, DodgerBlue, Orchid, violet);
 }
 .bid-table {
     background-color: slategray; border: white ridge 2px;
@@ -290,4 +309,3 @@ button.inviteBtn {
 }
 .iconBtn { color: grey; cursor: pointer;}
 .iconBtn:hover { color: lightcoral; cursor: pointer;}
-.crowncl, .info-crowncl { color: blue; }

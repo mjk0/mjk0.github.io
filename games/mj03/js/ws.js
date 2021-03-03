@@ -82,6 +82,11 @@ function sendCloseMe() {
 
 function init(opts) {
     WsOptions = opts;
+    for (const ecb of ["online", "offline"]) {
+        if (WsOptions.hasOwnProperty(ecb)) {
+            window.addEventListener(ecb, WsOptions[ecb]);
+        }
+    }
 }
 
 export {
