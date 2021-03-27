@@ -21,6 +21,8 @@ const WsOptions = {
         'hands':   rcvHands,
         'unplayed': rcvUnplayed,
         'current' : rcvCurrent,
+        'tileplay': rcvTilePlay,
+        'waiton'  : rcvWaitOn,
     },
 };
 
@@ -78,6 +80,13 @@ function rcvCurrent(data) {
     PSt.rcvCurrent(data);
     PUI.refreshCurrWind();
     PUI.refreshCurrDealer();
+}
+function rcvTilePlay(data) {
+    PSt.rcvTilePlay(data);
+    PUI.showPlaySelection();
+}
+function rcvWaitOn(data) {
+    PUI.rcvWaitOn(data); // Only relevant to UI
 }
 
 // Set the WebSocket URL to include our connection UUID

@@ -3,7 +3,9 @@ use { width: 100%; height: 100%; }
 .tile-lg, .tile-lg svg { width: 9vh; height: 12vh; max-width: 10.8vw; max-height: 14.4vw; }
 .tile-lgo, .tile-lgo svg { width: 9vh; height: 16vh; max-width: 10.8vw; max-height: 19.2vw; }
 .tile-lgp, .tile-lgp svg { width: 12vh; height: 16vh; max-width: 14.4vw; max-height: 19.2vw; }
-.tile-m, .tile-m svg { width: 5.4vh; height: 7.2vh; max-width: 4.2vw; max-height: 5.6vw; }
+.tile-mm, .tile-mm svg { width: 7.8vh; height: 10.4vh; max-width: 6vw; max-height: 8vw; }
+.tile-m, .tile-m svg { width: 4.8vh; height: 6.4vh; max-width: 4.2vw; max-height: 5.6vw; }
+.tile-s, .tile-s svg { width: 3.6vh; height: 4.8vh; max-width: 2.8vw; max-height: 3.733vw; }
 td.tile-m, td.tile-lg { display: contents; }
 .unplayed-lg { width: 98vw; height: 26vh; }
 .tile-anchor { position: relative; }
@@ -50,21 +52,11 @@ td.tile-m, td.tile-lg { display: contents; }
 #discard-line { position: absolute; top: 0.2vh; left:0.5vw; right: 0.5vw;
     background-color: red; line-height: 1.1em;
     border-radius: 0.4em; opacity: 95%;
+    animation: font-pulse 1s linear 0s infinite alternate;
 }
-#discards {
-    border: white solid 2px; background-color: burlywood;
-    width: auto; height: fit-content; font-size: 1.8vw;
-    align-self: center; padding: 0px;
-    border-collapse: separate; border-radius: 9px;
-}
-#discards th { padding: 0px 0px 0px 3px; border-bottom: white solid; }
-#discards td { padding: 0px; }
-#discards > tbody > tr > td:last-child { padding: 0px 3px 3px 3px; }
-@media only screen and (max-width: 1200px) {
-    #discards { font-size: 22px; }
-}
-@media only screen and (max-width: 800px) {
-    #discards { min-width: 90vw; }
+@keyframes font-pulse {
+    from {font-size: inherit;}
+    to {font-size: 1.1em;}
 }
 .flex-container {
     height: 100%;
@@ -108,7 +100,7 @@ td.tile-m, td.tile-lg { display: contents; }
     min-height: 16vh;
 }
 .box-play {
-    min-height: 30%;
+    min-height: 30%; position: relative;
 }
 .box-hand {
     min-height: 30vh;
@@ -142,11 +134,12 @@ i.material-icons.right.helpdd { margin-left: 0px; }
 .chatH a { cursor: pointer; }
 .chatE { background-color: brown; }
 #chatLog { display: block; overflow: auto; height: 20vh; }
-.chatBubble {
+.chatBubble, .w4Bubble {
     border-radius: 0.1em; box-shadow: 0 0 1pt 1pt black;
-    font-size: 2vmin;
-    display: table; margin: 0.3em 0; clear: both;
+    font-size: 2vmin; margin: 0.3em 0;
 }
+.chatBubble { display: table; clear: both;}
+.w4Bubble { display: initial; padding: 0em 0.5em 0.2em;}
 .East, .seat0 { background-color: white; color: black; }
 .South, .seat1 { background-color: green; color: white; }
 .West, .seat2 { background-color: orange; color: black; }
@@ -184,18 +177,27 @@ th.gameSectionTitle { text-align: left; font-style: italic; }
 .div-wind { display: inline-block; margin-right: auto; height: fit-content;
     background-color: darkgreen; color: white; border-radius: 1em;
 }
-.curr-wind { width: auto; }
-.curr-wind td { padding: 0px 0.5em; }
+.curr-wind { width: auto; line-height: 1.1; }
+.curr-wind td, .curr-wind th { padding: 0px 0.5em;
+    font-size: 90%; font-weight: normal;}
+.curr-wind td { text-align: center; }
 .curr-wind svg { margin-top: 0.2em; }
+.btn-score { border-radius: 1em; text-transform: uppercase;
+    vertical-align: super; margin-top: 0.3em;
+    font-size: 50%; color: white; padding: 0.1em 0.5em;
+    transition: background-color .2s ease-out;
+    cursor: pointer; background-color: #26a69a;
+    border: 0.1em solid lightsteelblue;
+}
+.btn-score:hover { background-color: brown;}
 .nb-active { background-color: yellow; }
 .nb-inactive { background-color: lightsteelblue; }
 .namebar {
     position: relative;
-    font-size: 3vh; line-height: normal;
+    font-size: 3vmin; line-height: normal;
     border: black solid 1px; text-align: left; padding: 0px;
 }
 .box-svg-m .namebar { max-width: 27vw; }
-.namebar i { font-size: 3vh; }
 .seatdir { padding-left: 0.5em; border-right: 2px solid black; }
 .seatname { margin-left: 0.2em; color: black; }
 .table-svg-m, .table-svg-k {
@@ -203,6 +205,7 @@ th.gameSectionTitle { text-align: left; font-style: italic; }
     font-size: 0px; border: none;
 }
 .table-svg-m { align-self: center; }
+.table-svg-m tr:first-child td { padding: 5px 5px 0px;}
 .table-svg-k { align-self: flex-end; margin-bottom: 5vh; }
 .table-svg-lg {
     width: auto; height: fit-content;
@@ -216,49 +219,70 @@ th.gameSectionTitle { text-align: left; font-style: italic; }
 }
 .hide-me { display: none; }
 .played-local {
-    background-color: bisque; color: white;
+    background-color: bisque; color: white; line-height: 1;
     border: white solid 0.5vw; border-radius: 2vw;
-    font-size: 7vh; width: 99vw; min-height: 12vh; margin-top: 1vh;
+    font-size: 7vh; width: 99vw; min-height: 12vh; margin-top: 3vh;
 }
-.HoverBtn, .HoverBtnW {
-    background-color: lightsteelblue; color: black;
+.fluffy-cloud3 { background-color: white; border-radius: 50%;
+    width: 2.5em; height: 2.2em;
+    padding-top: 0.5em; margin-bottom: -0.2em;
+    box-shadow: -1em 0.8em 0 0em white,
+        1.3em 0.5em 0 0em white,
+        -1.8em 2.3em 0 -0.85em white;
+}
+.thinking1, .thinking2, .thinking3 {position: absolute;
+    font-size: 2vmin; color: black;
+}
+.thinking1 { right: 1em; bottom: -2em; }
+.thinking2 { right: 0; bottom: 1vh; }
+.thinking3 { right: 0.7em; bottom: 1vh; }
+.thinking1 img, .thinking2 img, .thinking3 img { width: 3.5em; height: 3.5em; }
+.think-q, .think-cha, .think-po, .think-gng, .think-woo {
+    border-radius: 50%; padding: 0em 0.2em 0.1em;
+}
+.think-cha, .think-po, .think-gng, .think-woo {
+    animation: flash2 0.5s ease-in-out infinite alternate;
+}
+.think-q { background-color: cadetblue; color: white;
+    font-weight: bold; padding: 0em 0.6em 0.1em;}
+.think-cha { background-color: blue; color: white; }
+.think-po { background-color: orangered; color: white; }
+.think-gng { background-color: blueviolet; color: white; }
+.think-woo { color: black; }
+.midfs { padding: 0; overflow: auto;
+    height: 27vh; font-size: 80%;
+}
+legend { font-size: 80%; }
+.tilefs { font-size: 0.7em;}
+.HoverBtn { background-color: lightsteelblue;}
+.HoverBtnPass { background-color: bisque; width: calc(2.2em + 12px); }
+.HoverBtn, .HoverBtnW, .HoverBtnPass {
+    color: black;
     border: 2px solid black; border-radius: 0.7em;
     padding: 2px 4px;
+    line-height: 150%; vertical-align: bottom;
+    font-size: min(2vh,2vw);
+    height: min(8.5vh, 10vw);
 }
-.HoverBtn:hover { background-color :#393939; color:#f3f3f3; }
+.HoverBtn svg.tile-s { vertical-align: sub; }
+.HoverBtn:hover, .HoverBtnPass:hover { background-color :#393939; color:#f3f3f3; }
 .HoverBtnW:hover { border-color: white;}
-.rainbow {
+.rainbow, .think-woo {
     background: linear-gradient(to bottom, red, orange, yellow, lime, DodgerBlue, Orchid, violet);
 }
-.bid-table {
-    background-color: slategray; border: white ridge 2px;
-    width: auto; height: fit-content; align-self: center;
-    padding: 0px 0.4em;
+.l-gap { margin-left: 0.1em; }
+.anim-discarded { position: absolute; left: -3vw; top: 50%;
+    animation: slideInLeft 3s ease-in-out 0s infinite;
 }
-.bid-table td, .playEnd th, .playEnd td,
-.bid-table th {
-    padding: 0px 5px; border-radius: 0px;
-    text-align: center; min-width: 2.5em;
+.BtnDraw span::before {
+    content: "Draw";
+    animation: draw-alternate 2s linear 0s infinite alternate;
 }
-.bid-table td, .bid-table th { font-size: 2.8vw; }
-.playEnd th, .playEnd td { font-size: 2.8vmax; }
-@media only screen and (max-width: 600px) {
-    .bid-table td, .bid-table th { font-size: 3.8vw; }
-    .playEnd th, .playEnd td { font-size: 24px; }
+@keyframes draw-alternate {
+    from {content: "Draw"}
+    to {content: "抓牌"}
 }
-.pair-ew { background-color: white; color: black; }
-.pair-ns { background-color: darkred; color: white; }
-.play-area, .play-area svg { width: 20.4vh; height: 27.3vh; align-self: center; }
-.play-trick, .play-trick svg { width: 29.4vh; height: 39.3vh; align-self: center; }
-.playEndInner th.pair-ew, .playEndInner th.pair-ns { border-radius: 9px; }
-.playEndInner {
-    background-color: bisque; border-radius: 9px;
-    margin: 0.3em 0px 0.2em 0px;
-}
-.playEndInner tr:nth-child(3) {
-    background-color: burlywood;
-}
-.ptsWin { animation: tada 1s infinite; text-shadow: 0pt 0pt 4px white; }
+@keyframes flash2 { from {opacity: 0.0} to {opacity:1}}
 .animYourPlay {
     animation: fadeIn 4s cubic-bezier(0.95, 0.05, 0.795, 0.035), flash 4s ease 4s infinite;
 }

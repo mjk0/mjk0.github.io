@@ -27,8 +27,8 @@
         <li><a href="help.html" target="_blank">Game Help</a></li>
     </ul>
     <ul id="dropdown_g" class="dropdown-content">
-        <li><a onclick="alert('trick 1')">Trick 1</a></li>
-        <li><a onclick="alert('trick 2')">Trick 2</a></li>
+        <li><a onclick="PUI.setPlayView('tileplay')">Play Sel</a></li>
+        <li><a onclick="PUI.setPlayView('waiton')">Wait4</a></li>
     </ul>
     <nav><div class="nav-wrapper">
             <a class="brand-logo left">Mahjong Beta<i id="ws-status"
@@ -63,8 +63,18 @@
             <div class="col s4">
                 <div class="flex-container">
                     <div class="box box-2"><div class="div-wind">
-                        <table class="curr-wind"><tr><td>Wind:</td><td
-                            id="tilewind"></td></tr></table></div>
+                        <table class="curr-wind">
+                            <tr><th>Wind:</th><th id="tilewind"></th></tr>
+                            <tr><td colspan="2"><button
+                                class="btn-score">Score History</button>
+                            </td></tr>
+                        </table></div>
+                        <div class="thinking1">
+                            <div class="fluffy-cloud3"><span
+                                class="think-q">?</span>
+                            </div>
+                            <img src="media/thinking_anim.gif"/>
+                        </div>
                     </div>
                     <div class="box box-svg-m">
                         <table id="lhand" class="table-svg-m"><tr>
@@ -82,7 +92,7 @@
             <!-- Middle column -->
             <div class="col s4">
                 <div class="flex-container">
-                    <div class="box box-svg-m wide-middle">
+                    <div class="box box-svg-m wide-middle tile-anchor">
                         <table id="ohand" class="table-svg-m"><tr>
                             <td id="tilesp2">flower</td>
                         </tr>
@@ -92,31 +102,67 @@
                             <img class="svg-icon" src="media/Dice-2r1-Icon.svg"/>
                         </td></tr>
                         </table>
+                        <div class="thinking2">
+                            <div class="fluffy-cloud3"><span
+                                class="think-woo rainbow">WOO!</span>
+                            </div>
+                            <img src="media/thinking_anim.gif"/>
+                        </div>
                     </div>
                     <div class="box box-2"></div>
                     <div class="box box-play">
-                        <fieldset class="playfs"><legend>Play Selection</legend>
-                            <svg id="fs-tile" class="tile-lg left"><use href="media/stiles.svg#SymDTgt"/></svg>
-                            <button id="fs-woo" class="HoverBtnW rainbow" onclick="PMj.playWoo('WOO');" style="line-height:150%"
-                                title="Win"><span>Woo<br /></span><span style="font-size:1.3em;">&#21644;</span></button>
-                            <button id="fs-po" class="HoverBtn" onclick="PMj.playMake('PO');"><span>
-                                Po <br />&#30896;&#29260;</span></button>
-                            <button id="fs-gngadd" class="HoverBtn" onclick="PMj.playGngAdd()" title="Add to existing Gng"><span>
-                                +Gg <br />+ &#25179;</span></button>
-                            <button id="fs-gngsecret" class="HoverBtn" onclick="PMj.playGngSecret()" title="Secret Gng"><span>
-                                Gng<br />&#25179;</span></button>
-                            <button id="fs-gng" class="HoverBtn" onclick="PMj.playMake('GNG');"><span>
-                                Gng<br />&#25179;</span></button>
-                            <button id="fs-pass" class="HoverBtn" onclick="PMj.playMake('NONE');"><span>
+                        <div class="anim-discarded">
+                            <svg id="fs-tile" class="tile-mm"><use href="media/stiles.svg#B8"/></svg>
+                        </div>
+                        <fieldset id="playfs" class="midfs"><legend>Play Selection</legend>
+                            <button id="fs-draw" class="HoverBtnPass BtnDraw" onclick="PMj.playMake('NONE');"
+                                title="Draw a new tile"><span><br /></span><svg class="tile-s">
+                                    <use href="media/stiles.svg#UT"/></svg></button>
+                            <button id="fs-drawtail" class="HoverBtnPass BtnDraw" onclick="PMj.playMake('NONE');"
+                                title="Draw a new tile from the flower pile"><span><br /></span><svg class="tile-s">
+                                    <use href="media/stiles.svg#tailback"/></svg></button>
+                            <button id="fs-pass-multi" class="HoverBtnPass" onclick="PMj.playMake('NONE');"><span>
                                 Pass<br />&#19981;&#35201;</span></button>
-                            <button id="fs-pass2" class="HoverBtn" onclick="PMj.playMake('NONE');"><span>
+                            <button id="fs-pass-only" class="HoverBtnPass" onclick="PMj.playMake('NONE');"><span>
                                 Pass<br />&#36807;</span></button>
-                            <button id="fs-chal" class="HoverBtn" onclick="PMj.playMake('CHAL');" style="line-height:100%"><span>
-                                Cha<br /><span style="font-size:85%">&#128306;&ndash;&ndash;</span><br />&#21507;</span></button>
-                            <button id="fs-cham" class="HoverBtn" onclick="PMj.playMake('CHAM');" style="line-height:100%"><span>
-                                Cha<br /><span style="font-size:85%">&ndash;&#128306;&ndash;</span><br />&#21507;</span></button>
-                            <button id="fs-chah" class="HoverBtn" onclick="PMj.playMake('CHAH');" style="line-height:100%"><span>
-                                Cha<br /><span style="font-size:85%">&ndash;&ndash;&#128306;</span><br />&#21507;</span></button>
+                            <button id="fs-woo" class="HoverBtnW rainbow" onclick="PMj.playWoo('WOO');"
+                                title="Win"><span>Woo<br /></span><span style="font-size:1.3em;">&#21644;</span></button>
+                            <button id="fs-po" class="HoverBtn" onclick="PMj.playMake('PO');"
+                                title="Play a 3-set with discarded tile"><span>
+                                Po <br />&#30896;&#29260;</span></button>
+                            <button id="fs-gng0" class="HoverBtn" onclick="PMj.playGngAdd()"
+                                title="Play a 4-set"><span>
+                                Gng<br/>&#25179;</span><svg class="tile-s l-gap">
+                                    <use href="media/stiles.svg#M5"/></svg></button>
+                            <button id="fs-gng1" class="HoverBtn" onclick="PMj.playGngSecret()"
+                                title="Play a 4-set"><span>
+                                Gng<br />&#25179;</span><svg class="tile-s l-gap">
+                                    <use href="media/stiles.svg#B8"/></svg></button>
+                            <button id="fs-gng" class="HoverBtn" onclick="PMj.playMake('GNG');"
+                                title="Play a 4-set with discarded tile"><span>
+                                Gng<br />&#25179;</span></button>
+                            <button id="fs-chal" class="HoverBtn" onclick="PMj.playMake('CHAL');"
+                                title="Play a straight of 3 with discarded tile"><span>
+                                Cha &#21507;<br /></span><svg class="tile-s">
+                                    <use href="media/stiles.svg#M5"/></svg><svg class="tile-s">
+                                    <use href="media/stiles.svg#M6"/></svg><svg class="tile-s">
+                                    <use href="media/stiles.svg#M7"/></svg></button>
+                            <button id="fs-cham" class="HoverBtn" onclick="PMj.playMake('CHAM');"
+                                title="Play a straight of 3 with discarded tile"><span>
+                                Cha &#21507;<br /></span><svg class="tile-s">
+                                    <use href="media/stiles.svg#M4"/></svg><svg class="tile-s">
+                                    <use href="media/stiles.svg#M5"/></svg><svg class="tile-s">
+                                    <use href="media/stiles.svg#M6"/></svg></button>
+                            <button id="fs-chah" class="HoverBtn" onclick="PMj.playMake('CHAH');"
+                                title="Play a straight of 3 with discarded tile"><span>
+                                Cha &#21507;<br /></span><svg class="tile-s">
+                                    <use href="media/stiles.svg#M3"/></svg><svg class="tile-s">
+                                    <use href="media/stiles.svg#M4"/></svg><svg class="tile-s">
+                                    <use href="media/stiles.svg#M5"/></svg></button>
+                        </fieldset>
+                        <fieldset id="wait4fs" class="midfs hide-me">
+                            <div>Waiting for discard...</div>
+                            <div class="seat2 w4Bubble">R-Dopey</div>
                         </fieldset>
                     </div>
                 </div>
@@ -141,7 +187,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="box box-svg-m">
+                    <div class="box box-svg-m tile-anchor">
                         <table id="rhand" class="table-svg-m"><tr>
                             <td id="tilesp3">flower</td>
                         </tr>
@@ -151,6 +197,12 @@
                             <img class="svg-icon" src="media/Dice-2r1-Icon.svg"/>
                         </td></tr>
                         </table>
+                        <div class="thinking3">
+                            <div class="fluffy-cloud3"><span
+                                class="think-po">PO!</span>
+                            </div>
+                            <img src="media/thinking_anim.gif"/>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -160,7 +212,8 @@
                 <svg id="RefLg" class="tile-lg tile-ref"><use href="media/stiles.svg#OutTgt"/></svg>
                 <div class="box box-2">
                     <div id="discard-line">&#8679; &#8679;
-                        Discard / &#20986;&#29260; &#8679; &#8679;
+                        Drag tile above this line to discard
+                        / &#20986;&#29260; &#8679; &#8679;
                     </div>
                     <div class="played-local">
                         <div id="tilesp0"></div>

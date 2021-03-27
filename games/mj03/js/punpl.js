@@ -22,7 +22,7 @@ function updateGrid() {
     let lgprect = reflgp.getBoundingClientRect();
 
     let nw = Math.floor(unprect.width / lgrect.width);
-    let nh = Math.floor(unprect.height / lgrect.height);
+    let nh = Math.max(2, Math.floor(unprect.height / lgrect.height));
     grid.wpx = unprect.width / nw;
     grid.hpx = unprect.height / nh;
     grid.left = (grid.wpx - lgrect.width) / 2;

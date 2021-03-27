@@ -92,7 +92,7 @@ function mkTileSvg(tiles, repeatCnt, tileclass) {
 
 function refreshCurrWind() {
     let elem = document.getElementById('tilewind');
-    elem.innerHTML = mkTileSvg('W'+posGame2Dir(PSt.curr.wind), 1, 'tile-m');
+    elem.innerHTML = mkTileSvg('W'+posGame2Dir(PSt.curr.wind), 1, 'tile-s');
 }
 function refreshCurrDealer() {
     for (let seat=0; seat < 4; ++seat) { // game positions (0=East)
@@ -140,6 +140,69 @@ function refreshPlayed(ibase, num) {
     }
 }
 
+// It's our turn to select a play.  Minimum is either pass or discard
+const pcButtons = [
+    "draw", "drawtail", /* "pass-only", "pass-multi", */
+    "woo", "po", "gng", /* "gng0", "gng1", */
+    "chal", "cham", "chah"
+];
+function showPlaySelection() {
+    set_id_visibility("discard-line", PSt.plays.allowDiscard);
+    for (const pcid of pcButtons) {
+        if (PSt.plays.more.includes(pcid)) {
+            if (pcid.startsWith("cha")) {
+                // TODO: update tile SVGs
+            }
+            set_id_visibility("fs-"+pcid, 1);
+        } else {
+            set_id_visibility("fs-"+pcid, 0);
+        }
+    }
+
+    // Pass buttons in two flavors: "don't want", and "pass"
+    const passNeeded = PSt.plays.more.includes("pass");
+    const passOnly = passNeeded && PSt.plays.more.length == 1;
+    const passMulti = passNeeded && PSt.plays.more.length > 1;
+    set_id_visibility("fs-pass-only", passOnly);
+    set_id_visibility("fs-pass-multi", passMulti);
+
+    // GngAdd and GngSecret need to show the tile, in case of multiple
+    const gngt = PSt.plays.more.filter(v => {v=="gngadd" || v=="gngsecret"});
+    // TODO: update tile SVGs
+    set_id_visibility("fs-gng0", gngt.length > 0);
+    set_id_visibility("fs-gng1", gngt.length > 1);
+
+    setPlayView("tileplay"); // show the buttons
+}
+
+// Msg from server telling us who we're waiting on, and why
+// {"action":"waiton","who":[0],"why":"discard"}
+function rcvWaitOn(data) {
+    let why = data.why || "??";
+    let html = `<div>Waiting for ${why}...</div>`;
+    for (const ig of data.who || []) {
+        const pname = PSt.players[ig];
+        html += `<div class="seat${ig} w4Bubble">${pname}</div>`;
+    }
+    let w4elem = document.getElementById("wait4fs");
+    w4elem.innerHTML = html;
+    setPlayView('waiton');
+}
+
+function setPlayView(vname) {
+    switch (vname) {
+    case "tileplay":
+        set_id_visibility("wait4fs", 0);
+        set_id_visibility("playfs", 1);
+        break;
+    case "waiton":
+        set_id_visibility("playfs", 0);
+        set_id_visibility("discard-line", 0);
+        set_id_visibility("wait4fs", 1);
+        break;
+    }
+}
+
 function init() {
     // Initialize modal dialogs
     //elems = document.querySelectorAll('.modal');
@@ -160,4 +223,5 @@ export {
     init, refreshCurrWind, refreshCurrDealer,
     refreshPlayerDirs, refreshPlayerNames, refreshPlayed, refreshUnplayed,
     showWsOn, chatShow, chatIncoming,
+    setPlayView, showPlaySelection, rcvWaitOn,
 }

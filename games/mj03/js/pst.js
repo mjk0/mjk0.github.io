@@ -12,6 +12,7 @@ var ourSeat = 0;
 var username = null;
 var uuid = null;
 var email = null;
+var plays = {'allowDiscard': false, 'more': [], tile:"", src:-1};
 
 function getUrlParam(name, def) {
     let value = urlParams.get(name);
@@ -85,6 +86,19 @@ function rcvCurrent(data) {
     curr.wind = data.wind;
     curr.dealer = data.dealer;
 }
+// {"action":"tileplay","tile":"","src":-1,"pc":["discard"]}
+function rcvTilePlay(data) {
+    let playchoices = data.pc;
+    const idiscard = playchoices.indexOf("discard");
+    plays.allowDiscard = (idiscard >= 0);
+    if (plays.allowDiscard) {
+        // remove discard, since handled differently than other plays
+        playchoices.splice(idiscard, 1);
+    }
+    plays.more = playchoices;
+    plays.tile = data.tile;
+    plays.src = data.src;
+}
 
 function getSessionInfo() {
     username = sessionStorage.getItem("mj_username") || null;
@@ -98,8 +112,10 @@ function init() {
 }
 
 export {
-    players, hands, unplayed, curr, ourGame, ourSeat, username, uuid, email,
+    players, ourGame, ourSeat, username, uuid, email,
+    hands, unplayed, curr, plays,
     init, getUrlParam, getSessionInfo,
     setHand, setUnplayed, isSameSuitConsecutive, tileSuit,
     rcvSitAt, rcvPlayers, rcvHands, rcvUnplayed, rcvCurrent,
+    rcvTilePlay,
 };
