@@ -2,6 +2,7 @@
 //const urlParams = new URLSearchParams(window.location.search);
 import * as PSt from './pst.js';
 
+let UiOptions = null; // UI action callbacks
 let mdown = {
     elem:null, cx:0, cy:0, left:0, top:0, scoord:{x:0,y:0},
     tgt:null, gcoord:{x:0,y:0}, gleft:0, shifts:null
@@ -148,7 +149,12 @@ function unDragStyle(elem) {
 function endDrag(e) {
     if (mdown.elem) {
         let lt = tileLeftTop(e);
-        if (lt.xy.y == -1) {
+        if (lt.xy.y < -1 && 'dragDiscard' in UiOptions) {
+            // Discard the tile
+            let tile = svgToTileString(mdown.elem);
+            UiOptions.dragDiscard(tile);
+        }
+        if (lt.xy.y < 0) {
             // In no-drag area, snap back to start location
             toGridXY(mdown.elem, mdown.scoord);
         } else {
@@ -409,7 +415,8 @@ function tileMvListeners(el) {
     el.addEventListener('touchcancel', endDrag);
 }
 
-function init() {
+function init(opts) {
+    UiOptions = opts || {};
     // Register event handlers for all movable tiles
     var tile_mvs = document.getElementsByClassName("tile-mv");
     Array.from(tile_mvs).forEach(tileMvListeners);
@@ -417,5 +424,5 @@ function init() {
 }
 
 export {
-    init, refreshGrid, refreshUnplayed, deselectAll,
+    init, refreshGrid, refreshUnplayed, deselectAll, svgToTileString,
 }

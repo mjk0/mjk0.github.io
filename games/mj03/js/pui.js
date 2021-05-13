@@ -3,6 +3,8 @@
 import * as PSt from './pst.js';
 import * as PUnpl from './punpl.js';
 
+let UiOptions = null; // UI action callbacks
+
 function onResize() {
     PUnpl.refreshGrid();
 }
@@ -88,6 +90,12 @@ function mkTileSvg(tiles, repeatCnt, tileclass) {
         }
     }
     return r;
+}
+
+// Get tile string from first child SVG
+function getSvgTileString(elem) {
+    let svgs = elem.getElementsByTagName('svg');
+    return (svgs.length > 0) ? PUnpl.svgToTileString(svgs[0]) : "";
 }
 
 function refreshCurrWind() {
@@ -203,7 +211,8 @@ function setPlayView(vname) {
     }
 }
 
-function init() {
+function init(opts) {
+    UiOptions = opts || {};
     // Initialize modal dialogs
     //elems = document.querySelectorAll('.modal');
     //instances = M.Modal.init(elems, {}); // materialize init
@@ -214,7 +223,7 @@ function init() {
     M.Sidenav.init(elems, { edge: 'right' });
     $(".dropdown-trigger").dropdown({ coverTrigger: false }); // nav-bar drop-down
 
-    PUnpl.init();
+    PUnpl.init(opts);
     window.addEventListener("resize", onResize);
     //PUnpl.updateGrid(); // calc grid sizes
 }
@@ -223,5 +232,5 @@ export {
     init, refreshCurrWind, refreshCurrDealer,
     refreshPlayerDirs, refreshPlayerNames, refreshPlayed, refreshUnplayed,
     showWsOn, chatShow, chatIncoming,
-    setPlayView, showPlaySelection, rcvWaitOn,
+    setPlayView, showPlaySelection, rcvWaitOn, getSvgTileString,
 }

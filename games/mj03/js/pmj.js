@@ -26,6 +26,10 @@ const WsOptions = {
     },
 };
 
+const UiOptions = {
+    'dragDiscard' : uicbDiscard,
+};
+
 function loginAndSit() {
     // login and SitAt are only valid on WebSocket connection
     // In case this is a re-connect, clear any queued messages
@@ -111,6 +115,31 @@ function netOnOnline() {
     console.log('%s: online', (new Date()).toLocaleTimeString());
 }
 
+// Send TilePlay msg for current player
+function wsSendTilePlay(play, tile) {
+    Ws.sendMsg({
+        "action":"tileplay", "tile":tile,
+        "src":PSt.ourSeat,"pc":[play]
+    });
+}
+function playNt(play) { // send given play with no tile
+    wsSendTilePlay(play,"");
+}
+function playWt(play) { // send given play with tile from child SVG
+    let tile = PUI.getSvgTileString(window.event.target);
+    if (tile.length > 0) {
+        wsSendTilePlay(play, tile);
+    } else {
+        console.error('No SVG tile?', window.event.target);
+    }
+}
+
+/// UI callbacks
+function uicbDiscard(tile) {
+    console.log("Discard %s", tile);
+    wsSendTilePlay("discard", tile);
+}
+
 // Function that executes jQuery code after page load is complete
 $(document).ready(function(){
     //let a_start = document.getElementById("a_start");
@@ -119,7 +148,7 @@ $(document).ready(function(){
     PSt.init();
     wsUuidInit();
 
-    PUI.init(); // initializes unplayed tile grid
+    PUI.init(UiOptions); // initializes unplayed tile grid
 
     // Stub tile set for testing
     PSt.setUnplayed(["CN", "FA", "BB"]);
@@ -131,5 +160,5 @@ $(document).ready(function(){
 });
 
 export {
-    loginAndSit, chatsubmit,
+    loginAndSit, chatsubmit, playNt, playWt,
 };

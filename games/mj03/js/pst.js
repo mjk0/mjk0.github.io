@@ -12,7 +12,7 @@ var ourSeat = 0;
 var username = null;
 var uuid = null;
 var email = null;
-var plays = {'allowDiscard': false, 'more': [], tile:"", src:-1};
+var plays = {'allowDiscard': false, 'more': [], tile:"", src:-1, resp:[]};
 
 function getUrlParam(name, def) {
     let value = urlParams.get(name);
@@ -89,15 +89,21 @@ function rcvCurrent(data) {
 // {"action":"tileplay","tile":"","src":-1,"pc":["discard"]}
 function rcvTilePlay(data) {
     let playchoices = data.pc;
-    const idiscard = playchoices.indexOf("discard");
-    plays.allowDiscard = (idiscard >= 0);
-    if (plays.allowDiscard) {
-        // remove discard, since handled differently than other plays
-        playchoices.splice(idiscard, 1);
+    if (data.tile.length == 0 && data.src >= 0) {
+        // This is just a discard play response from another player
+        plays.resp[data.src] = playchoices[0];
+    } else {
+        const idiscard = playchoices.indexOf("discard");
+        plays.allowDiscard = (idiscard >= 0);
+        if (plays.allowDiscard) {
+            // remove discard, since handled differently than other plays
+            playchoices.splice(idiscard, 1);
+        }
+        plays.more = playchoices;
+        plays.tile = data.tile;
+        plays.src = data.src;
+        plays.resp.length = 0; // clear out old responses
     }
-    plays.more = playchoices;
-    plays.tile = data.tile;
-    plays.src = data.src;
 }
 
 function getSessionInfo() {
@@ -105,7 +111,7 @@ function getSessionInfo() {
     uuid = sessionStorage.getItem("mj_uuid") || null;
     email = sessionStorage.getItem("mj_email") || null;
     ourGame = sessionStorage.getItem("mj_game") || null;
-    ourSeat = sessionStorage.getItem("mj_seat") || 0;
+    ourSeat = parseInt(sessionStorage.getItem("mj_seat") || 0);
 }
 function init() {
     getSessionInfo();
