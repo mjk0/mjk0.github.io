@@ -378,7 +378,14 @@ function refreshUnplayed(seat) {
         tileMvListeners(svg);
     }
 }
-
+function svgSetTileString(elem, tile) {
+    let uses = elem.getElementsByTagName('use');
+    if (uses.length > 0) {
+        uses[0].setAttribute("href", "media/stiles.svg#" + tile);
+    } else {
+        console.error("SVG/use not found in ", elem);
+    }
+}
 function svgToTileString(svg) {
     return svg.firstChild.getAttribute("href").slice(-2);
 }
@@ -424,5 +431,6 @@ function init(opts) {
 }
 
 export {
-    init, refreshGrid, refreshUnplayed, deselectAll, svgToTileString,
+    init, refreshGrid, refreshUnplayed, deselectAll,
+    svgToTileString, svgSetTileString,
 }

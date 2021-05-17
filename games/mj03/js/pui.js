@@ -148,6 +148,70 @@ function refreshPlayed(ibase, num) {
     }
 }
 
+// Show most recent play or discard responses in others and ourselves
+function showThinking() {
+    let vcurr = posGame2View(PSt.curr.pos);
+    if (PSt.isDiscardCycle()) {
+        for (let off=1; off < 4; ++off) {
+            let gpos = (PSt.curr.pos + off) & 0x3;
+            let rp = PSt.plays.resp[gpos]
+            let vpos = posGame2View(gpos);
+            setThinking(vpos, rp? rp : 'q', true);
+        }
+        // Hide discarder's thinking bubbles
+        setThinking(vcurr, "", false);
+    } else {
+        // Show curr player's bubbles for last play
+        setThinking(vcurr, PSt.plays.resp[PSt.curr.pos], false);
+        // Hide other thinking bubbles
+        for (let off=1; off < 4; ++off) {
+            let vpos = (vcurr + off) & 0x3;
+            setThinking(vpos, '', false);
+        }
+    }
+}
+const tk2text = {
+    'q':"?", 'draw':"Draw", 'pass':"✓",
+    'chal':"Cha!", 'cham':"Cha!", 'chah':"Cha!",
+    'po':"PO!", 'gng':"Gng!", 'woo':"WOO!", 
+}; // remap play token to text and CSS style
+const tk2css = {'pass':"q", 'chal':"cha", 'cham':"cha", 'chah':"cha"};
+function setThinking(vpos, val, doFlash) {
+  if (vpos > 0) { // For now, no bubbles for our hand
+    let tt = document.getElementsByClassName('thinking'+vpos);
+    if (tt.length > 0) {
+        set_elem_visibility(tt[0], val.length > 0);
+        if (val.length > 0) {
+            let txt = tk2text[val] || val;
+            let fc = (doFlash && txt.slice(-1) == "!" ? " think-f" : "");
+            let spans = tt[0].getElementsByTagName('span');
+            spans[0].className = "think-"+(tk2css[val] || val) + fc;
+            spans[0].textContent = txt;
+        }
+    } else {
+        console.error("Couldn't find thinking"+vpos);
+    }
+  }
+}
+
+// Show or hide discarded tile
+function showDiscard() {
+    let odiscard = document.getElementById('other-discard');
+    // Do we need a discard animation?
+    if (PSt.isOtherDiscard()) {
+        let currv = posGame2View(PSt.curr.pos); // view pos of curr player
+        odiscard.className = 'anim-discard-view'+currv;
+        set_elem_visibility(odiscard, 1);
+    } else {
+        set_elem_visibility(odiscard, 0);
+    }
+}
+// Refresh the SVG use link to show the discarded tile
+function refreshDiscardTile() {
+    let odiscard = document.getElementById('other-discard');
+    PUnpl.svgSetTileString(odiscard, PSt.plays.tile);
+}
+
 // It's our turn to select a play.  Minimum is either pass or discard
 const pcButtons = [
     "draw", "drawtail", /* "pass-only", "pass-multi", */
@@ -233,4 +297,5 @@ export {
     refreshPlayerDirs, refreshPlayerNames, refreshPlayed, refreshUnplayed,
     showWsOn, chatShow, chatIncoming,
     setPlayView, showPlaySelection, rcvWaitOn, getSvgTileString,
+    showDiscard, showThinking, refreshDiscardTile,
 }

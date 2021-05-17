@@ -22,6 +22,7 @@ const WsOptions = {
         'unplayed': rcvUnplayed,
         'current' : rcvCurrent,
         'tileplay': rcvTilePlay,
+        'tplayres': rcvTPlayRes,
         'waiton'  : rcvWaitOn,
     },
 };
@@ -87,7 +88,18 @@ function rcvCurrent(data) {
 }
 function rcvTilePlay(data) {
     PSt.rcvTilePlay(data);
+    if (PSt.tpIsDiscardTile(data)) {
+        PUI.refreshDiscardTile();
+    }
     PUI.showPlaySelection();
+    PUI.showDiscard();
+    PUI.showThinking();
+}
+function rcvTPlayRes(data) {
+    PSt.rcvTPlayRes(data);
+    // TODO: show new current player, and last play (draw, Po, ...)
+    PUI.showDiscard();
+    PUI.showThinking();
 }
 function rcvWaitOn(data) {
     PUI.rcvWaitOn(data); // Only relevant to UI

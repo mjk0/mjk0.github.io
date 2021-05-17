@@ -86,10 +86,24 @@ function rcvCurrent(data) {
     curr.wind = data.wind;
     curr.dealer = data.dealer;
 }
-// {"action":"tileplay","tile":"","src":-1,"pc":["discard"]}
+
+function isOurTurn() { return (curr.pos == ourSeat) }
+function isDiscardCycle() { return (plays.resp[curr.pos] == "discard");}
+function isOtherDiscard() { return !isOurTurn() && isDiscardCycle();}
+
+// in-hand: {"action":"tileplay","tile":"","src":-1,"pc":["discard"]}
+// i-h-tail: {"action":"tileplay","tile":"","src":-2,"pc":["tail"]}
+// dis-play: {"action":"tileplay","tile":"FA","src":1,"pc":["chah","draw"]}
+// dis-resp: {"action":"tileplay","tile":"","src":1,"pc":["chah"]}
+function tpIsDiscardTile(data) {
+    return (data.tile.length > 0 && data.src >= 0);
+}
+function tpIsDiscardResponse(data) {
+    return (data.tile.length == 0 && data.src >= 0);
+}
 function rcvTilePlay(data) {
     let playchoices = data.pc;
-    if (data.tile.length == 0 && data.src >= 0) {
+    if (tpIsDiscardResponse(data)) {
         // This is just a discard play response from another player
         plays.resp[data.src] = playchoices[0];
     } else {
@@ -103,7 +117,18 @@ function rcvTilePlay(data) {
         plays.tile = data.tile;
         plays.src = data.src;
         plays.resp.length = 0; // clear out old responses
+        if (tpIsDiscardTile(data)) {
+            plays.resp[plays.src] = "discard";  // mark last play
+        }
     }
+}
+// Play has advanced to a new current position
+// {"action":"tplayres","tile":"M8","pos":2,"pc":"draw"}
+function rcvTPlayRes(data) {
+    curr.pos = data.pos;
+    plays.tile = data.tile;
+    plays.resp.length = 0; // clear out old responses
+    plays.resp[curr.pos] = data.pc;
 }
 
 function getSessionInfo() {
@@ -122,6 +147,7 @@ export {
     hands, unplayed, curr, plays,
     init, getUrlParam, getSessionInfo,
     setHand, setUnplayed, isSameSuitConsecutive, tileSuit,
+    isOurTurn, isDiscardCycle, isOtherDiscard, tpIsDiscardTile,
     rcvSitAt, rcvPlayers, rcvHands, rcvUnplayed, rcvCurrent,
-    rcvTilePlay,
+    rcvTilePlay, rcvTPlayRes,
 };
