@@ -23,6 +23,7 @@ const WsOptions = {
         'current' : rcvCurrent,
         'tileplay': rcvTilePlay,
         'tplayres': rcvTPlayRes,
+        'reshuffle': rcvReshuffle,
         'waiton'  : rcvWaitOn,
     },
 };
@@ -101,6 +102,9 @@ function rcvTPlayRes(data) {
     PUI.showDiscard();
     PUI.showThinking();
 }
+function rcvReshuffle(data) {
+    //PSt.setReshuffleState(); // Currently unused action.  UI updates when WaitOn arrives
+}
 function rcvWaitOn(data) {
     PUI.rcvWaitOn(data); // Only relevant to UI
 }
@@ -145,6 +149,9 @@ function playWt(play) { // send given play with tile from child SVG
         console.error('No SVG tile?', window.event.target);
     }
 }
+function playAgain() { // send reshuffle
+    Ws.sendMsg({"action":"reshuffle", "why":"playagain"});
+}
 
 /// UI callbacks
 function uicbDiscard(tile) {
@@ -172,5 +179,5 @@ $(document).ready(function(){
 });
 
 export {
-    loginAndSit, chatsubmit, playNt, playWt,
+    loginAndSit, chatsubmit, playNt, playWt, playAgain,
 };

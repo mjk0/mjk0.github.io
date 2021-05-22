@@ -259,7 +259,9 @@ legend { font-size: 80%; }
 .tilefs { font-size: 0.7em;}
 .HoverBtn { background-color: lightsteelblue;}
 .HoverBtnPass { background-color: bisque; width: calc(2.2em + 12px); }
-.HoverBtn, .HoverBtnW, .HoverBtnPass {
+.HoverBtnG { background-color: lime;}
+.HoverBtnR { background-color: salmon;}
+.HoverBtn, .HoverBtnW, .HoverBtnG, .HoverBtnR, .HoverBtnPass {
     color: black;
     border: 2px solid black; border-radius: 0.7em;
     padding: 2px 4px;
@@ -269,10 +271,14 @@ legend { font-size: 80%; }
 }
 .HoverBtn svg.tile-s { vertical-align: sub; }
 .HoverBtn:hover, .HoverBtnPass:hover { background-color :#393939; color:#f3f3f3; }
-.HoverBtnW:hover { border-color: white;}
+.HoverBtnW:hover, .HoverBtnG:hover, .HoverBtnR:hover {
+    border-color: white;
+}
 .rainbow, .think-woo {
     background: linear-gradient(to bottom, red, orange, yellow, lime, DodgerBlue, Orchid, violet);
 }
+.bGG { color: darkgreen; }
+.bRR { color: red; }
 .l-gap { margin-left: 0.1em; }
 .anim-discard-view1 { position: absolute; left: -3vw; top: 66%;
     animation: slideInLeft 3s ease-in-out 0s infinite;

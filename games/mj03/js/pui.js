@@ -214,7 +214,7 @@ function refreshDiscardTile() {
 
 // It's our turn to select a play.  Minimum is either pass or discard
 const pcButtons = [
-    "draw", "drawtail", /* "pass-only", "pass-multi", */
+    "draw", "tail", /* "pass-only", "pass-multi", */
     "woo", "po", "gng", /* "gng0", "gng1", */
     "chal", "cham", "chah"
 ];
@@ -247,11 +247,19 @@ function showPlaySelection() {
     setPlayView("tileplay"); // show the buttons
 }
 
+const reshuffle_buttons = `
+<button class="HoverBtnG" onclick="PMj.playAgain();"><span>
+Play<br />again<br /><b class="bGG">✓</b></span></button>
+<a href="./"><button class="HoverBtnR"><span>
+Stand<br />up<br /><b class="bRR">✗</b></span></button></a>
+`.trim();
+
 // Msg from server telling us who we're waiting on, and why
 // {"action":"waiton","who":[0],"why":"discard"}
 function rcvWaitOn(data) {
     let why = data.why || "??";
-    let html = `<div>Waiting for ${why}...</div>`;
+    let html = (why=='woo'||why=='reshuffle')? reshuffle_buttons : '';
+    html += `<div>Waiting for ${why}...</div>`;
     for (const ig of data.who || []) {
         const pname = PSt.players[ig];
         html += `<div class="seat${ig} w4Bubble">${pname}</div>`;
