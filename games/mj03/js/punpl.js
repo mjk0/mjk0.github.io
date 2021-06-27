@@ -378,16 +378,17 @@ function refreshUnplayed(seat) {
         tileMvListeners(svg);
     }
 }
-function svgSetTileString(elem, tile) {
+function svgSetTileString(elem, tile, pos) {
     let uses = elem.getElementsByTagName('use');
-    if (uses.length > 0) {
-        uses[0].setAttribute("href", "media/stiles.svg#" + tile);
+    let i = pos || 0;
+    if (uses.length > i) {
+        uses[i].setAttribute("href", "media/stiles.svg#" + tile);
     } else {
         console.error("SVG/use not found in ", elem);
     }
 }
 function svgToTileString(svg) {
-    return svg.firstChild.getAttribute("href").slice(-2);
+    return svg.firstElementChild.getAttribute("href").slice(-2);
 }
 
 function svgArrToTileString(arr) {

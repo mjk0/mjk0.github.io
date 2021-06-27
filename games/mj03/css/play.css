@@ -33,11 +33,6 @@ td.tile-m, td.tile-lg { display: contents; }
     overflow: visible;
     width: 43.3333vw;
 }
-.robotPlayBtn {
-    position: absolute; left: 3px; bottom: -0.5em;
-    height: 1em;
-    animation: pulse 1s infinite;
-}
 /* https://blog.prototypr.io/align-svg-icons-to-text-and-say-goodbye-to-font-icons-d44b3d7b26b4 */
 .svg-icon { display: inline-block; }
 .svg-icon svg, svg.svg-icon, img.svg-icon {
@@ -252,6 +247,14 @@ th.gameSectionTitle { text-align: left; font-style: italic; }
 .think-po { background-color: orangered; color: white; }
 .think-gng { background-color: blueviolet; color: white; }
 .think-woo { color: black; }
+button.robitBtn {
+    height: 1.2em; line-height: 1; white-space: nowrap;
+    border-radius: 0.8em; background-color: darkblue;
+    margin: 0em 0.2em 0em 1em; padding: 0px 0.5em;
+}
+button.robitBtn {
+    animation: pulse 1s infinite;
+}
 .midfs { padding: 0; overflow: auto;
     height: 27vh; font-size: 80%;
 }
@@ -302,50 +305,25 @@ legend { font-size: 80%; }
 .animYourPlay {
     animation: fadeIn 4s cubic-bezier(0.95, 0.05, 0.795, 0.035), flash 4s ease 4s infinite;
 }
-.bordleft { border-left: black dashed 1px; }
-td.bordbot { border-bottom: black solid 2px; }
-tr.bordtop { border-top: black solid 3px; }
-.diaTable h3, .diaTable h4 {
-    background-color: lightblue; text-align: center;
-    margin-bottom: 0px; padding: 0px 1em 0.2em 1em;
-}
-.diaTable { width: max-content; }
-.diaTable th, .diaTable td { text-align: center; }
-.diaTable div.modal-footer { background-color: lightblue; }
-tr.pastGames { background-color: burlywood; }
-.winCell { background-color: lightgreen; }
-#rankTable th { background-color: blue; color: white; }
-#rankTable table, #rankTable th, #rankTable td {
-    border: black solid 1px; padding: 0px 0.3em;
-}
-#totEW { background-color: white; border-radius: 5px; box-shadow: 0 0 2pt 2pt black; }
-#totNS {
-    background-color: darkred; color: white;
-    border-radius: 5px; box-shadow: 0 0 2pt 2pt white;
-}
-.infoTbl th, .infoTbl td { padding: 0px 0px; text-align: center; }
-.infoTbl tr { border-bottom: none;}
-table.infoTbl tbody:first-child tr:first-child td:first-child { border-bottom: 3px solid black;}
-#infoTd1 { padding-bottom: 4px; min-width: 6em; border-bottom: none; }
-#totSpc, #totSpc button { width: 2em; padding: 0px 0.3em; }
-svg.totPts { width: 2vw; height: 2vw; }
-span.totPtsVal { line-height: 1.2; vertical-align: text-top; }
 #hand svg.slideOutUp {
     animation-duration: 100ms;
 }
-#diaInvite { width: max-content; max-height: 85%; }
-#diaInvite h5 {
-    background-color: lightblue; margin: 0px; padding: 10px;
-}
-#diaInviteTable th {
-    background-color: blue; margin: 0px; padding: 0.3em; color: white; text-align: center;
-}
-#diaInviteUsers td:nth-child(2) { text-align: center; }
-#diaInvite label > span { margin-left: 1em; width: calc(100% - 2em); }
-button.inviteBtn {
-    height: 1.6em; line-height: 1;
-    border-radius: 15px; background-color: darkblue;
-    margin: 0px 5px 0px 0px; padding: 0px 1em;
-}
 .iconBtn { color: grey; cursor: pointer;}
 .iconBtn:hover { color: lightcoral; cursor: pointer;}
+/* Spinner LoadBar, from "http://codepen.io/bernethe/pen/dorozd" */
+.sp-loadbar {
+    color: white;
+    border: 1px #000 solid;
+    background: linear-gradient(-60deg, brown 0%, brown 50%, #000 50%, #000 75%, brown 75%, brown);
+    background-size: 20px 30px;
+    background-position: 0px 0px;
+    animation: spLoadBar 0.8s infinite linear;
+}
+@keyframes spLoadBar {
+    from { background-position: 0px 0px; }
+    to { background-position: -20px 0px; }
+}
+.iv-bar {
+    width: 50%; height: 1em; margin-top: 20%;
+    display: inline-block;
+}

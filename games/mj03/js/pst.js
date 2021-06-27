@@ -92,6 +92,7 @@ function isDiscardCycle() { return (plays.resp[curr.pos] == "discard");}
 function isOtherDiscard() { return !isOurTurn() && isDiscardCycle();}
 
 // in-hand: {"action":"tileplay","tile":"","src":-1,"pc":["discard"]}
+// i-h opt: {"action":"tileplay","tile":"","src":-1,"pc":[{"gngsecret":"B1"},{"gngsecret":"M1"},"discard"]}
 // i-h-tail: {"action":"tileplay","tile":"","src":-2,"pc":["tail"]}
 // dis-play: {"action":"tileplay","tile":"FA","src":1,"pc":["chah","draw"]}
 // dis-resp: {"action":"tileplay","tile":"","src":1,"pc":["chah"]}
@@ -130,6 +131,15 @@ function rcvTPlayRes(data) {
     plays.resp.length = 0; // clear out old responses
     plays.resp[curr.pos] = data.pc;
 }
+// In-hand Gng* plays appear as objects in plays.more.
+// Returns array of Gng*
+// i-h opt: {"action":"tileplay","tile":"","src":-1,
+//           "pc":[{"gngsecret":"B1"},{"gngsecret":"M1"},"discard"]}
+function getInHandGngPlays() {
+    return plays.more.filter(v => {
+        return typeof v === 'object' && v !== null
+    });
+}
 
 function getSessionInfo() {
     username = sessionStorage.getItem("mj_username") || null;
@@ -147,7 +157,8 @@ export {
     hands, unplayed, curr, plays,
     init, getUrlParam, getSessionInfo,
     setHand, setUnplayed, isSameSuitConsecutive, tileSuit,
-    isOurTurn, isDiscardCycle, isOtherDiscard, tpIsDiscardTile,
+    isOurTurn, isDiscardCycle, isOtherDiscard,
+    tpIsDiscardTile, tpIsDiscardResponse, getInHandGngPlays,
     rcvSitAt, rcvPlayers, rcvHands, rcvUnplayed, rcvCurrent,
     rcvTilePlay, rcvTPlayRes,
 };

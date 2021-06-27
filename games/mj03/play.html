@@ -111,10 +111,10 @@
                     </div>
                     <div class="box box-2"></div>
                     <div class="box box-play">
-                        <div id="other-discard" class="anim-discard-view1">
+                        <div id="other-discard" class="anim-discard-view1 hide-me">
                             <svg id="fs-tile" class="tile-mm"><use href="media/stiles.svg#B8"/></svg>
                         </div>
-                        <fieldset id="playfs" class="midfs"><legend>Play Selection</legend>
+                        <fieldset id="playfs" class="midfs hide-me"><legend>Play Selection</legend>
                             <button id="fs-draw" class="HoverBtnPass BtnDraw" onclick="PMj.playNt('draw');"
                                 title="Draw a new tile"><span><br /></span><svg class="tile-s">
                                     <use href="media/stiles.svg#UT"/></svg></button>
@@ -130,11 +130,11 @@
                             <button id="fs-po" class="HoverBtn" onclick="PMj.playNt('po');"
                                 title="Play a 3-set with discarded tile"><span>
                                 Po <br />&#30896;&#29260;</span></button>
-                            <button id="fs-gng0" class="HoverBtn" onclick="PMj.playWt('gngadd')"
+                            <button id="fs-gng0" class="HoverBtn" onclick="PMj.playWt(0)"
                                 title="Play a 4-set"><span>
                                 Gng<br/>&#25179;</span><svg class="tile-s l-gap">
                                     <use href="media/stiles.svg#M5"/></svg></button>
-                            <button id="fs-gng1" class="HoverBtn" onclick="PMj.playWt('gngsecret')"
+                            <button id="fs-gng1" class="HoverBtn" onclick="PMj.playWt(1)"
                                 title="Play a 4-set"><span>
                                 Gng<br />&#25179;</span><svg class="tile-s l-gap">
                                     <use href="media/stiles.svg#B8"/></svg></button>
@@ -163,6 +163,14 @@
                         <fieldset id="wait4fs" class="midfs hide-me">
                             <div>Waiting for discard...</div>
                             <div class="seat2 w4Bubble">R-Dopey</div>
+                        </fieldset>
+                        <fieldset id="viewinit" class="midfs">
+                            <legend>Connecting...</legend>
+                            <div class="sp-loadbar iv-bar"></div>
+                        </fieldset>
+                        <fieldset id="viewwoo" class="midfs hide-me">
+                            <legend>Game Over</legend>
+                            <div>Score details here</div>
                         </fieldset>
                     </div>
                 </div>

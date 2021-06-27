@@ -4,6 +4,10 @@ import * as PSt from './pst.js';
 import * as PUnpl from './punpl.js';
 
 let UiOptions = null; // UI action callbacks
+let UI = {
+    view: 'init',
+    waitOn: {'why':'why', 'who':[]},
+};
 
 function onResize() {
     PUnpl.refreshGrid();
@@ -77,6 +81,9 @@ function refreshPlayerNames() {
         let name = PSt.players[seat];
         domSeatName.innerHTML = ( name? name : "AI("+dir+")");
     }
+    if (UI.view == 'waiton') {
+        showWaitOn(); // Update list of who we're waiting on
+    }
 }
 
 // From a comma-sep string of tile names ("F1,F2"), create SVGs as innerHTML
@@ -149,7 +156,7 @@ function refreshPlayed(ibase, num) {
 }
 
 // Show most recent play or discard responses in others and ourselves
-function showThinking() {
+function refreshThinking() {
     let vcurr = posGame2View(PSt.curr.pos);
     if (PSt.isDiscardCycle()) {
         for (let off=1; off < 4; ++off) {
@@ -180,13 +187,15 @@ function setThinking(vpos, val, doFlash) {
   if (vpos > 0) { // For now, no bubbles for our hand
     let tt = document.getElementsByClassName('thinking'+vpos);
     if (tt.length > 0) {
-        set_elem_visibility(tt[0], val.length > 0);
-        if (val.length > 0) {
+        if (val.length > 0 && val != "pass") {
+            set_elem_visibility(tt[0], 1);
             let txt = tk2text[val] || val;
             let fc = (doFlash && txt.slice(-1) == "!" ? " think-f" : "");
             let spans = tt[0].getElementsByTagName('span');
             spans[0].className = "think-"+(tk2css[val] || val) + fc;
             spans[0].textContent = txt;
+        } else {
+            set_elem_visibility(tt[0], 0); // hide "pass" response
         }
     } else {
         console.error("Couldn't find thinking"+vpos);
@@ -195,7 +204,7 @@ function setThinking(vpos, val, doFlash) {
 }
 
 // Show or hide discarded tile
-function showDiscard() {
+function refreshDiscard() {
     let odiscard = document.getElementById('other-discard');
     // Do we need a discard animation?
     if (PSt.isOtherDiscard()) {
@@ -211,6 +220,19 @@ function refreshDiscardTile() {
     let odiscard = document.getElementById('other-discard');
     PUnpl.svgSetTileString(odiscard, PSt.plays.tile);
 }
+// Refresh the SVG use link on an optional play button
+const id2incr = {"fs-chal":[0,1,2],"fs-cham":[-1,0,1],"fs-chah":[-2,-1,0]};
+function setSVGOnBtn(pcid,tile) {
+    const el = document.getElementById(pcid);
+    const ia = id2incr[pcid] || [0];
+    const t = tile || PSt.plays.tile;
+    ia.forEach((v,i) => {
+        PUnpl.svgSetTileString(el,tileStrIncr(t,v), i);
+    });
+}
+function tileStrIncr(t,incr) {
+    return t.charAt(0)+(parseInt(t.charAt(1))+incr)
+}
 
 // It's our turn to select a play.  Minimum is either pass or discard
 const pcButtons = [
@@ -218,16 +240,17 @@ const pcButtons = [
     "woo", "po", "gng", /* "gng0", "gng1", */
     "chal", "cham", "chah"
 ];
-function showPlaySelection() {
+function setViewTilePlay() {
     set_id_visibility("discard-line", PSt.plays.allowDiscard);
     for (const pcid of pcButtons) {
+        const id = "fs-"+pcid;
         if (PSt.plays.more.includes(pcid)) {
             if (pcid.startsWith("cha")) {
-                // TODO: update tile SVGs
+                setSVGOnBtn(id); // show tiles in CHA button
             }
-            set_id_visibility("fs-"+pcid, 1);
+            set_id_visibility(id, 1);
         } else {
-            set_id_visibility("fs-"+pcid, 0);
+            set_id_visibility(id, 0);
         }
     }
 
@@ -239,8 +262,16 @@ function showPlaySelection() {
     set_id_visibility("fs-pass-multi", passMulti);
 
     // GngAdd and GngSecret need to show the tile, in case of multiple
-    const gngt = PSt.plays.more.filter(v => {v=="gngadd" || v=="gngsecret"});
-    // TODO: update tile SVGs
+    const gngt = PSt.getInHandGngPlays();
+    gngt.forEach((v,i) => {
+        for (const [play,tile] of Object.entries(v)) {
+            if (i < 2) {
+                setSVGOnBtn("fs-gng"+i, tile);
+            } else {
+                console.error("%s:%s is gng#%d",play,tile,i);
+            }
+        }
+    });
     set_id_visibility("fs-gng0", gngt.length > 0);
     set_id_visibility("fs-gng1", gngt.length > 1);
 
@@ -257,11 +288,20 @@ Stand<br />up<br /><b class="bRR">✗</b></span></button></a>
 // Msg from server telling us who we're waiting on, and why
 // {"action":"waiton","who":[0],"why":"discard"}
 function rcvWaitOn(data) {
-    let why = data.why || "??";
+    UI.waitOn.why = data.why || "??";
+    UI.waitOn.who = data.who || [];
+    showWaitOn();
+}
+function showWaitOn() {
+    let why = UI.waitOn.why;
     let html = (why=='woo'||why=='reshuffle')? reshuffle_buttons : '';
     html += `<div>Waiting for ${why}...</div>`;
-    for (const ig of data.who || []) {
-        const pname = PSt.players[ig];
+    for (const ig of UI.waitOn.who || []) {
+        let pname = PSt.players[ig];
+        if (pname.startsWith("R-")) {
+            // If waiting on a robot, offer robot take-over
+            pname += `<button class="btn-small robitBtn" onclick="PMj.askRobotPlay(${ig})" type="button">Robot play</button>`;
+        }
         html += `<div class="seat${ig} w4Bubble">${pname}</div>`;
     }
     let w4elem = document.getElementById("wait4fs");
@@ -269,16 +309,29 @@ function rcvWaitOn(data) {
     setPlayView('waiton');
 }
 
+const playViewIds = [
+    'playfs', 'discard-line', 'wait4fs',
+    'viewwoo', 'viewinit'
+];
+function enaPlayViewPieces(opts) {
+    for (const pvid of playViewIds) {
+        set_id_visibility(pvid, opts[pvid] || 0);
+    }
+}
 function setPlayView(vname) {
+    UI.view = vname;
     switch (vname) {
-    case "tileplay":
-        set_id_visibility("wait4fs", 0);
-        set_id_visibility("playfs", 1);
+    case "init":
+        enaPlayViewPieces({"viewinit":1});
+        set_id_visibility("other-discard", 0);
+        break;
+    case "tileplay": // both in-hand and on-discard
+        enaPlayViewPieces({"playfs":1,
+            "discard-line":PSt.plays.allowDiscard
+        });
         break;
     case "waiton":
-        set_id_visibility("playfs", 0);
-        set_id_visibility("discard-line", 0);
-        set_id_visibility("wait4fs", 1);
+        enaPlayViewPieces({"wait4fs":1});
         break;
     }
 }
@@ -296,6 +349,7 @@ function init(opts) {
     $(".dropdown-trigger").dropdown({ coverTrigger: false }); // nav-bar drop-down
 
     PUnpl.init(opts);
+    setPlayView(UI.view);
     window.addEventListener("resize", onResize);
     //PUnpl.updateGrid(); // calc grid sizes
 }
@@ -304,6 +358,6 @@ export {
     init, refreshCurrWind, refreshCurrDealer,
     refreshPlayerDirs, refreshPlayerNames, refreshPlayed, refreshUnplayed,
     showWsOn, chatShow, chatIncoming,
-    setPlayView, showPlaySelection, rcvWaitOn, getSvgTileString,
-    showDiscard, showThinking, refreshDiscardTile,
+    setPlayView, setViewTilePlay, rcvWaitOn, getSvgTileString,
+    refreshDiscard, refreshThinking, refreshDiscardTile,
 }

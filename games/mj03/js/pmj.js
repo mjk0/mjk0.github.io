@@ -92,15 +92,17 @@ function rcvTilePlay(data) {
     if (PSt.tpIsDiscardTile(data)) {
         PUI.refreshDiscardTile();
     }
-    PUI.showPlaySelection();
-    PUI.showDiscard();
-    PUI.showThinking();
+    if (!PSt.tpIsDiscardResponse(data)) {
+        PUI.setViewTilePlay();
+    }
+    PUI.refreshDiscard();
+    PUI.refreshThinking();
 }
 function rcvTPlayRes(data) {
     PSt.rcvTPlayRes(data);
     // TODO: show new current player, and last play (draw, Po, ...)
-    PUI.showDiscard();
-    PUI.showThinking();
+    PUI.refreshDiscard();
+    PUI.refreshThinking();
 }
 function rcvReshuffle(data) {
     //PSt.setReshuffleState(); // Currently unused action.  UI updates when WaitOn arrives
@@ -141,16 +143,24 @@ function wsSendTilePlay(play, tile) {
 function playNt(play) { // send given play with no tile
     wsSendTilePlay(play,"");
 }
-function playWt(play) { // send given play with tile from child SVG
-    let tile = PUI.getSvgTileString(window.event.target);
-    if (tile.length > 0) {
-        wsSendTilePlay(play, tile);
+function playWt(pnum) { // send given play with tile from child SVG
+    const gngt = PSt.getInHandGngPlays();
+    if (pnum < gngt.length) {
+        let tiles = Object.values(gngt[pnum]);
+        if (tiles.length != 1) {
+            console.error('invalid Gng play,',gngt[pnum]);
+        } else {
+            wsSendTilePlay(gngt[pnum], tiles[0]);
+        }
     } else {
-        console.error('No SVG tile?', window.event.target);
+        console.error('Invalid Gng play number,', pnum, gngt);
     }
 }
 function playAgain() { // send reshuffle
     Ws.sendMsg({"action":"reshuffle", "why":"playagain"});
+}
+function askRobotPlay(pos) { // ask robot to take over for a missing human
+    Ws.sendMsg({"action":"robotplay", "pos":pos});
 }
 
 /// UI callbacks
@@ -179,5 +189,5 @@ $(document).ready(function(){
 });
 
 export {
-    loginAndSit, chatsubmit, playNt, playWt, playAgain,
+    loginAndSit, chatsubmit, playNt, playWt, playAgain, askRobotPlay,
 };
