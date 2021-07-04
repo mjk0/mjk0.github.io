@@ -15,12 +15,18 @@ td.tile-m, td.tile-lg { display: contents; }
 .tile-lg, .tile-lg svg,
 .tile-m, .tile-m svg { margin: 0px; padding: 0px; }
 #ArrowR, #ArrowL { opacity: 50% }
+.tile-set, .tile-set-ureveal, .tile-set-secret {
+    border-radius: 1vw; padding: 0.3vw;
+}
 .tile-set {
-    background-color: sandybrown; padding: 0.3vw;
-    border-radius: 1vw; display: inline-flex;
+    background-color: sandybrown; display: inline-flex;
 }
 #tilesp0 div.tile-set { border-radius: 2vw; }
+.tile-set-ureveal {
+    display: inline-block;
+}
 .tile-set-secret {
+    background-color: black; display: inline-flex;
     /* animation: tile-bg-secret 2s ease-in-out 0s infinite alternate; */
     box-shadow: 0 0 1pt 1pt deeppink;
 }
@@ -134,7 +140,7 @@ i.material-icons.right.helpdd { margin-left: 0px; }
     font-size: 2vmin; margin: 0.3em 0;
 }
 .chatBubble { display: table; clear: both;}
-.w4Bubble { display: initial; padding: 0em 0.5em 0.2em;}
+.w4Bubble { display: inline-block; padding: 0em 0.5em 0.2em;}
 .East, .seat0 { background-color: white; color: black; }
 .South, .seat1 { background-color: green; color: white; }
 .West, .seat2 { background-color: orange; color: black; }

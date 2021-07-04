@@ -81,9 +81,7 @@ function refreshPlayerNames() {
         let name = PSt.players[seat];
         domSeatName.innerHTML = ( name? name : "AI("+dir+")");
     }
-    if (UI.view == 'waiton') {
-        showWaitOn(); // Update list of who we're waiting on
-    }
+    refreshWaitOn();
 }
 
 // From a comma-sep string of tile names ("F1,F2"), create SVGs as innerHTML
@@ -132,9 +130,11 @@ function refreshPlayed(ibase, num) {
         let html = '';
         for (const set of PSt.hands[ig].sets) {
             // each set consists of: {"s":"F1,F2","secret":0}
-            if (set.s.length > 0) {
-                if (set.secret) {
-                    html += '<div class="tile-set tile-set-secret">';
+            if (set.s.length > 0 && (set.secret<2 || iv>0)) {
+                if (set.secret > 1) {
+                    html += '<div class="tile-set-ureveal">';
+                } else if (set.secret) {
+                    html += '<div class="tile-set-secret">';
                 } else {
                     html += '<div class="tile-set">';
                 }
@@ -231,7 +231,7 @@ function setSVGOnBtn(pcid,tile) {
     });
 }
 function tileStrIncr(t,incr) {
-    return t.charAt(0)+(parseInt(t.charAt(1))+incr)
+    return incr==0 ? t : t.charAt(0)+(parseInt(t.charAt(1))+incr)
 }
 
 // It's our turn to select a play.  Minimum is either pass or discard
@@ -308,6 +308,12 @@ function showWaitOn() {
     w4elem.innerHTML = html;
     setPlayView('waiton');
 }
+// If in the "waiton" view, refresh display
+function refreshWaitOn() {
+    if (UI.view == 'waiton') {
+        showWaitOn(); // Update list of who we're waiting on
+    }
+}
 
 const playViewIds = [
     'playfs', 'discard-line', 'wait4fs',
@@ -360,4 +366,5 @@ export {
     showWsOn, chatShow, chatIncoming,
     setPlayView, setViewTilePlay, rcvWaitOn, getSvgTileString,
     refreshDiscard, refreshThinking, refreshDiscardTile,
+    refreshWaitOn,
 }

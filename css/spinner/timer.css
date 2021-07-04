@@ -1,0 +1,118 @@
+/* https://github.com/jlong/css-spinners */
+@-moz-keyframes timer-loader {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+@-webkit-keyframes timer-loader {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+@keyframes timer-loader {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+/* :not(:required) hides this rule from IE9 and below */
+.timer-loader:not(:required) {
+    border: 0.5em solid var(--color);
+    border-radius: 2em;
+    box-sizing: border-box;
+    display: inline-block;
+    overflow: hidden;
+    position: relative;
+    text-indent: -9999px;
+    width: 4em;
+    height: 4em;
+}
+.timer-loader:not(:required)::before {
+    animation: timer-loader 1250ms infinite linear;
+    transform-origin: 0.25em 0.25em;
+    background: var(--color);
+    border-radius: 0.25em;
+    content: '';
+    display: block;
+    position: absolute;
+    width: 0.5em;
+    height: 1.6em;
+    left: 1.25em;
+    top: 1.25em;
+}
+.timer-loader:not(:required)::after {
+    animation: timer-loader 15000ms infinite linear;
+    transform-origin: 0.25em 0.25em;
+    background: var(--color);
+    border-radius: 0.25em;
+    content: '';
+    display: block;
+    position: absolute;
+    width: 0.5em;
+    height: 1.3333em;
+    left: 1.25em;
+    top: 1.25em;
+}
+.bubbles { background-color: darkslateblue;
+    border: 0.3em solid black; border-radius: 50%;
+    width: 8em; height: 6em; padding-top: 0.7em;
+}
+.bubbles:before, .bubbles:after {
+    content:"";
+    background-color:darkslateblue;
+    border-radius:50%;
+    display:block;
+    position:absolute;
+}
+.bubbles:before {
+    width: 2em; height: 1.5em;
+    bottom: -1.6em; right: 0.0em;
+    box-shadow: 0 0 0 2px black;
+}
+.bubbles:after {
+    width: 1.2em; height: 1em;
+    bottom: -3.0em; right: 1.1em;
+    box-shadow: 0 0 0 2px black, -1em 1.2em 0 0em black;
+}
+.fluffy-cloud5 { background-color: white; border-radius: 50%;
+    width: 5em; height: 4em; padding-top: 0.7em;
+    box-shadow: -6em -0.1em 0 0em white,
+        -3em -1.3em 0 0em white,
+        -1em 1.3em 0 0em white,
+        -4em 1.3em 0 0em white;
+}
+.fluffy-cloud5:before {
+    content:"";
+    background-color:white;
+    border-radius:50%;
+    display:block;
+    position:absolute;
+}
+.fluffy-cloud5:before {
+    width: 1.2em; height: 0.8em;
+    bottom: -0.6em; right: -0.3em;
+}
+.fluffy-cloud3 { background-color: white; border-radius: 50%;
+    color: black;
+    width: 3em; height: 2em; padding-top: 0.5em;
+    box-shadow: -1em 0.8em 0 0em white, 1em 0.5em 0 0em white;
+}
+.fluffy-cloud3:before {
+    content:"";
+    background-color:white;
+    border-radius:50%;
+    display:block;
+    position:absolute;
+}
+.fluffy-cloud3:before {
+    width: 0.8em; height: 0.5em;
+    bottom: 2.5em; right: 3.5em;
+}
