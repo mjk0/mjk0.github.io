@@ -66,7 +66,7 @@
                         <table class="curr-wind">
                             <tr><th>Wind:</th><th id="tilewind"></th></tr>
                             <tr><td colspan="2"><button
-                                class="btn-score">Score History</button>
+                                class="btn-score btn-s">Score History</button>
                             </td></tr>
                         </table></div>
                         <div class="thinking1">
@@ -84,6 +84,9 @@
                             class="seatdir"></span><span id="seatname1"
                             class="seatname">Lefty</span>
                             <img class="svg-icon" src="media/Dice-2r1-Icon.svg"/>
+                            <div id="rdy1" class="rdyFlagAnim hide-me">
+                                <svg><use href="media/stiles.svg#rdyflag" /></svg>
+                            </div>
                             </td></tr>
                         </table>
                     </div>
@@ -100,6 +103,9 @@
                             class="seatdir"></span><span id="seatname2"
                             class="seatname">Oppo</span>
                             <img class="svg-icon" src="media/Dice-2r1-Icon.svg"/>
+                            <div id="rdy2" class="rdyFlagAnim hide-me">
+                                <svg><use href="media/stiles.svg#rdyflag" /></svg>
+                            </div>
                         </td></tr>
                         </table>
                         <div class="thinking2">
@@ -138,6 +144,10 @@
                                 title="Play a 4-set"><span>
                                 Gng<br />&#25179;</span><svg class="tile-s l-gap">
                                     <use href="media/stiles.svg#B8"/></svg></button>
+                            <button id="fs-gng2" class="HoverBtn" onclick="PMj.playWt(2)"
+                                title="Play a 4-set"><span>
+                                Gng<br />&#25179;</span><svg class="tile-s l-gap">
+                                    <use href="media/stiles.svg#B9"/></svg></button>
                             <button id="fs-gng" class="HoverBtn" onclick="PMj.playNt('gng');"
                                 title="Play a 4-set with discarded tile"><span>
                                 Gng<br />&#25179;</span></button>
@@ -203,6 +213,9 @@
                             class="seatdir"></span><span id="seatname3"
                             class="seatname">Righty</span>
                             <img class="svg-icon" src="media/Dice-2r1-Icon.svg"/>
+                            <div id="rdy3" class="rdyFlagAnim hide-me">
+                                <svg><use href="media/stiles.svg#rdyflag" /></svg>
+                            </div>
                         </td></tr>
                         </table>
                         <div class="thinking3">
@@ -223,8 +236,11 @@
                         Drag tile above this line to discard
                         / &#20986;&#29260; &#8679; &#8679;
                     </div>
-                    <div class="played-local">
+                    <div class="played-local tile-anchor">
                         <div id="tilesp0"></div>
+                        <div id="rdy0" class="rdyFlagAnim hide-me">
+                            <svg><use href="media/stiles.svg#rdyflag" /></svg>
+                        </div>
                     </div>
                 </div>
                 <div class="box box-svg-lg">
@@ -249,10 +265,19 @@
                             --><span id="seatdir0" class="seatdir"></span><span
                             id="seatname0" class="seatname">Human</span><img
                             class="svg-icon" src="media/Dice-2r1-Icon.svg"/><!--
+                            --><div id="undo"><button  onclick="PMj.reqUndo(-1)"
+                            class="btn-undo btn-s">Undo A Play ...</button></div><!--
                         --></td></tr>
                     </table>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal 'Undo Play' options' -->
+    <div id="diaUndo" class="modal">
+        <input class="btn-small modal-close" value="cancel" type="button" />
+        <div id='diaUndoContents'>
         </div>
     </div>
 

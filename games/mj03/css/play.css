@@ -42,7 +42,7 @@ td.tile-m, td.tile-lg { display: contents; }
 /* https://blog.prototypr.io/align-svg-icons-to-text-and-say-goodbye-to-font-icons-d44b3d7b26b4 */
 .svg-icon { display: inline-block; }
 .svg-icon svg, svg.svg-icon, img.svg-icon {
-    height:1em; width:1em; top: .125em; position: relative;
+    height:1em; width:1em; top: .125em; position: inherit;
 }
 .center {
     position: absolute;
@@ -183,14 +183,19 @@ th.gameSectionTitle { text-align: left; font-style: italic; }
     font-size: 90%; font-weight: normal;}
 .curr-wind td { text-align: center; }
 .curr-wind svg { margin-top: 0.2em; }
-.btn-score { border-radius: 1em; text-transform: uppercase;
+.btn-score { background-color: #26a69a;
+    border: 0.1em solid lightsteelblue; }
+.btn-undo { background-color: orangered;
+    border: 0.1em solid lightsteelblue; }
+.btn-s:hover, .btn-s:focus, .btn-r:hover, .btn-r:focus {
+    background-color: brown;}
+.btn-s, .btn-r { border-radius: 1em; text-transform: uppercase;
     vertical-align: super; margin-top: 0.3em;
-    font-size: 50%; color: white; padding: 0.1em 0.5em;
+    color: white; padding: 0.1em 0.5em;
     transition: background-color .2s ease-out;
-    cursor: pointer; background-color: #26a69a;
-    border: 0.1em solid lightsteelblue;
+    cursor: pointer;
 }
-.btn-score:hover { background-color: brown;}
+.btn-s { font-size: 50%; }
 .nb-active { background-color: yellow; }
 .nb-inactive { background-color: lightsteelblue; }
 .namebar {
@@ -333,3 +338,28 @@ legend { font-size: 80%; }
     width: 50%; height: 1em; margin-top: 20%;
     display: inline-block;
 }
+#undo { position: absolute; right: -5em; top: 0.1em; }
+#diaUndo { width: max-content; text-align: center;
+    font-size: 2vmin; background-color: bisque;
+}
+@media only screen and (max-width: 600px) {
+    #diaUndo { font-size: 3vmin; }
+}
+#rdy0, #rdy1, #rdy2, #rdy3 { position: absolute; right: 0; bottom: -8px; }
+#rdy0 svg { width: 0.6em; height: 0.8em; }
+#rdy1 svg, #rdy2 svg, #rdy3 svg { width: 1.2em; height: 1.5em; }
+.rdyFlagAnim {
+    animation-name: opacityAnim; animation-iteration-count: infinite;
+    animation-direction: alternate; animation-duration: 0.4s;
+}
+@keyframes opacityAnim {
+    from {opacity: 1;}
+    to {opacity: 0;}
+}
+.diaTable h3, .diaTable h4 {
+    background-color: lightblue; text-align: center;
+    margin-bottom: 0px; padding: 0px 1em 0.2em 1em;
+}
+.diaTable { width: max-content; }
+.diaTable th, .diaTable td { text-align: center; }
+.diaTable div.modal-footer { background-color: lightblue; }

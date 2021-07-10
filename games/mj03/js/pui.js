@@ -120,8 +120,29 @@ function posGame2View(seat) { return (seat+4 - PSt.ourSeat) & 0x3; }
 // Translate from game positions (0=East) to view directions: "E", "S", "W", "N"
 function posGame2Dir(seat) { return "ESWN".charAt(seat); }
 
+// When view changes, may need to refresh all ready flags.
+// "init" and "gameend" views force ready floags off.
+const viewRdyAllowed = {"tileplay":1, "waiton":1};
+function refreshRdyFlags() {
+    // Does current view allow ready flags?
+    let vrdyok = viewRdyAllowed[UI.view] || 0;
+    for (let ig=0; ig < 4; ++ig) {
+        let iv = posGame2View(ig); // view positions (0=bottom)
+        // update ready flag
+        set_id_visibility("rdy"+iv, vrdyok && PSt.hands[ig].r);
+    }
+}
+function doesViewChangeNeedRefreshOfRdyFlags(oldv, newv) {
+    let oldok = viewRdyAllowed[oldv] || 0;
+    let newok = viewRdyAllowed[newv] || 0;
+    return oldok != newok; // if different, need refresh
+}
+
 // Show the played tiles for one or more players
 function refreshPlayed(ibase, num) {
+    // Does current view allow ready flags?
+    let vrdyok = (UI.view != "init" && UI.view != "gameend")? 1:0;
+    // Look at each hand in the update
     for (let ib = ibase; ib < ibase+num; ib++) {
         let ig = ib & 0x3; // game positions (0=East), i.e. PSt.hands[ig]
         let iv = posGame2View(ig); // view positions (0=bottom)
@@ -152,6 +173,8 @@ function refreshPlayed(ibase, num) {
             html = 'played tiles';
         }
         elem.innerHTML = html; // clear old contents
+        // update ready flag
+        set_id_visibility("rdy"+iv, vrdyok && PSt.hands[ig].r);
     }
 }
 
@@ -265,7 +288,7 @@ function setViewTilePlay() {
     const gngt = PSt.getInHandGngPlays();
     gngt.forEach((v,i) => {
         for (const [play,tile] of Object.entries(v)) {
-            if (i < 2) {
+            if (i < 3) {
                 setSVGOnBtn("fs-gng"+i, tile);
             } else {
                 console.error("%s:%s is gng#%d",play,tile,i);
@@ -274,6 +297,7 @@ function setViewTilePlay() {
     });
     set_id_visibility("fs-gng0", gngt.length > 0);
     set_id_visibility("fs-gng1", gngt.length > 1);
+    set_id_visibility("fs-gng2", gngt.length > 2);
 
     setPlayView("tileplay"); // show the buttons
 }
@@ -315,6 +339,49 @@ function refreshWaitOn() {
     }
 }
 
+// Msg from server giving undo/redo options
+// {"action":"redo","offset":0,"v":[[1,"draw"],[0,"discard"]]}
+function rcvReDo(data) {
+    let elem = document.getElementById("diaUndoContents");
+    let v = data.v || [];
+    let html = "";
+    if (v.length == 0) {
+        html = "<span> No Plays! </span>";
+    } else {
+        // Create an undo button for each option
+        v.forEach((a,i) => {
+            // a[0] is the player pos, a[1] is the play
+            let pname = PSt.players[a[0]];
+            let play = undoPlayStr(a[1]);
+            let div = i==0 ? "fieldset" : "div";
+            let lg = i==0 ? "<legend>Last Play:</legend>" : "";
+            if (i==1) {
+                html += '<fieldset><legend>Previous Play(s):</legend>';
+            }
+            html += `<${div}>${lg}<button class="btn-r btn-undo modal-close"`;
+            html += ` onclick="PMj.reqUndo(${i})" type="button">`;
+            html += `Undo ${pname} ${play}</button></${div}>`;
+        });
+        if (v.length > 1) {
+            html += '</fieldset>';
+        }
+    }
+    elem.innerHTML = html;
+    $('#diaUndo').modal('open');
+}
+const undoPlay2Str = {'gngadd': 'gng', 'gngsecret': 'gng-secret'};
+function undoPlayStr(play) {
+    if (typeof play === 'object' && play !== null) {
+        let pstr = Object.keys(play)[0];
+        return undoPlay2Str[pstr] || "in-hand play";
+    }
+    return play;
+}
+
+function playResultWoo() {
+    setPlayView("gameend");
+}
+
 const playViewIds = [
     'playfs', 'discard-line', 'wait4fs',
     'viewwoo', 'viewinit'
@@ -325,6 +392,7 @@ function enaPlayViewPieces(opts) {
     }
 }
 function setPlayView(vname) {
+    const nu_RdyFlag = doesViewChangeNeedRefreshOfRdyFlags(UI.view, vname);
     UI.view = vname;
     switch (vname) {
     case "init":
@@ -339,6 +407,13 @@ function setPlayView(vname) {
     case "waiton":
         enaPlayViewPieces({"wait4fs":1});
         break;
+    case "gameend":
+        enaPlayViewPieces({"viewwoo":1});
+        break;
+    }
+    // Other refresh
+    if (nu_RdyFlag) {
+        refreshRdyFlags();
     }
 }
 
@@ -363,8 +438,8 @@ function init(opts) {
 export {
     init, refreshCurrWind, refreshCurrDealer,
     refreshPlayerDirs, refreshPlayerNames, refreshPlayed, refreshUnplayed,
-    showWsOn, chatShow, chatIncoming,
-    setPlayView, setViewTilePlay, rcvWaitOn, getSvgTileString,
+    showWsOn, chatShow, chatIncoming, getSvgTileString,
+    setPlayView, setViewTilePlay, rcvWaitOn, rcvReDo,
     refreshDiscard, refreshThinking, refreshDiscardTile,
-    refreshWaitOn,
+    refreshWaitOn, playResultWoo,
 }

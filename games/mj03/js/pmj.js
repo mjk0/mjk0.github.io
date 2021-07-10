@@ -17,6 +17,7 @@ const WsOptions = {
         'sitat': rcvSitAt,
         'err':   rcvErr,
         'chat':  rcvChat,
+        'redo':  rcvReDo,
         'players': rcvPlayers,
         'hands':   rcvHands,
         'unplayed': rcvUnplayed,
@@ -103,12 +104,18 @@ function rcvTPlayRes(data) {
     // TODO: show new current player, and last play (draw, Po, ...)
     PUI.refreshDiscard();
     PUI.refreshThinking();
+    if (data.pc == "woo") {
+        PUI.playResultWoo();
+    }
 }
 function rcvReshuffle(data) {
     //PSt.setReshuffleState(); // Currently unused action.  UI updates when WaitOn arrives
 }
 function rcvWaitOn(data) {
     PUI.rcvWaitOn(data); // Only relevant to UI
+}
+function rcvReDo(data) {
+    PUI.rcvReDo(data); // UI only for now
 }
 
 // Set the WebSocket URL to include our connection UUID
@@ -162,6 +169,9 @@ function playAgain() { // send reshuffle
 function askRobotPlay(pos) { // ask robot to take over for a missing human
     Ws.sendMsg({"action":"robotplay", "pos":pos});
 }
+function reqUndo(offset) {
+    Ws.sendMsg({"action":"redo", offset, "v":[]});
+}
 
 /// UI callbacks
 function uicbDiscard(tile) {
@@ -189,5 +199,6 @@ $(document).ready(function(){
 });
 
 export {
-    loginAndSit, chatsubmit, playNt, playWt, playAgain, askRobotPlay,
+    loginAndSit, chatsubmit, playNt, playWt, playAgain,
+    askRobotPlay, reqUndo,
 };
