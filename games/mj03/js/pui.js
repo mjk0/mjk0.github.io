@@ -10,7 +10,11 @@ let UI = {
 };
 
 function onResize() {
-    PUnpl.refreshGrid();
+    // Refresh unplayed grid if it's visible
+    if (is_visible("unplayed")) PUnpl.refreshGrid();
+}
+function doesViewChangeNeedRefreshOfUnplGrid(oldv, newv) {
+    return oldv == "gameend" && newv != "gameend";
 }
 
 // Refresh our unplayed tiles
@@ -75,14 +79,17 @@ function refreshPlayerDirs() {
 // After a seat change, we received an updated player seat list from the server
 function refreshPlayerNames() {
     for (let seat=0; seat < 4; ++seat) { // game positions (0=East)
-        let dir = posGame2Dir(seat);
         let iv = posGame2View(seat); // view positions (0=bottom)
-        let domSeatName = document.getElementById('seatname'+iv);
-        let name = PSt.players[seat];
-        domSeatName.innerHTML = ( name? name : "AI("+dir+")");
+        let name = seatPlayerName(seat);
+        document.getElementById('seatname'+iv).innerHTML = name;
+        document.getElementById("p-n"+seat).innerHTML = name;
+    }
+    if (UI.view == "gameend") {
+        refreshScoring();
     }
     refreshWaitOn();
 }
+function seatPlayerName(seat) { return PSt.players[seat] || "AI("+posGame2Dir(seat)+")"}
 
 // From a comma-sep string of tile names ("F1,F2"), create SVGs as innerHTML
 function mkTileSvg(tiles, repeatCnt, tileclass) {
@@ -151,7 +158,7 @@ function refreshPlayed(ibase, num) {
         let html = '';
         for (const set of PSt.hands[ig].sets) {
             // each set consists of: {"s":"F1,F2","secret":0}
-            if (set.s.length > 0 && (set.secret<2 || iv>0)) {
+            if (set.s.length > 0) {
                 if (set.secret > 1) {
                     html += '<div class="tile-set-ureveal">';
                 } else if (set.secret) {
@@ -239,9 +246,11 @@ function refreshDiscard() {
     }
 }
 // Refresh the SVG use link to show the discarded tile
-function refreshDiscardTile() {
-    let odiscard = document.getElementById('other-discard');
-    PUnpl.svgSetTileString(odiscard, PSt.plays.tile);
+function refreshDiscardTile() { refreshTileOnId('other-discard', PSt.plays.tile) }
+// Refresh the SVG use link to show the given tile
+function refreshTileOnId(id,tile) {
+    let oid = document.getElementById(id);
+    PUnpl.svgSetTileString(oid, tile);
 }
 // Refresh the SVG use link on an optional play button
 const id2incr = {"fs-chal":[0,1,2],"fs-cham":[-1,0,1],"fs-chah":[-2,-1,0]};
@@ -302,26 +311,21 @@ function setViewTilePlay() {
     setPlayView("tileplay"); // show the buttons
 }
 
-const reshuffle_buttons = `
-<button class="HoverBtnG" onclick="PMj.playAgain();"><span>
-Play<br />again<br /><b class="bGG">✓</b></span></button>
-<a href="./"><button class="HoverBtnR"><span>
-Stand<br />up<br /><b class="bRR">✗</b></span></button></a>
-`.trim();
-
 // Msg from server telling us who we're waiting on, and why
 // {"action":"waiton","who":[0],"why":"discard"}
 function rcvWaitOn(data) {
     UI.waitOn.why = data.why || "??";
     UI.waitOn.who = data.who || [];
-    showWaitOn();
+    if (UI.waitOn.why=='woo'||UI.waitOn.why=='reshuffle') {
+        gameEndWaitOn();
+    } else {
+        showWaitOn();
+    }
 }
 function showWaitOn() {
-    let why = UI.waitOn.why;
-    let html = (why=='woo'||why=='reshuffle')? reshuffle_buttons : '';
-    html += `<div>Waiting for ${why}...</div>`;
+    let html = `<div>Waiting for ${UI.waitOn.why}...</div>`;
     for (const ig of UI.waitOn.who || []) {
-        let pname = PSt.players[ig];
+        let pname = seatPlayerName(ig);
         if (pname.startsWith("R-")) {
             // If waiting on a robot, offer robot take-over
             pname += `<button class="btn-small robitBtn" onclick="PMj.askRobotPlay(${ig})" type="button">Robot play</button>`;
@@ -332,7 +336,17 @@ function showWaitOn() {
     w4elem.innerHTML = html;
     setPlayView('waiton');
 }
-// If in the "waiton" view, refresh display
+function gameEndWaitOn() {
+    // Show which positions have responded
+    let html = "";
+    for (const ig of UI.waitOn.who || []) {
+        let pname = seatPlayerName(ig);
+        html += `<div>${pname}</div>`;
+    }
+    document.getElementById("ge-wo").innerHTML = html; // gameend waiting on who
+    setPlayView('gameend');
+}
+// If in the "waiton" view, refresh display after player name list update
 function refreshWaitOn() {
     if (UI.view == 'waiton') {
         showWaitOn(); // Update list of who we're waiting on
@@ -351,7 +365,7 @@ function rcvReDo(data) {
         // Create an undo button for each option
         v.forEach((a,i) => {
             // a[0] is the player pos, a[1] is the play
-            let pname = PSt.players[a[0]];
+            let pname = seatPlayerName(a[0]);
             let play = undoPlayStr(a[1]);
             let div = i==0 ? "fieldset" : "div";
             let lg = i==0 ? "<legend>Last Play:</legend>" : "";
@@ -378,12 +392,100 @@ function undoPlayStr(play) {
     return play;
 }
 
+// Scoring result for the game.  Only handled in the UI
+// {"action":"scoring","addv":[1,20],"adds":["Flowers","7 pairs"],
+//   "multv":[2],"mults":["zzmo"],"diffs":[168,-84,-42,-42],
+//   "score":{"R-Doc":-84,"R-Happy":-42,"Marcel":168,"R-Bashful":-42}}
+function refreshScoring() {
+    let d = "";
+    let score = 0;
+    // Additive points
+    PSt.scoring.addv.forEach((v,i) => { score += v;
+        d += tableRow(["+"+v +": "+ PSt.scoring.adds[i]])
+    });
+    // Multiplicative points
+    PSt.scoring.multv.forEach((v,i) => { score *= v;
+        d += tableRow([PSt.scoring.mults[i] + "(*"+v+")"])
+    });
+    // Hand score total
+    document.getElementById("score-hpts").innerHTML = score.toString();
+    document.getElementById("pts-detail").innerHTML = d;
+    // Hand score differential
+    let tr_diffs = document.getElementById("pts-diff");
+    PSt.scoring.diffs.forEach((v,i) => { tr_diffs.childNodes[i+1].innerHTML = v.toString()});
+    // Game running total points
+    let tr_pts = document.getElementById("pts-tot");
+    for (let i = 0; i < 4; ++i) {
+        tr_pts.childNodes[i+1].innerHTML = PSt.scoring.score[seatPlayerName(i)] || "--";
+    }
+}
+function tableRow(arr, thd) {
+    let td = thd || "td";
+    let r = "<tr>";
+    arr.forEach((v) => { r += "<"+td+">"+v+"</"+td+">" });
+    return r + '</tr>';
+}
+
+// Score history.  Only handled in the UI
+// {"action":"scorehist","h":[
+//    {"wind":1,"dealer_pos":2,"win_pos":2,"date":"2021-07-15T02:01:08Z",
+//      "scores":{"R-Happy":-26,"Marcel":164,"R-Sneezy":-50,"R-Bashful":-88}},
+//    {"wind":1,"dealer_pos":1,"win_pos":0,"date":"2021-07-15T01:58:34Z",
+//      "scores":{"R-Happy":-42,"Marcel":168,"R-Sneezy":-42,"R-Bashful":-84}}]}
+function rcvScoreHist(data) {
+    // Iterate through all entries to find complete set of named players
+    let nmap = {}; // collect all found names
+    for (const gr of data.h) { Object.assign(nmap, gr.scores) }
+
+    // Create table header with complete set of names
+    const names = Object.keys(nmap);
+    for (const n of names) { nmap[n] = 0; }
+    let name_order = [...PSt.players]; // copy players array
+    for (const n of PSt.players) { nmap[n] = 1; } // mark those already listed
+    for (const n of names) { if (nmap[n] == 0) name_order.push(n); }
+    let hdr = "<th>W</th>";
+    for (const n of name_order) { hdr += "<th>"+n+"</th>" }
+    document.getElementById("scoreHhead").innerHTML = hdr;
+
+    // Create results table
+    let last_ds = "";
+    let html = "";
+    const cols = name_order.length + 1;
+    for (const gr of data.h) {
+        // get date of the game result
+        const date = new Date(gr.date);
+        const ds = date.toLocaleDateString('en-CA'); // 2020-08-19 (year-month-day)
+        if (ds != last_ds) {
+            // Add line for game result date
+            html += `<tr><th colspan="${cols}" class="shDate">${ds}</th></tr>`;
+            last_ds = ds;
+        }
+        // Result row starts with wind
+        const windchar = posGame2Dir(gr.wind);
+        html += `<tr><td>${windchar}</td>`;
+        name_order.forEach((n,i) => {
+            let pts = gr.scores.hasOwnProperty(n) ? gr.scores[n] : "--";
+            if (i == gr.dealer_pos) pts = `* ${pts} *`;
+            const style = (i == gr.win_pos)? ' class="shWin"' : '';
+            html += `<td${style}>${pts}</td>`;
+        });
+        html += "</tr>";
+    }
+    if (data.h.length == 0) {
+        html += `<tr><td colspan="${cols}"><i>no score history yet</i></td></tr>`;
+    }
+    document.getElementById("scoreHbody").innerHTML = html;
+    $('#scoreHistory').modal('open');
+}
+
 function playResultWoo() {
+    // Refresh the SVG use link to show the last tile before Woo
+    refreshTileOnId('last-tile', PSt.plays.tile);
     setPlayView("gameend");
 }
 
 const playViewIds = [
-    'playfs', 'discard-line', 'wait4fs',
+    'playfs', 'discard-line', 'wait4fs', "unplayed",
     'viewwoo', 'viewinit'
 ];
 function enaPlayViewPieces(opts) {
@@ -393,28 +495,28 @@ function enaPlayViewPieces(opts) {
 }
 function setPlayView(vname) {
     const nu_RdyFlag = doesViewChangeNeedRefreshOfRdyFlags(UI.view, vname);
+    const nu_UnplGrid = doesViewChangeNeedRefreshOfUnplGrid(UI.view, vname);
     UI.view = vname;
     switch (vname) {
     case "init":
-        enaPlayViewPieces({"viewinit":1});
+        enaPlayViewPieces({"viewinit":1, "unplayed":1});
         set_id_visibility("other-discard", 0);
         break;
     case "tileplay": // both in-hand and on-discard
-        enaPlayViewPieces({"playfs":1,
+        enaPlayViewPieces({"playfs":1, "unplayed":1,
             "discard-line":PSt.plays.allowDiscard
         });
         break;
     case "waiton":
-        enaPlayViewPieces({"wait4fs":1});
+        enaPlayViewPieces({"wait4fs":1, "unplayed":1});
         break;
     case "gameend":
         enaPlayViewPieces({"viewwoo":1});
         break;
     }
     // Other refresh
-    if (nu_RdyFlag) {
-        refreshRdyFlags();
-    }
+    if (nu_RdyFlag) refreshRdyFlags();
+    if (nu_UnplGrid) PUnpl.refreshGrid();
 }
 
 function init(opts) {
@@ -439,7 +541,7 @@ export {
     init, refreshCurrWind, refreshCurrDealer,
     refreshPlayerDirs, refreshPlayerNames, refreshPlayed, refreshUnplayed,
     showWsOn, chatShow, chatIncoming, getSvgTileString,
-    setPlayView, setViewTilePlay, rcvWaitOn, rcvReDo,
+    setPlayView, setViewTilePlay, rcvWaitOn, rcvReDo, rcvScoreHist,
     refreshDiscard, refreshThinking, refreshDiscardTile,
-    refreshWaitOn, playResultWoo,
+    refreshWaitOn, playResultWoo, refreshScoring,
 }

@@ -24,6 +24,8 @@ const WsOptions = {
         'current' : rcvCurrent,
         'tileplay': rcvTilePlay,
         'tplayres': rcvTPlayRes,
+        'scoring' : rcvScoring,
+        'scorehist': PUI.rcvScoreHist,
         'reshuffle': rcvReshuffle,
         'waiton'  : rcvWaitOn,
     },
@@ -108,6 +110,10 @@ function rcvTPlayRes(data) {
         PUI.playResultWoo();
     }
 }
+function rcvScoring(data) {
+    PSt.rcvScoring(data);
+    PUI.refreshScoring();
+}
 function rcvReshuffle(data) {
     //PSt.setReshuffleState(); // Currently unused action.  UI updates when WaitOn arrives
 }
@@ -172,6 +178,9 @@ function askRobotPlay(pos) { // ask robot to take over for a missing human
 function reqUndo(offset) {
     Ws.sendMsg({"action":"redo", offset, "v":[]});
 }
+function reqScoreHist() {
+    Ws.sendMsg({"action":"scorehist", "h":[]});
+}
 
 /// UI callbacks
 function uicbDiscard(tile) {
@@ -200,5 +209,5 @@ $(document).ready(function(){
 
 export {
     loginAndSit, chatsubmit, playNt, playWt, playAgain,
-    askRobotPlay, reqUndo,
+    askRobotPlay, reqUndo, reqScoreHist,
 };

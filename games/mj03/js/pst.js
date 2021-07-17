@@ -13,6 +13,7 @@ var username = null;
 var uuid = null;
 var email = null;
 var plays = {'allowDiscard': false, 'more': [], tile:"", src:-1, resp:[]};
+var scoring = null; // save scoring info for UI, in case of player name change at game end
 
 function getUrlParam(name, def) {
     let value = urlParams.get(name);
@@ -55,6 +56,8 @@ function rcvPlayers(data) {
         players = data.seats;
     }
 }
+// Save complete scoring message for UI
+function rcvScoring(data) { scoring = data }
 
 // {"action":"hands","ibase":0,"h":[
 //   {"sets":[{"s":"","secret":0}],"nu":13,"r":0},
@@ -154,11 +157,11 @@ function init() {
 
 export {
     players, ourGame, ourSeat, username, uuid, email,
-    hands, unplayed, curr, plays,
+    hands, unplayed, curr, plays, scoring,
     init, getUrlParam, getSessionInfo,
     setHand, setUnplayed, isSameSuitConsecutive, tileSuit,
     isOurTurn, isDiscardCycle, isOtherDiscard,
     tpIsDiscardTile, tpIsDiscardResponse, getInHandGngPlays,
     rcvSitAt, rcvPlayers, rcvHands, rcvUnplayed, rcvCurrent,
-    rcvTilePlay, rcvTPlayRes,
+    rcvTilePlay, rcvTPlayRes, rcvScoring,
 };
