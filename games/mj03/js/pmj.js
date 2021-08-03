@@ -28,6 +28,7 @@ const WsOptions = {
         'scorehist': PUI.rcvScoreHist,
         'reshuffle': rcvReshuffle,
         'waiton'  : rcvWaitOn,
+        'shutdown'  : rcvShutdown, // game forcibly ended
     },
 };
 
@@ -122,6 +123,10 @@ function rcvWaitOn(data) {
 }
 function rcvReDo(data) {
     PUI.rcvReDo(data); // UI only for now
+}
+// {"action":"shutdown"}
+function rcvShutdown(data) {
+    PUI.gameShutdown();
 }
 
 // Set the WebSocket URL to include our connection UUID

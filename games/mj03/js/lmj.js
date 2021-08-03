@@ -6,15 +6,23 @@ import * as LUI from './lui.js';
 
 const WsOptions = {
     serverUrl: "ws://localhost:3030/games/mahjong/login",
+    autoReconnectInterval: 5000, // in milliseconds
+    'onClose': wsOnClose,
+    'online' : netOnOnline,
+    'offline': netOnOffline,
     actionHandlers: {
         'suuid': rcvUuid,
         'games': rcvGames,
         'users': rcvUsers,
+        'series': rcvSeries,
         'privinv': rcvPrivInv,
+        'scorehist': rcvScoreHist,
         'sitat': rcvSitAt,
         'err':   rcvErr,
     },
 };
+
+var seriesHistorySeriesID = 0; // for use by reqScoreHist()
 
 function rcvUuid(data) {
     // if UUID is valid, also set username & email with login value
@@ -37,8 +45,8 @@ function rcvErr(data) {
 }
 
 function signOut() {
-    Ws.close();
     St.clrUuid(); // sets to null
+    Ws.close(); // since uuid now null, won't trigger auto-login
     LUI.set_sign_in_state(St.uuid); // falsy values enable sign-in UI
 }
 
@@ -61,8 +69,19 @@ function startGame() {
     }
 }
 
-function sitAt(game, seat, elem) {
-    console.log('sitAt('+game+', '+seat+', '+ elem +')');
+function rcvSeries(data) {
+    St.rcvSeries(data);
+    LUI.update_games_display();
+}
+function seriesResume(sid) {
+    Ws.sendMsg({"action":"serresume", "id":parseInt(sid)});
+}
+function seriesDelete(sid) {
+    Ws.sendMsg({"action":"serdel", "id":parseInt(sid)});
+}
+
+function sitAt(game, seat) {
+    console.log('sitAt('+game+', '+seat+')');
     Ws.sendMsg({"action":"sitat", game, seat}); // response from server triggers UI refresh
 }
 function rcvSitAt(data) { // server confirmation of seat request
@@ -76,8 +95,8 @@ function rcvPrivInv(data) {
 function privCreate() {
     Ws.sendMsg({"action":"privcreate"}); // response from server triggers UI refresh
 }
-function privKill() {
-    Ws.sendMsg({"action":"privkill"}); // response from server triggers UI refresh
+function gameKill(game) {
+    Ws.sendMsg({"action":"gkill", game}); // response from server triggers UI refresh
 }
 // Open private invite dialog
 function privInvite() {
@@ -98,10 +117,40 @@ function privInviteSelected() {
     St.setPastInvited(inv);
     Ws.sendMsg({'action':'privinv', 'list': inv});
 }
+function reqScoreHist(game, sid) {
+    seriesHistorySeriesID = sid;
+    Ws.sendMsg({'action':'serhist', game, 'id': sid});
+}
+
+// {"action":"scorehist","h":[...]}
+function rcvScoreHist(data) {
+    var players = [...CUI.rplayers];
+    if (St.series.hasOwnProperty(seriesHistorySeriesID)) {
+        St.series[seriesHistorySeriesID].order.forEach((p,i) => {
+            if (i< 4 && p.length > 0) players[i] = p;
+        });
+    }
+    CUI.rcvScoreHist(data, players); // Display score history dialog
+}
 
 function rcvUsers(data) {
     St.rcvUsers(data);
     LUI.update_users_display();
+}
+
+function wsOnClose() {
+    // schedule try_autologin if previously authenticated
+    if (St.uuid && WsOptions.autoReconnectInterval > 0) {
+        console.log('%s: Auto reconnect in %d ms',
+            (new Date()).toLocaleTimeString(), WsOptions.autoReconnectInterval);
+        setTimeout(try_autologin, WsOptions.autoReconnectInterval);
+    }
+}
+function netOnOffline() { // offline
+    console.log('%s: offline', (new Date()).toLocaleTimeString());
+}
+function netOnOnline() { // back online
+    console.log('%s: online', (new Date()).toLocaleTimeString());
 }
 
 // If already had been assigned a UUID, try auto-login
@@ -110,6 +159,9 @@ function try_autologin() {
     let mjuuid = sessionStorage.getItem("mj_uuid");
     let mjemail = sessionStorage.getItem("mj_email") || "";
     if (mjuname && mjuuid) {
+        // login is only valid on WebSocket connection
+        // In case this is a re-connect, clear any queued messages
+        Ws.wsClrSendQ();
         Ws.sendMsg({"action":"login", "username":mjuname, "email":mjemail});
     }
 }
@@ -143,6 +195,7 @@ $(document).ready(function(){
 });
 
 export {
-    submit, signOut, sitAt, startGame,
-    privCreate, privKill, privInvite, privInviteSelected, privForget,
+    submit, signOut, sitAt, startGame, gameKill,
+    seriesResume, seriesDelete, reqScoreHist,
+    privCreate, privInvite, privInviteSelected, privForget,
 };

@@ -2,6 +2,7 @@
 "use strict";
 
 var games = {};
+var series = {}; // key is series ID, value is array of player order
 var users = {}; // {key is username, value is last_seen_time as RFC3339 string or literal "now"}
 var username = null;  // sessionStorage or UI field must be confirmed by server
 var uuid = null; // our connection key
@@ -57,13 +58,14 @@ function isInvited(gname) {
     return i >= 0;
 }
 // {"action":"sitat","game":"Marcel","seat":2} // server ack of seat request being granted
+// {"action":"sitat","game":"","seat":0} // we are kicked from game
 function rcvSitAt(data) {
     if (data.hasOwnProperty('game')) {
-        ourGame = data.game;
+        ourGame = data.game.length > 0 ? data.game : null;
         sessionStorage.setItem("mj_game", ourGame);
     }
     if (data.hasOwnProperty('seat') && data.seat >= 0 && data.seat <= 3) {
-        ourSeat = data.seat;
+        ourSeat = ourGame ? data.seat : -1;
         sessionStorage.setItem("mj_seat", ourSeat);
     }
 }
@@ -73,6 +75,22 @@ function hasOurGameStarted() {
         && games[ourGame].seats[ourSeat] == username
         && games[ourGame].status > 0 // game started?
     );
+}
+// {"action":"series","h":
+//    {"1":{"order":["Marcel","","",""],"date":"2021-07-30T07:39:49Z"}}}
+function rcvSeries(data) {
+    if ('h' in data) { series = data.h; }
+}
+// Check if the series game for a given ID is present in games
+function hasSeriesGame(sid) {
+    let bfn = 'mj-'+ Number(sid).toString(16).padStart(4,'0').toUpperCase();
+    return games.hasOwnProperty(bfn);
+}
+function seriesIdForGame(glabel) {
+    // Check for possible matching series ID
+    let msid = glabel.match(/^mj[-]([0-9A-F]+)$/);
+    let sid = (msid && msid.length == 2)? parseInt(msid[1],16) : null;
+    return (sid && St.series.hasOwnProperty(sid))? sid: null;
 }
 
 function rcvUsers(data) {
@@ -114,7 +132,9 @@ function privForget(u) {
 }
 
 export {
-    games, users, username, uuid, ourGame, ourSeat, pastInvited,
-    rcvUuid, clrUuid, rcvGames, isOpen, isPrivate, isInvited, setPastInvited,
-    rcvSitAt, rcvUsers, rcvPrivInv, privForget, hasOurGameStarted,
+    games, series, users, username, uuid, ourGame, ourSeat, pastInvited,
+    rcvUuid, clrUuid, rcvUsers, rcvSeries, rcvSitAt,
+    rcvGames, isOpen, isPrivate, isInvited, setPastInvited,
+    rcvPrivInv, privForget, hasOurGameStarted,
+    hasSeriesGame, seriesIdForGame,
 };

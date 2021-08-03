@@ -70,7 +70,7 @@ function priv_users_table_row(u, ds) {
         +(pchk ? 'checked="checked"' : '')
         +' /><span>'+u+'</span></label></td><td>'
         +ds+'</td><td>'
-        +(pinv?'<i class="material-icons iconBtn" onclick="LMj.privForget(\''+u+'\')">delete</i>':'')
+        +(pinv?'<i class="material-icons iconBtnRed" onclick="LMj.privForget(\''+u+'\')">delete</i>':'')
         +'</td></tr>';
     return (u == St.username)? '' : r;
 }
@@ -108,6 +108,53 @@ function update_games_display() {
     let createBtnVisible = priv.length==0 || priv[0] != St.username;
     jshow('#privCreate', createBtnVisible);
     jshow('#privTableHeading', priv.length > 0); // hide heading if no private games
+
+    // Show past series that can be resumed
+    var sert = $('#seriesgtable');
+    let hasVisibleSeries = false;
+    sert.empty(); // clear out previous game series list
+    if (St.series) Object.keys(St.series).forEach( sid => {
+        if (!St.hasSeriesGame(sid)) {
+            sert.append(addRowSeriesDisplay(sid));
+            hasVisibleSeries = true;
+        }
+    });
+    jshow('.seriesTable', hasVisibleSeries);
+}
+
+// Create HTML for series table entry.
+// St.series:{"1":{"order":["Marcel","","",""],"date":"2021-07-30T07:39:49Z"}}
+function addRowSeriesDisplay(sid) {
+    var r = `<tr><td><button class="btn-ser ser-pulse"
+        onClick="LMj.seriesResume(${sid})"><i
+        class="material-icons">restore</i>
+        </button></td>
+    `.trim();
+    var extras = []; // if any players after first 4, add here
+    St.series[sid].order.forEach((pl, i) => {
+        if (i<4) r += '<td>'+ (pl.length > 0? pl : "--") + '</td>';
+        else { extras.push(pl) }
+    });
+    // Show any extras as single entry in 5th spot
+    r += '<td class="seriesExtras">'+ extras.join() +'</td>';
+    // get date of last game completion
+    const date = new Date(St.series[sid].date);
+    const ds = date.toLocaleDateString('en-CA'); // 2020-08-19 (year-month-day)
+    r += `<td><button class="btn-sscore"
+        onClick="LMj.reqScoreHist('',${sid})"><i
+        class="material-icons">timeline</i>${ds}
+        </button></td>
+        <td><i class="material-icons iconBtnRed"
+        onclick="LMj.seriesDelete(${sid})">delete</i></td></tr>
+    `.trim();
+    return r;
+}
+function seriesDisplayName(sid) {
+    var r = [];
+    if (St.series.hasOwnProperty(sid)) St.series[sid].order.forEach(v => {
+        if (v.length > 0) r.push(v.charAt(0));
+    });
+    return r.join('+');
 }
 
 // Show or hide a jQuery object
@@ -119,22 +166,36 @@ function jshow(jq, f) {
 // Create HTML for games table entry.  gk is game name, gd is game data
 // gk:"\t2", gd:{"seats":[null,null,null,null],"status":0,"invited":[]}
 function addRowGamesDisplay(gk) {
-    var r = '<tr><td>'+gk+'</td>';
-    var sn = 0;
-    for (var s of St.games[gk].seats) {
-        r += '<td>'+(s?s:
-            '<button class="btn-small" onClick="LMj.sitAt(\''+gk+'\','+sn+',this)">'
+    // Check for possible matching series ID
+    let sid = St.seriesIdForGame(gk);
+    // Get game display name
+    var r = '<tr><td>'+(sid? seriesDisplayName(sid) : gk) +'</td>';
+    let seriesGseat = sid? ' class="sgseat"' : '';
+    // Fill in seat info
+    St.games[gk].seats.forEach((s,i) => {
+        // Seat occupied or available to sit/join?
+        let sit = (s?s:
+            '<button class="btn-small" onClick="LMj.sitAt(\''+gk+'\','+i+')">'
             +(St.games[gk].status ? 'join' : 'sit')
-            +'</button>' )+'</td>';
-        ++sn;
-    }
+            +'</button>'
+        );
+        // if series, hint of who last sat at this position
+        let serh = sid? ('<br/><span class="serhint">'
+            +(St.series[sid].order[i] || "--") +'</span>'): '';
+        // Add to result HTML
+        r += `<td${seriesGseat}>${sit}${serh}</td>`;
+    });
     r += '<td>'+lobbyGameStatus(St.games[gk].status > 0, gk)+'</td>';
 
     // If this is a private game, show second row for invited list, and possible invite button
     if (St.isPrivate(gk)) {
         // close first row entry with options column
         let own = (gk == St.username);
-        r += '<td>'+(own?'<i class="material-icons iconBtn" onclick="LMj.privKill()">delete</i>':'');
+        r += '<td>'
+            +((own||sid)?`<i class="material-icons iconBtnTe"
+            onclick="LMj.reqScoreHist('${gk}',${sid})">timeline</i>`.trim():'')
+            +((own||sid)?`<i class="material-icons iconBtnOr"
+            onclick="LMj.gameKill('${gk}')">cancel</i>`.trim():'');
         r += '</td></tr>';
         // 2nd row of private game entry
         r += '<tr><td colspan="7" class="bordbot">'

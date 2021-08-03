@@ -49,7 +49,7 @@
                             Invitational Games
                             <button id="privCreate" class="btn-small inviteBtn right"
                                 type="button" onclick="LMj.privCreate()">
-                                Create game
+                                New game
                             </button>
                         </th></tr>
                         <tr id="privTableHeading"><th>Owner</th>
@@ -64,6 +64,15 @@
                             onclick="alert('preview')" > Invite
                         </button></td></tr>
                         </tbody>
+                    </table>
+                    <div class="divider"></div>
+                    <table class="seriesTable cTable"><!--<thead>
+                        <tr><th colspan="8" class="gameSectionTitle">
+                            Past Games - Click
+                            <i class="material-icons">restore</i>
+                            to continue a series</th></tr>
+                        </thead> -->
+                        <tbody id="seriesgtable"></tbody>
                     </table>
                     <div class="divider"></div>
                     <table class="openTable cTable"><thead>
@@ -127,12 +136,25 @@
         </table>
     </div>
 
+    <!-- Modal score history -->
+    <div id="scoreHistory" class="modal diaTable">
+        <table id='scoreHTable'>
+            <thead id='scoreHhead'></thead>
+            <tbody id='scoreHbody'></tbody>
+        </table>
+        <div class="modal-footer">
+            <a class="modal-close btn-score btn-r">Close</a>
+        </div>
+    </div>
+
     <!--JavaScript at end of body for optimized loading-->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script type="text/javascript" src="/js/materialize.min.js"></script>
     <script type="module">
         import * as LMj from './js/lmj.js';
         window.LMj = LMj;
+        import * as CUI from './js/cui.js';
+        window.CUI = CUI;
         import * as LUI from './js/lui.js';
         window.LUI = LUI;
         import * as Ws from './js/ws.js';

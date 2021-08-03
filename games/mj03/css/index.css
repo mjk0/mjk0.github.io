@@ -58,6 +58,7 @@ i.material-icons.icon-inherit { font-size: inherit; }
 .gamepanel div.divider { margin: 8px 0 0 0; }
 .openTable th {background-color: lightslategrey; color: white; }
 .privTable th {background-color: peru; color: white; }
+.seriesTable th {background-color: white; color: peru; }
 .usersTable th {background-color: green; color: white; }
 .cTable table, .cTable th, .cTable td { border: 1px solid black; }
 .cTable td, .cTable th {
@@ -66,6 +67,13 @@ i.material-icons.icon-inherit { font-size: inherit; }
 }
 .privTable td[colspan] { text-align: left; }
 .privTable td { background-color: #e4d2bf; }
+.seriesTable td {background-color: white;
+    color: peru; font-style: italic; padding: 0.1em;
+}
+.seriesTable i.material-icons { font-size: 120%; vertical-align: bottom; }
+.seriesExtras { font-size: 70%; }
+td.sgseat { padding-bottom: 0px; }
+.serhint { color: red; font-style: italic; font-size: 80%; }
 .usersTable td { background-color: palegreen; }
 .gameTableDir { padding: 0px 0.3em; box-shadow: 0 0 1pt 1pt; border-radius: 5px; }
 .East, .East.gameTableDir { background-color: white; color: black; }
@@ -73,14 +81,37 @@ i.material-icons.icon-inherit { font-size: inherit; }
 .West, .West.gameTableDir { background-color: orange; color: black; }
 .North, .North.gameTableDir { background-color: darkred; color: white; }
 th.gameSectionTitle { text-align: left; font-style: italic; }
-button.inviteBtn, button.privKillBtn {
+button.inviteBtn {
     height: 1.6em; line-height: 1;
     border-radius: 15px;
     margin: 0px 5px 0px 0px; padding: 0px 1em;
 }
 button.inviteBtn { background-color: darkblue; }
-.iconBtn { color:darkred; cursor: pointer;}
-.iconBtn:hover { color: red; cursor: pointer;}
+.btn-sscore { border-radius: 1em; border: 1px solid black; }
+.btn-sscore:hover, .btn-sscore:focus { background-color: antiquewhite;}
+.btn-ser { border-radius: 1em; border: 0px solid black;
+    padding: 0em 0.1em 0.0em; background-color: white;
+}
+.btn-ser:hover, .btn-ser:focus {
+    color: limegreen; border: 0px solid black;
+}
+.sgseat button.btn-small { height: 1.5em; line-height: 1.5em; }
+.iconBtnRed { color:darkred; cursor: pointer;}
+.iconBtnRed:hover { color: red; cursor: pointer;}
+.iconBtnOr { color:orangered; cursor: pointer;}
+.iconBtnOr:hover { color: orange; cursor: pointer;}
+.iconBtnTe { color:teal; cursor: pointer;}
+.iconBtnTe:hover { color: cadetblue; cursor: pointer;}
+.ser-pulse {
+    box-shadow: 0 0 0 0 rgba(204,169,44, 1);
+    animation: series-pulse 2s infinite;
+}
+.ser-pulse:hover { animation: none; }
+@keyframes series-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(204,169,44, 1); }
+    70% { box-shadow: 0 0 0 0.5em rgba(204,169,44, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(204,169,44, 0); }
+}
 .play-lg { font-size: xx-large !important; }
 td.bordbot { border-bottom: black solid 2px; }
 .userspanel {
@@ -98,3 +129,12 @@ td.bordbot { border-bottom: black solid 2px; }
 #diaInvite label > span { margin-left: 1em; width: calc(100% - 2em); }
 .invitee { background-color: #e6faff ; }
 .invitee span { font-weight: bold; }
+.diaTable { width: max-content; }
+.diaTable th, .diaTable td { text-align: center; padding: 0em 0.5em;
+    border: 2px solid black;
+}
+.diaTable th { background-color: blue; color: white; }
+.diaTable div.modal-footer { background-color: lightblue; height: auto; }
+td.shWin { background-color: lightgreen; }
+th.shDate { font-size: 70%; }
+#scoreHistory { border: 0.5em solid orange; }

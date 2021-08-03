@@ -329,6 +329,15 @@
         </div>
     </div>
 
+    <!-- Modal game shutdown notification -->
+    <div id="shutdown" class="modal">
+        <p><i class="material-icons red-text">warning</i>
+            The game owner has ended the game
+            <i class="material-icons red-text">warning</i>
+        </p>
+        <a class="btn-small" href="./" >Back to Lobby</a>
+    </div>
+
     <!--JavaScript at end of body for optimized loading-->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script type="text/javascript" src="/js/materialize.min.js"></script>
@@ -341,6 +350,8 @@
         window.Ws = Ws;
         import * as PUnpl from './js/punpl.js';
         window.PUnpl = PUnpl;
+        import * as CUI from './js/cui.js';
+        window.CUI = CUI;
         import * as PUI from './js/pui.js';
         window.PUI = PUI;
     </script>
