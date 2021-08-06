@@ -7,6 +7,8 @@ use { width: 100%; height: 100%; }
 .tile-m, .tile-m svg { width: 3.6vh; height: 4.8vh; max-width: 3.6vw; max-height: 4.8vw; }
 .tile-s, .tile-s svg { width: 2.8vh; height: 3.733vh; max-width: 2.7vw; max-height: 3.6vw; }
 td.tile-m, td.tile-lg { display: contents; }
+#discardRecent { width: 5.6vh; height: 3.733vh; max-width: 5.4vw; max-height: 3.6vw; margin: 0 0 0.1em 0; }
+#discardText { vertical-align: top; line-height: 2.5em; font-size: 50%;}
 .unplayed-lg { width: 98vw; height: 26vh; }
 .tile-anchor { position: relative; }
 .tile-mv { position: absolute; top: 1vh; left: 9vh; cursor: move; }
@@ -174,7 +176,10 @@ th.gameSectionTitle { text-align: left; font-style: italic; }
 .curr-wind td, .curr-wind th { padding: 0px 0.5em;
     font-size: 90%; font-weight: normal;}
 .curr-wind td { text-align: center; }
+.curr-wind tr { border-bottom: none; }
 .curr-wind svg { margin-top: 0.2em; }
+#discardRecent { border-radius: 0.2em; cursor: pointer;}
+#discardRecent:hover { box-shadow: 0 0 1pt 1pt yellow; }
 .btn-score { background-color: #26a69a;
     border: 0.1em solid lightsteelblue; }
 .btn-undo { background-color: orangered;
@@ -387,3 +392,19 @@ tr#pts-tot > td { background-color: #859c5e; color: white; }
 #shutdown { background-color: gold; text-align: center; border: 1vw solid red; }
 #shutdown p { font-size: 3vw; }
 #shutdown i { vertical-align: text-bottom; font-size: 4vw; }
+@keyframes nodeReady {  
+    from { outline-color: #fff; }
+    to { outline-color: #000; }  
+}
+div.on-ready {
+    animation-duration: 0.01s;
+    animation-name: nodeReady;
+}
+#discardHistory { font-size: 2vmin;
+    border: 0.5em solid teal; background-color: navajowhite;
+}
+#discardHistory div.modal-footer { height: auto; background-color: beige;}
+#discardHistory legend {
+    border-radius: 0.6em; border: 1px solid black;
+    background-color: beige; padding: 0 0.3em;
+}

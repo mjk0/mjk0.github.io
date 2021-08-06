@@ -68,6 +68,13 @@
                             <tr><td colspan="2"><button onclick="PMj.reqScoreHist()"
                                 class="btn-score btn-s">Score History</button>
                             </td></tr>
+                            <tr><td colspan="2"><span id="discardText">Discards:</span>
+                            <svg id="discardRecent" onclick="PMj.reqDiscardHist()" viewBox="0 0 130 84">
+                                <use href="media/stiles.svg#BB" width="65" x="0" y="0" />
+                                <use href="media/stiles.svg#FA" width="65" x="5" y="0" />
+                                <use href="media/stiles.svg#WW" width="65" x="30" y="0" />
+                                <use href="media/stiles.svg#WN" width="65" x="65" y="0" />
+                            </svg></td></tr>
                         </table></div>
                         <div class="thinking1">
                             <div class="fluffy-cloud3"><span
@@ -280,7 +287,7 @@
                     </div>
                 </div>
                 <div class="box box-svg-lg">
-                    <div id="unplayed" class="unplayed-lg tile-anchor">
+                    <div id="unplayed" class="unplayed-lg tile-anchor on-ready">
                         <svg id="OutTgt" class="tile-lg tile-ref"><use href="media/stiles.svg#OutTgt"/></svg>
                         <svg id="DiscardTgt" class="tile-lgp tile-ref"><use href="media/stiles.svg#SymDTgt"/></svg>
                         <svg id="DiagOY" class="tile-lgp tile-ref" viewBox="0 0 86 112" >
@@ -324,6 +331,15 @@
             <thead id='scoreHhead'></thead>
             <tbody id='scoreHbody'></tbody>
         </table>
+        <div class="modal-footer">
+            <a class="modal-close btn-score btn-r">Close</a>
+        </div>
+    </div>
+
+    <!-- Modal discard history -->
+    <div id="discardHistory" class="modal">
+        <fieldset id='discardSingle'></fieldset>
+        <fieldset id="deck"></fieldset>
         <div class="modal-footer">
             <a class="modal-close btn-score btn-r">Close</a>
         </div>

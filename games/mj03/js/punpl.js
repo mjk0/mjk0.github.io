@@ -248,7 +248,7 @@ function gridAutoPlacement() {
         coords[i] = {x,y};
         x += 1;
     }
-    console.log(grid, coords);
+    //console.log(grid, coords);
     return coords;
 }
 
@@ -318,6 +318,7 @@ function refreshGrid() {
     let allrows = discoverUnplayedInGrid();
     let oldgrid = grid; // remember old grid bounds
     grid = updateGrid();
+    //console.log("refreshGrid in progress, new grid: ", grid);
     let emptySpots = []; // track the number of empty spots per row
     let overflow = []; // tiles that cannot be fit into their original row
     for (let xy={x:0, y:0}; xy.y < oldgrid.nh; ++xy.y) {

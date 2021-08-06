@@ -27,8 +27,10 @@ const WsOptions = {
         'scoring' : rcvScoring,
         'scorehist': PUI.rcvScoreHist,
         'reshuffle': rcvReshuffle,
+        'discardl4': rcvDiscardL4, // up to 4 most recent discards
+        'discards': PUI.rcvDiscards,
         'waiton'  : rcvWaitOn,
-        'shutdown'  : rcvShutdown, // game forcibly ended
+        'shutdown': rcvShutdown, // game forcibly ended
     },
 };
 
@@ -90,6 +92,11 @@ function rcvCurrent(data) {
     PSt.rcvCurrent(data);
     PUI.refreshCurrWind();
     PUI.refreshCurrDealer();
+    PUI.refreshDiscardHistBtn(); // discards were cleared
+}
+function rcvDiscardL4(data) { // up to 4 most recent discards
+    PSt.rcvDiscardL4(data);
+    PUI.refreshDiscardHistBtn();
 }
 function rcvTilePlay(data) {
     PSt.rcvTilePlay(data);
@@ -186,11 +193,16 @@ function reqUndo(offset) {
 function reqScoreHist() {
     Ws.sendMsg({"action":"scorehist", "h":[]});
 }
+function reqDiscardHist() {
+    Ws.sendMsg({"action":"discards", "v":"", "deck":""});
+}
 
 /// UI callbacks
 function uicbDiscard(tile) {
     console.log("Discard %s", tile);
     wsSendTilePlay("discard", tile);
+    PSt.addDiscard(tile);
+    PUI.refreshDiscardHistBtn();
 }
 
 // Function that executes jQuery code after page load is complete
@@ -214,5 +226,5 @@ $(document).ready(function(){
 
 export {
     loginAndSit, chatsubmit, playNt, playWt, playAgain,
-    askRobotPlay, reqUndo, reqScoreHist,
+    askRobotPlay, reqUndo, reqScoreHist, reqDiscardHist,
 };

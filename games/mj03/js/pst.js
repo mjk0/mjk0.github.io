@@ -13,6 +13,7 @@ var username = null;
 var uuid = null;
 var email = null;
 var plays = {'allowDiscard': false, 'more': [], tile:"", src:-1, resp:[]};
+var recentDiscards = Array(4).fill("backwhite"); // last 4 discards
 var scoring = null; // save scoring info for UI, in case of player name change at game end
 
 function getUrlParam(name, def) {
@@ -88,6 +89,7 @@ function rcvCurrent(data) {
     curr.pos = data.pos;
     curr.wind = data.wind;
     curr.dealer = data.dealer;
+    clearDiscards(); // clear recent discards
 }
 
 function isOurTurn() { return (curr.pos == ourSeat) }
@@ -123,9 +125,22 @@ function rcvTilePlay(data) {
         plays.resp.length = 0; // clear out old responses
         if (tpIsDiscardTile(data)) {
             plays.resp[plays.src] = "discard";  // mark last play
+            addDiscard(plays.tile);
         }
     }
 }
+function addDiscard(tile) {
+    recentDiscards.push(tile);
+    while (recentDiscards.length > 4) recentDiscards.shift();
+}
+function clearDiscards() { recentDiscards = Array(4).fill("backwhite") }
+// Up to 4 most recent discards
+// {"action":"discardl4","v":"WW-0,WN-1,WSp2,B5-3"}
+function rcvDiscardL4(data) {
+    clearDiscards();
+    data.v.split(',').forEach((v,i) => addDiscard(v.substr(0,2)));
+}
+
 // Play has advanced to a new current position
 // {"action":"tplayres","tile":"M8","pos":2,"pc":"draw"}
 function rcvTPlayRes(data) {
@@ -157,11 +172,11 @@ function init() {
 
 export {
     players, ourGame, ourSeat, username, uuid, email,
-    hands, unplayed, curr, plays, scoring,
+    hands, unplayed, curr, plays, scoring, recentDiscards,
     init, getUrlParam, getSessionInfo,
     setHand, setUnplayed, isSameSuitConsecutive, tileSuit,
-    isOurTurn, isDiscardCycle, isOtherDiscard,
+    isOurTurn, isDiscardCycle, isOtherDiscard, addDiscard,
     tpIsDiscardTile, tpIsDiscardResponse, getInHandGngPlays,
     rcvSitAt, rcvPlayers, rcvHands, rcvUnplayed, rcvCurrent,
-    rcvTilePlay, rcvTPlayRes, rcvScoring,
+    rcvTilePlay, rcvTPlayRes, rcvScoring, rcvDiscardL4,
 };

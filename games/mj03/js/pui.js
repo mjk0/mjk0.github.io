@@ -8,17 +8,29 @@ let UI = {
     view: 'init',
     waitOn: {'why':'why', 'who':[]},
 };
+let unpBB = null; // DIV#unplayed getBoundingClientRect()
 
 function onResize() {
     // Refresh unplayed grid if it's visible
     if (is_visible("unplayed")) PUnpl.refreshGrid();
 }
-function doesViewChangeNeedRefreshOfUnplGrid(oldv, newv) {
-    return oldv == "gameend" && newv != "gameend";
-}
 
 // Refresh our unplayed tiles
-function refreshUnplayed() { PUnpl.refreshUnplayed(); }
+function refreshUnplayed() {
+    if (!is_visible("unplayed")) {
+        set_id_visibility("unplayed", 1);
+    }
+    PUnpl.refreshUnplayed();
+}
+function onReadyUnplayed() { // called once unplayed DOM ready
+    //this.classList.remove("on-ready");
+    let bb = document.getElementById("unplayed").getBoundingClientRect();
+    //console.log('completed on-ready anim, unplayed rect: ', bb);
+    if (bb.width != unpBB.width || bb.height != unpBB.height) {
+        console.log("unplayed size change, re-grid");
+        PUnpl.refreshGrid();
+    }
+}
 
 // Set(1) or clear(0), or toggle(-1) "hide-me" class on element
 function set_elem_visibility(elem, boolish) {
@@ -110,6 +122,24 @@ function getSvgTileString(elem) {
     return (svgs.length > 0) ? PUnpl.svgToTileString(svgs[0]) : "";
 }
 
+// {"action":"discards","v":"M7-3,FA-0,B1-1,B8c3","deck":"WE,M9,...,M1"}
+// discard encoding is "tt", then play as a single char, then src
+function discardsAsSingleSet(data) {
+    let r = '<legend>Discarded tiles for all players</legend>';
+    data.v.split(',').forEach((v,i) => {
+        r += '<svg class="tile-m"><use href="media/stiles.svg#'
+            +v.substr(0,2)+'"/></svg>';
+    });
+    document.getElementById('discardSingle').innerHTML = r;
+    // Deck remaining, if given (at end of game only)
+    r = '';
+    if (data.deck.length > 0) {
+        r = '<legend>Deck remaining tiles</legend>';
+        r += mkTileSvg(data.deck, 1, 'tile-m');
+    }
+    document.getElementById('deck').innerHTML = r;
+}
+
 function refreshCurrWind() {
     let elem = document.getElementById('tilewind');
     elem.innerHTML = mkTileSvg('W'+posGame2Dir(PSt.curr.wind), 1, 'tile-s');
@@ -160,13 +190,18 @@ function refreshPlayed(ibase, num) {
             // each set consists of: {"s":"F1,F2","secret":0}
             if (set.s.length > 0) {
                 if (set.secret > 1) {
-                    html += '<div class="tile-set-ureveal">';
-                } else if (set.secret) {
-                    html += '<div class="tile-set-secret">';
+                    unplayedAsSuitSets(set.s).forEach(s => {
+                        html += '<div class="tile-set-ureveal">';
+                        html += mkTileSvg(s, 1, tileclass) + '</div>';
+                    });
                 } else {
-                    html += '<div class="tile-set">';
+                    if (set.secret) {
+                        html += '<div class="tile-set-secret">';
+                    } else {
+                        html += '<div class="tile-set">';
+                    }
+                    html += mkTileSvg(set.s, 1, tileclass) + '</div>';
                 }
-                html += mkTileSvg(set.s, 1, tileclass) + '</div>';
             }
         }
         // other players, not the local player at the bottom of the view
@@ -183,6 +218,21 @@ function refreshPlayed(ibase, num) {
         // update ready flag
         set_id_visibility("rdy"+iv, vrdyok && PSt.hands[ig].r);
     }
+}
+// Break a comma-separated list of unplayed tiles into groupings by suit
+// e.g. "O1,O2,M5,M7,WS,WW,BB"
+function unplayedAsSuitSets(tiles) {
+    // possible suits: 'O', 'B', 'M', 'W', 'N', 'F'
+    let suits = {'O':[], 'B':[], 'M':[], 'W':[]};
+    suits['N'] = suits.W; // group W & N together
+    suits['F'] = suits.W;
+    tiles.split(',').forEach(t => suits[PSt.tileSuit(t)].push(t));
+    // Collect suit groupings as strings
+    let r = [];
+    for (const st of ['O', 'B', 'M', 'W']) {
+        if (suits[st].length > 0) r.push(suits[st].join());
+    }
+    return r;
 }
 
 // Show most recent play or discard responses in others and ourselves
@@ -246,7 +296,17 @@ function refreshDiscard() {
     }
 }
 // Refresh the SVG use link to show the discarded tile
-function refreshDiscardTile() { refreshTileOnId('other-discard', PSt.plays.tile) }
+function refreshDiscardTile() {
+    refreshTileOnId('other-discard', PSt.plays.tile); // for animation
+    refreshDiscardHistBtn();
+}
+function refreshDiscardHistBtn() {
+    // Refresh recent discards on discard history button
+    let oid = document.getElementById('discardRecent');
+    PSt.recentDiscards.forEach((t,i) => {
+        if (i<4) PUnpl.svgSetTileString(oid, t, i);
+    });
+}
 // Refresh the SVG use link to show the given tile
 function refreshTileOnId(id,tile) {
     let oid = document.getElementById(id);
@@ -431,6 +491,14 @@ function rcvScoreHist(data) {
     CUI.rcvScoreHist(data, PSt.players);
 }
 
+// Display discard history
+// {"action":"discards","v":"M7-3,FA-0,B1-1,B8c3","deck":"WE,M9,...,M1"}
+// discard encoding is "tt", then play as a single char, then src
+function rcvDiscards(data) {
+    discardsAsSingleSet(data);
+    $('#discardHistory').modal('open');
+}
+
 function gameShutdown() {
     $('#shutdown').modal('open');
     //window.location.replace("./"); // back to lobby
@@ -453,7 +521,6 @@ function enaPlayViewPieces(opts) {
 }
 function setPlayView(vname) {
     const nu_RdyFlag = doesViewChangeNeedRefreshOfRdyFlags(UI.view, vname);
-    const nu_UnplGrid = doesViewChangeNeedRefreshOfUnplGrid(UI.view, vname);
     UI.view = vname;
     switch (vname) {
     case "init":
@@ -474,7 +541,6 @@ function setPlayView(vname) {
     }
     // Other refresh
     if (nu_RdyFlag) refreshRdyFlags();
-    if (nu_UnplGrid) PUnpl.refreshGrid();
 }
 
 function init(opts) {
@@ -492,15 +558,21 @@ function init(opts) {
 
     PUnpl.init(opts);
     setPlayView(UI.view);
+    // Allow grid refresh on window resize and unplayed render done
     window.addEventListener("resize", onResize);
+    let unp = document.getElementById("unplayed");
+    unpBB = unp.getBoundingClientRect(); // on change, refreshGrid
+    unp.addEventListener("animationend", onReadyUnplayed);
     //PUnpl.updateGrid(); // calc grid sizes
 }
 
 export {
     init, refreshCurrWind, refreshCurrDealer,
-    refreshPlayerDirs, refreshPlayerNames, refreshPlayed, refreshUnplayed,
+    refreshPlayerDirs, refreshPlayerNames,
+    refreshPlayed, refreshUnplayed, refreshDiscardHistBtn,
     showWsOn, chatShow, chatIncoming, getSvgTileString,
-    setPlayView, setViewTilePlay, rcvWaitOn, rcvReDo, rcvScoreHist,
+    setPlayView, setViewTilePlay,
+    rcvWaitOn, rcvReDo, rcvScoreHist, rcvDiscards,
     refreshDiscard, refreshThinking, refreshDiscardTile,
     refreshWaitOn, playResultWoo, refreshScoring, gameShutdown,
 }
