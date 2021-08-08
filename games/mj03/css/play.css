@@ -365,6 +365,7 @@ th.shDate { font-size: 70%; }
 #scoreHistory { border: 0.5em solid orange; }
 .sctbl th { padding: 0px 0.2em; text-align: center; color: white; font-weight: bold;}
 .sctbl td { padding: 0px 0px 0px 5px; }
+.sctbl svg { width: 2.15vmin; height: 2.7vmin; vertical-align: sub; }
 .sctbl { font-size: 2vmin; border: 0.1em solid white; }
 #score-hand { display: inline-block; width: auto; max-width: 100%; overflow: hidden;
     background-color: darkgreen; border-radius: 0.5em;

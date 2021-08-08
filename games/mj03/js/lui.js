@@ -113,7 +113,7 @@ function update_games_display() {
     var sert = $('#seriesgtable');
     let hasVisibleSeries = false;
     sert.empty(); // clear out previous game series list
-    if (St.series) Object.keys(St.series).forEach( sid => {
+    Object.keys(St.series).forEach( sid => {
         if (!St.hasSeriesGame(sid)) {
             sert.append(addRowSeriesDisplay(sid));
             hasVisibleSeries = true;

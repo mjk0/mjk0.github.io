@@ -106,11 +106,11 @@ function seatPlayerName(seat) { return PSt.players[seat] || "AI("+posGame2Dir(se
 // From a comma-sep string of tile names ("F1,F2"), create SVGs as innerHTML
 function mkTileSvg(tiles, repeatCnt, tileclass) {
     let r = '';
+    let cl = (tileclass.length >0 ? ` class="${tileclass}"`: '');
     let syms = tiles.split(',');
     for (let i=0; i < repeatCnt; ++i) {
         for (const sym of syms) {
-            r += '<svg class="'+tileclass+'"><use href="media/stiles.svg#'
-                 +sym+'"/></svg>';
+            r += `<svg${cl}><use href="media/stiles.svg#${sym}"/></svg>`;
         }
     }
     return r;
@@ -452,6 +452,31 @@ function undoPlayStr(play) {
     return play;
 }
 
+// Find word sets of the given minimum length, return as SVGs
+// Tool for scoring points summary
+function wordSetsOfMinLen(len) {
+    let r = '';
+    // Each hand entry is:
+    // {"sets":[{"s":"F8,...","secret":0},{"s":"FA,FA,FA,FA","secret":0},{"s":"B3,B3,B3","secret":0},{"s":"B1,B1,B1","secret":0},{"s":"B1,B2,B3","secret":0},{"s":"B4,B4","secret":0}],"nu":0,"r":1}
+    for (let i = 1; i < PSt.hands[PSt.curr.pos].sets.length; ++i) {
+        const t = PSt.hands[PSt.curr.pos].sets[i].s.split(',');
+        if (PSt.tileSuit(t[0]) == 'N' && t.length >= len) {
+            if (r.length > 0) r += ',';
+            r += mkTileSvg(t[0], (t.length>3? 3: t.length), '');
+        }
+    }
+    return r
+}
+
+const m2tiles = {
+    "3x current wind": function() {
+        return mkTileSvg('W'+posGame2Dir(PSt.curr.wind), 3, '')
+    },
+    "3x word set": function() { return wordSetsOfMinLen(3) },
+    "3x all word sets": function() { return wordSetsOfMinLen(3) },
+    "3+3+2 all words": function() { return wordSetsOfMinLen(2) },
+};
+
 // Scoring result for the game.  Only handled in the UI
 // {"action":"scoring","addv":[1,20],"adds":["Flowers","7 pairs"],
 //   "multv":[2],"mults":["zzmo"],"diffs":[168,-84,-42,-42],
@@ -461,7 +486,9 @@ function refreshScoring() {
     let score = 0;
     // Additive points
     PSt.scoring.addv.forEach((v,i) => { score += v;
-        d += tableRow(["+"+v +": "+ PSt.scoring.adds[i]])
+        const ta = PSt.scoring.adds[i];
+        const txt = m2tiles.hasOwnProperty(ta) ? m2tiles[ta]() : ta;
+        d += tableRow(["+"+v +": "+ txt])
     });
     // Multiplicative points
     PSt.scoring.multv.forEach((v,i) => { score *= v;

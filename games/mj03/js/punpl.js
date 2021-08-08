@@ -59,6 +59,7 @@ function tileLeftTop(e) {
 }
 
 function startDrag(e) {
+    e.preventDefault();
     mdown.elem = e.target.parentNode; // e.target is svg use.  Parent is svg
     mdown.cx = e.clientX;
     mdown.cy = e.clientY;
@@ -82,6 +83,7 @@ function startDrag(e) {
 
 function drag(e) {
     if (mdown.elem) {
+        e.preventDefault();
         let lt = tileLeftTop(e);
         mdown.elem.style.left = lt.left;
         mdown.elem.style.top = lt.top;
@@ -414,10 +416,13 @@ function deselectAll() {
 
 function tileMvListeners(el) {
     el.addEventListener('mousedown', startDrag);
+    el.addEventListener('touchstart', startDrag);
+}
+
+function parentMvListeners(el) {
     el.addEventListener('mousemove', drag);
     el.addEventListener('mouseup', endDrag);
     //el.addEventListener('mouseleave', endDrag);
-    el.addEventListener('touchstart', startDrag);
     el.addEventListener('touchmove', drag);
     el.addEventListener('touchend', endDrag);
     //el.addEventListener('touchleave', endDrag);
@@ -429,6 +434,9 @@ function init(opts) {
     // Register event handlers for all movable tiles
     var tile_mvs = document.getElementsByClassName("tile-mv");
     Array.from(tile_mvs).forEach(tileMvListeners);
+    // Register event handlers for tile area container
+    let ct = document.getElementsByClassName('greenStripes')[0];
+    parentMvListeners(ct);
     grid = updateGrid(); // initialize the unplayed tiles grid
 }
 
