@@ -15,7 +15,8 @@
     </symbol>
     <symbol id="US" viewBox="0 0 65 84" > <!-- tilesecret -->
         <use x="0" y="0" width="100%" height="100%" href="#UT" />
-        <text x="12" y="68" fill="white" stroke="black" stroke-width="3" font-size="500%">?</text>
+        <text x="15" y="70" fill="white" stroke="black" stroke-width="3"
+        font-size="80">?</text>
     </symbol>
     <symbol id="out" viewBox="0 0 65 84" >
         <rect fill="transparent" stroke-width="2"

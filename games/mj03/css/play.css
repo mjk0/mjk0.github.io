@@ -299,15 +299,17 @@ legend { font-size: 80%; }
 .bRR { color: red; }
 .l-gap { margin-left: 0.1em; }
 .anim-discard-view1 { position: absolute; left: -3vw; top: 66%;
-    animation: slideInLeft 3s ease-in-out 0s infinite;
+    animation: slideInLeft 3s ease-in-out 0s forwards;
 }
 .anim-discard-view2 { position: absolute; top: -3vw; right: 2vw;
-    animation: slideInDown 3s ease-in-out 0s infinite;
+    animation: slideInDown 3s ease-in-out 0s forwards;
 }
-.anim-discard-view3 { position: absolute; right: -3vw; top: 34%;
+.anim-discard-view3 { position: absolute; right: -1vw; top: 34%;
     z-index: 1;
-    animation: slideInRight 3s ease-in-out 0s infinite;
+    animation: slideInRight 3s ease-in-out 0s forwards;
 }
+#other-discard { font-size: 0px;}
+.odiscard-tile { box-shadow: 0 0 0.8vmin 0.5vmin yellow; border-radius: 1.2vmin; }
 .BtnDraw span::before {
     content: "Draw";
     animation: draw-alternate 2s linear 0s infinite alternate;

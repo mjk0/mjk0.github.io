@@ -206,7 +206,7 @@ function refreshPlayed(ibase, num) {
         }
         // other players, not the local player at the bottom of the view
         if (iv > 0) {
-            // show unplayed tiles, if any (none for winner)
+            // show unplayed tiles, if any (none after win)
             if (PSt.hands[ig].nu > 0) {
                 html += mkTileSvg("UT", PSt.hands[ig].nu, tileclass);
                 let tcnt = (PSt.hands[ig].sets.length-1)*3 + PSt.hands[ig].nu;
@@ -315,9 +315,10 @@ function refreshDiscard() {
     if (PSt.isOtherDiscard()) {
         let currv = posGame2View(PSt.curr.pos); // view pos of curr player
         odiscard.className = 'anim-discard-view'+currv;
-        set_elem_visibility(odiscard, 1);
+        //set_elem_visibility(odiscard, 1); // 'hide-me' already removed
     } else {
-        set_elem_visibility(odiscard, 0);
+        //set_elem_visibility(odiscard, 0); // hidden on next line
+        odiscard.className = 'hide-me';
     }
 }
 // Refresh the SVG use link to show the discarded tile
@@ -325,6 +326,11 @@ function refreshDiscardTile() {
     refreshTileOnId('other-discard', PSt.plays.tile); // for animation
     refreshDiscardHistBtn();
 }
+// When discard animation ends, can add decorations
+function onDiscardAnimEnd() {
+    this.classList.add('odiscard-tile');
+}
+// Show recent discards in button SVGs
 function refreshDiscardHistBtn() {
     // Refresh recent discards on discard history button
     let oid = document.getElementById('discardRecent');
@@ -616,6 +622,8 @@ function init(opts) {
     unpBB = unp.getBoundingClientRect(); // on change, refreshGrid
     unp.addEventListener("animationend", onReadyUnplayed);
     //PUnpl.updateGrid(); // calc grid sizes
+    let odiscard = document.getElementById('other-discard');
+    odiscard.addEventListener("animationend", onDiscardAnimEnd);
 }
 
 export {
