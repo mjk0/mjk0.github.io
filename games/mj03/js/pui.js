@@ -209,6 +209,10 @@ function refreshPlayed(ibase, num) {
             // show unplayed tiles, if any (none for winner)
             if (PSt.hands[ig].nu > 0) {
                 html += mkTileSvg("UT", PSt.hands[ig].nu, tileclass);
+                let tcnt = (PSt.hands[ig].sets.length-1)*3 + PSt.hands[ig].nu;
+                if (tcnt < 14) {
+                    html += mkTileSvg("ZT", 1, tileclass);
+                }
             }
         }
         if (html.length == 0) {
@@ -235,6 +239,23 @@ function unplayedAsSuitSets(tiles) {
     return r;
 }
 
+// While doing a tplayres refresh, mark curr player with highlights
+function refreshCurrPlayerIndicator() {
+    let play = PSt.plays.resp[PSt.curr.pos];
+    let curr_iv = posGame2View(PSt.curr.pos);
+    // If play result is woo, get winner's view pos (0 == bottom)
+    let woo_iv = (play == "woo") ? curr_iv : -1;
+    for (let iv=0; iv < 4; ++iv) {
+        let elem = document.getElementById('tilesp'+iv)
+        // winning hand indicator
+        if (iv == woo_iv) elem.classList.add('woo-hand');
+        else elem.classList.remove('woo-hand');
+        // current hand indicator
+        if (iv == curr_iv) elem.classList.add('curr-hand');
+        else elem.classList.remove('curr-hand');
+    }
+}
+
 // Show most recent play or discard responses in others and ourselves
 function refreshThinking() {
     let vcurr = posGame2View(PSt.curr.pos);
@@ -249,25 +270,29 @@ function refreshThinking() {
         setThinking(vcurr, "", false);
     } else {
         // Show curr player's bubbles for last play
-        setThinking(vcurr, PSt.plays.resp[PSt.curr.pos], false);
+        let play = PSt.plays.resp[PSt.curr.pos];
+        if (play != "woo") setThinking(vcurr, play, false);
         // Hide other thinking bubbles
-        for (let off=1; off < 4; ++off) {
+        let off = (play == "woo") ? 0 : 1;
+        for (; off < 4; ++off) {
             let vpos = (vcurr + off) & 0x3;
             setThinking(vpos, '', false);
         }
     }
+    refreshCurrPlayerIndicator();
 }
 const tk2text = {
     'q':"?", 'draw':"Draw", 'pass':"✓",
     'chal':"Cha!", 'cham':"Cha!", 'chah':"Cha!",
     'po':"PO!", 'gng':"Gng!", 'woo':"WOO!", 
 }; // remap play token to text and CSS style
+const tk2hide = {'pass':1, 'draw':1, '':1};
 const tk2css = {'pass':"q", 'chal':"cha", 'cham':"cha", 'chah':"cha"};
 function setThinking(vpos, val, doFlash) {
   if (vpos > 0) { // For now, no bubbles for our hand
     let tt = document.getElementsByClassName('thinking'+vpos);
     if (tt.length > 0) {
-        if (val.length > 0 && val != "pass") {
+        if (!tk2hide.hasOwnProperty(val)) {
             set_elem_visibility(tt[0], 1);
             let txt = tk2text[val] || val;
             let fc = (doFlash && txt.slice(-1) == "!" ? " think-f" : "");
@@ -275,7 +300,7 @@ function setThinking(vpos, val, doFlash) {
             spans[0].className = "think-"+(tk2css[val] || val) + fc;
             spans[0].textContent = txt;
         } else {
-            set_elem_visibility(tt[0], 0); // hide "pass" response
+            set_elem_visibility(tt[0], 0); // hide responses in tk2hide
         }
     } else {
         console.error("Couldn't find thinking"+vpos);

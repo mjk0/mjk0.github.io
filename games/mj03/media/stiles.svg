@@ -6,6 +6,7 @@
     <symbol id="UT" viewBox="0 0 65 84" >
         <rect style="fill:green;stroke:black;stroke-width:2;" x="0.5" y="0.5" rx="12" ry="12" width="64" height="83" />
     </symbol>
+    <symbol id="ZT" viewBox="0 0 65 84" ></symbol>
     <symbol id="backwhite" viewBox="0 0 65 84" >
         <rect style="fill:white;stroke:black;stroke-width:2;" x="1" y="1" rx="12" ry="12" width="63" height="82" />
     </symbol>

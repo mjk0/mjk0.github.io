@@ -238,7 +238,7 @@ th.gameSectionTitle { text-align: left; font-style: italic; }
 }
 .thinking1 { right: 1em; bottom: -2em; }
 .thinking2 { right: 0; bottom: 1vh; }
-.thinking3 { right: 0.7em; bottom: 1vh; }
+.thinking3 { right: 0.7em; top: -8vh; }
 .thinking1 img, .thinking2 img, .thinking3 img { width: 3.5em; height: 3.5em; }
 .think-q, .think-draw, .think-tail,
 .think-cha, .think-po, .think-gng, .think-woo {
@@ -290,6 +290,11 @@ legend { font-size: 80%; }
 .rainbow, .think-woo {
     background: linear-gradient(to bottom, red, orange, yellow, lime, DodgerBlue, Orchid, violet);
 }
+.woo-hand div.tile-set {
+    background: linear-gradient(to right, red, orange, yellow, lime, DodgerBlue, Orchid, violet);
+}
+.woo-hand { background-color: ivory; text-align: center; }
+.curr-hand { box-shadow: 0 0 7px 4px white; border-radius: 1.5vmin; }
 .bGG { color: darkgreen; }
 .bRR { color: red; }
 .l-gap { margin-left: 0.1em; }
@@ -344,8 +349,8 @@ legend { font-size: 80%; }
     #diaUndo { font-size: 3vmin; }
 }
 #rdy0, #rdy1, #rdy2, #rdy3 { position: absolute; right: 0; bottom: -8px; }
-#rdy0 svg { width: 0.6em; height: 0.8em; }
-#rdy1 svg, #rdy2 svg, #rdy3 svg { width: 1.2em; height: 1.5em; }
+#rdy0 svg { width: 0.7em; height: 0.9em; }
+#rdy1 svg, #rdy2 svg, #rdy3 svg { width: 1.4em; height: 1.8em; }
 .rdyFlagAnim {
     animation-name: opacityAnim; animation-iteration-count: infinite;
     animation-direction: alternate; animation-duration: 0.4s;
