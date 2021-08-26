@@ -417,7 +417,7 @@ function showWaitOn() {
     let html = `<div>Waiting for ${UI.waitOn.why}...</div>`;
     for (const ig of UI.waitOn.who || []) {
         let pname = seatPlayerName(ig);
-        if (pname.startsWith("R-")) {
+        if (pname.startsWith("r-")) {
             // If waiting on a robot, offer robot take-over
             pname += `<button class="btn-small robitBtn" onclick="PMj.askRobotPlay(${ig})" type="button">Robot play</button>`;
         }
@@ -511,7 +511,7 @@ const m2tiles = {
 // Scoring result for the game.  Only handled in the UI
 // {"action":"scoring","addv":[1,20],"adds":["Flowers","7 pairs"],
 //   "multv":[2],"mults":["zzmo"],"diffs":[168,-84,-42,-42],
-//   "score":{"R-Doc":-84,"R-Happy":-42,"Marcel":168,"R-Bashful":-42}}
+//   "score":{"r-Doc":-84,"r-Happy":-42,"Marcel":168,"r-Bashful":-42}}
 function refreshScoring() {
     let d = "";
     let score = 0;
