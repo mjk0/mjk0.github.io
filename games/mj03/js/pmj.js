@@ -7,8 +7,8 @@ const params = {
 };
 
 const WsOptions = {
-    serverBase: "ws://localhost:3030/games/mahjong/",
-    serverUrl: "ws://localhost:3030/games/mahjong/",
+    serverBase: "wss://pizzamonster.org:3031/games/mahjong/",
+    serverUrl: "wss://pizzamonster.org:3031/games/mahjong/",
     autoReconnectInterval: 5000, // in milliseconds
     'onClose': wsOnClose,
     'online' : netOnOnline,

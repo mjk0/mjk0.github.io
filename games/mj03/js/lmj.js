@@ -5,7 +5,7 @@ import * as St from './st.js';
 import * as LUI from './lui.js';
 
 const WsOptions = {
-    serverUrl: "ws://localhost:3030/games/mahjong/login",
+    serverUrl: "wss://pizzamonster.org:3031/games/mahjong/login",
     autoReconnectInterval: 5000, // in milliseconds
     'onClose': wsOnClose,
     'online' : netOnOnline,
