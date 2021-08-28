@@ -48,7 +48,7 @@ td.tile-m, td.tile-lg { display: contents; }
     transform: translate(-50%, -50%);
 }
 #discard-line { position: absolute; top: 0.2vh; left:0.5vw; right: 0.5vw;
-    background-color: red; line-height: 1.1em;
+    background-color: red; line-height: 1.1em; padding-bottom: 0.1em;
     border-radius: 0.4em; opacity: 95%;
     animation: font-pulse 1s linear 0s infinite alternate;
 }
@@ -361,6 +361,9 @@ legend { font-size: 80%; }
     from {opacity: 1;}
     to {opacity: 0;}
 }
+table.diatable { position: relative; }
+.diaTable thead th { position: sticky; top: 0; }
+.diaTable tbody th { background-color: black; }
 .diaTable { width: max-content; }
 .diaTable th, .diaTable td { text-align: center; padding: 0em 0.5em;
     border: 2px solid black;

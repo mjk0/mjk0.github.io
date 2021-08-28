@@ -1,0 +1,9 @@
+.ingredients {
+    column-count: 2; width: fit-content;
+    font-weight: bold; margin-left: 2em;
+}
+.ingredients p { margin: 0; }
+@media only screen and (max-width: 600px) {
+    .ingredients { column-count: 1; }
+}
+.floatRight{float:right; margin-right: 1em;}
