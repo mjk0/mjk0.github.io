@@ -93,6 +93,8 @@ function rcvCurrent(data) {
     PUI.refreshCurrWind();
     PUI.refreshCurrDealer();
     PUI.refreshDiscardHistBtn(); // discards were cleared
+    PUI.clearGameEndScoring();
+    PUnpl.rmPlayedAndUnplayedAnims();
 }
 function rcvDiscardL4(data) { // up to 4 most recent discards
     PSt.rcvDiscardL4(data);
@@ -111,7 +113,6 @@ function rcvTilePlay(data) {
 }
 function rcvTPlayRes(data) {
     PSt.rcvTPlayRes(data);
-    // TODO: show new current player, and last play (draw, Po, ...)
     PUI.refreshDiscard();
     PUI.refreshThinking();
     if (data.pc == "woo") {
@@ -123,7 +124,7 @@ function rcvScoring(data) {
     PUI.refreshScoring();
 }
 function rcvReshuffle(data) {
-    //PSt.setReshuffleState(); // Currently unused action.  UI updates when WaitOn arrives
+    PSt.rcvReshuffle(data); // UI updates when WaitOn arrives
 }
 function rcvWaitOn(data) {
     PUI.rcvWaitOn(data); // Only relevant to UI
@@ -167,6 +168,7 @@ function wsSendTilePlay(play, tile) {
 }
 function playNt(play) { // send given play with no tile
     wsSendTilePlay(play,"");
+    PUnpl.rmPlayedAndUnplayedAnims();
 }
 function playWt(pnum) { // send given play with tile from child SVG
     const gngt = PSt.getInHandGngPlays();
@@ -180,6 +182,7 @@ function playWt(pnum) { // send given play with tile from child SVG
     } else {
         console.error('Invalid Gng play number,', pnum, gngt);
     }
+    PUnpl.rmPlayedAndUnplayedAnims();
 }
 function playAgain() { // send reshuffle
     Ws.sendMsg({"action":"reshuffle", "why":"playagain"});
@@ -203,6 +206,7 @@ function uicbDiscard(tile) {
     wsSendTilePlay("discard", tile);
     PSt.addDiscard(tile);
     PUI.refreshDiscardHistBtn();
+    PUnpl.rmPlayedAndUnplayedAnims();
 }
 
 // Function that executes jQuery code after page load is complete
@@ -217,7 +221,7 @@ $(document).ready(function(){
 
     // Stub tile set for testing
     PSt.setUnplayed(["CN", "FA", "BB"]);
-    PSt.setHand(PSt.ourSeat, {nu:PSt.unplayed.length, s:[], r:false});
+    PSt.setHand(PSt.ourSeat, {nu:PSt.unplayed.full.length, sets:[{s:"",secret:0}], r:false});
     PUI.refreshUnplayed();
 
     // Initiate login and seating at running game

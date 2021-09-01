@@ -186,9 +186,10 @@ function refreshPlayed(ibase, num) {
         let tileclass = (iv > 0? "tile-m" : "tile-lg");
         let elem = document.getElementById('tilesp'+iv);
         let html = '';
-        for (const set of PSt.hands[ig].sets) {
+        PSt.hands[ig].sets.forEach((set, si) => {
             // each set consists of: {"s":"F1,F2","secret":0}
             if (set.s.length > 0) {
+                const lastSet = (si==PSt.hands[ig].sets.length-1);
                 if (set.secret > 1) {
                     unplayedAsSuitSets(set.s).forEach(s => {
                         html += '<div class="tile-set-ureveal">';
@@ -200,10 +201,20 @@ function refreshPlayed(ibase, num) {
                     } else {
                         html += '<div class="tile-set">';
                     }
-                    html += mkTileSvg(set.s, 1, tileclass) + '</div>';
+                    const cl = tileclass +(iv==0 && lastSet && PSt.hasAddedSet()? " add-pulse":"");
+                    html += mkTileSvg(set.s, 1, cl) + '</div>';
+                    // Check for added flower highlight
+                    if (iv==0 && si==0 && PSt.hasAddedFlower()) {
+                        // Add class on last flower SVG
+                        let n = html.lastIndexOf('class="');
+                        if (n >= 0) {
+                            n += 'class="'.length;
+                            html = html.slice(0,n) + "add-pulse " + html.slice(n);
+                        }
+                    }
                 }
             }
-        }
+        });
         // other players, not the local player at the bottom of the view
         if (iv > 0) {
             // show unplayed tiles, if any (none after win)
@@ -407,7 +418,7 @@ function setViewTilePlay() {
 function rcvWaitOn(data) {
     UI.waitOn.why = data.why || "??";
     UI.waitOn.who = data.who || [];
-    if (UI.waitOn.why=='woo'||UI.waitOn.why=='reshuffle') {
+    if (PSt.hasGameEnded()) {
         gameEndWaitOn();
     } else {
         showWaitOn();
@@ -543,6 +554,11 @@ function tableRow(arr, thd) {
     arr.forEach((v) => { r += "<"+td+">"+v+"</"+td+">" });
     return r + '</tr>';
 }
+// When a new game starts, clear previoud end-of-game scoring,
+// in case current game ends in stalemate
+function clearGameEndScoring() {
+    refreshTileOnId('last-tile', "ZT"); // empty tile until real woo
+}
 
 // Display shared dialog for score history
 function rcvScoreHist(data) {
@@ -595,6 +611,8 @@ function setPlayView(vname) {
         break;
     case "gameend":
         enaPlayViewPieces({"viewwoo":1});
+        // When new unplayed hand arrives, auto-sort
+        PUnpl.domUnpAutoSort().checked = true;
         break;
     }
     // Other refresh
@@ -634,5 +652,6 @@ export {
     setPlayView, setViewTilePlay,
     rcvWaitOn, rcvReDo, rcvScoreHist, rcvDiscards,
     refreshDiscard, refreshThinking, refreshDiscardTile,
-    refreshWaitOn, playResultWoo, refreshScoring, gameShutdown,
+    refreshWaitOn, clearGameEndScoring,
+    playResultWoo, refreshScoring, gameShutdown,
 }

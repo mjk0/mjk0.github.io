@@ -201,7 +201,7 @@
                                     <div class="col s2">
                                         <fieldset id="last-tile" class="fs-r">
                                             <legend>Last</legend>
-                                            <svg class="tile-mm"><use href="media/stiles.svg#M1"/></svg>
+                                            <svg class="tile-mm"><use href="media/stiles.svg#ZT"/></svg>
                                         </fieldset>
                                     </div>
                                     <div class="col s6">
@@ -288,6 +288,10 @@
                 </div>
                 <div class="box box-svg-lg">
                     <div id="unplayed" class="unplayed-lg tile-anchor on-ready">
+                        <div id="unp-sort"><label class="orange-text"><input id="unp-auto-sort"
+                            type="checkbox" value="sort" onclick="PUnpl.unpAutoSortClicked()"
+                            checked><span>auto sort tiles</span></label>
+                        </div>
                         <svg id="OutTgt" class="tile-lg tile-ref"><use href="media/stiles.svg#OutTgt"/></svg>
                         <svg id="DiscardTgt" class="tile-lgp tile-ref"><use href="media/stiles.svg#SymDTgt"/></svg>
                         <svg id="DiagOY" class="tile-lgp tile-ref" viewBox="0 0 86 112" >

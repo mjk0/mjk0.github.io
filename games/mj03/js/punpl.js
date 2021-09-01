@@ -8,8 +8,11 @@ let mdown = {
     tgt:null, gcoord:{x:0,y:0}, gleft:0, shifts:null
 };
 let grid = {nw:8, nh:2, wpx: 1, hpx: 1, left: 1, top: 1, toplgo: -1, leftlgp: -1};
+let lastDiscard = { tile:null, elem:null };
 
 function domUnplayed() { return document.getElementById('unplayed')}
+function domUnpAutoSort() {return document.getElementById('unp-auto-sort')}
+
 function updateGrid() {
     let grid = {};
     // working area for the grid is #unplayed
@@ -71,14 +74,7 @@ function startDrag(e) {
     mdown.shifts = null; // nothing to shift yet
     mdown.tgt = document.getElementById('OutTgt');
     mdown.elem.style['z-index'] = 9;
-    //let rect = svg.getBoundingClientRect();
-    //console.log(rect);
-    //dx = rect.left - e.clientX;
-    //dy = rect.top - e.clientY;
-    //console.log("dx:",dx, "dy:",dy);
-    //console.log(mdown);
-    //console.log(svg.style);
-    //updateGrid();
+    rmUnplayedAnims();
 }
 
 function drag(e) {
@@ -155,6 +151,9 @@ function endDrag(e) {
             // Discard the tile
             let tile = svgToTileString(mdown.elem);
             UiOptions.dragDiscard(tile);
+            // remember which tile was discarded
+            lastDiscard.elem = mdown.elem;
+            lastDiscard.tile = tile;
         }
         if (lt.xy.y < 0) {
             // In no-drag area, snap back to start location
@@ -163,6 +162,10 @@ function endDrag(e) {
             // Snap tile to grid target
             let gleft = toGridXY(mdown.elem, lt.xy);
             dragMoves(lt.xy, (gleft >= lt.left));
+            if (!areCoordsSame(mdown.scoord, lt.xy)) {
+                // since tiles were rearranged, turn off auto-sort
+                domUnpAutoSort().checked = false;
+            }
         }
         mdown.elem.style['z-index'] = null;
 
@@ -176,6 +179,7 @@ function endDrag(e) {
         deselectAll(); // in case drag accidentally selected text
     }
 }
+function areCoordsSame(a,b) { return a.x == b.x && a.y == b.y; }
 
 function dragMoves(to, shRight) {
     console.log("Drag from (%d,%d) to (%d,%d), shift %s preferred",
@@ -226,6 +230,22 @@ function dragShifts(to) {
     return shs;
 }
 
+// For newly drawn tile, find an open spot for it
+function openCoords() {
+    let allrows = discoverUnplayedInGrid();
+
+    // starting from last spot, search backwards until open spot found
+    for (let ri=grid.nh-1; ri>=0; --ri) {
+        for (let ci=grid.nw-1; ci>=0; --ci) {
+            if (allrows[ri][ci] == null) { // null means unoccupied
+                return {x:ci,y:ri};
+            }
+        }
+    }
+    console.error("no open spots for incoming tile");
+    return null; // Should not be possible
+}
+
 function shiftX(arr, xoffset) {
     for (let elem of arr) {
         let cstyle = getComputedStyle(elem);
@@ -238,7 +258,7 @@ function shiftX(arr, xoffset) {
 function gridAutoPlacement() {
     let x=0, y=0;
     let coords = []; // each entry is {x,y}
-    let u = PSt.unplayed;
+    let u = PSt.unplayed.full;
     for (let i = 0; i < u.length; ++i) {
         if (i > 0 && !PSt.isSameSuitConsecutive(u, i-1)) {
             x += 1; // inter-suit gap
@@ -255,14 +275,40 @@ function gridAutoPlacement() {
 }
 
 // Remove all DOM children that contain the given class
+// If arr is given, remove only tiles listed in the array
 function rmChildrenOfClass(elem, cl) {
+    childrenOfClass(elem, cl, child => elem.removeChild(child));
+}
+function childrenOfClass(elem, cl, f) {
     let chnext = null;
     for(let child=elem.firstChild; child!==null; child=chnext) {
         chnext=child.nextSibling;
         if (child.classList && child.classList.contains(cl)) {
-            elem.removeChild(child);
+            f(child);
         }
     }
+}
+// Remove given class from elements at or below given top element
+function rmClass(elem, cl) {
+    var matches = elem.getElementsByClassName(cl);
+    while (matches.length > 0) {
+        matches[0].classList.remove(cl);
+    }
+}
+function rmUnplayedAnims() {
+    childrenOfClass(domUnplayed(), "add-pulse",
+        child => child.classList.remove("add-pulse")
+    );
+}
+function rmPlayedAnims() {
+    const tp0 = document.getElementById("tilesp0");
+    rmClass(tp0, "add-pulse");
+    console.log('rmPlayedAnims');
+}
+function rmPlayedAndUnplayedAnims() {
+    rmUnplayedAnims();
+    rmPlayedAnims();
+    PSt.clearDiffPlayed();
 }
 
 // Discover the grid coordinates of each unplayed tile
@@ -363,23 +409,98 @@ function refreshGrid() {
     }
 }
 
-function refreshUnplayed(seat) {
-    let coords = gridAutoPlacement(); // initial tile grid coords
-    let u = PSt.unplayed;
+// User clicked on the unplayed auto-sort checkbox
+function unpAutoSortClicked() {
+    if (domUnpAutoSort().checked) {
+        // Since auto-sort was just enabled, sort now
+        refreshUnpFull();
+        rmPlayedAndUnplayedAnims();
+    }
+}
+
+// Partial or full update of unplayed tile positions
+function refreshUnplayed() {
+    let doFull = domUnpAutoSort().checked;
+    console.log('add:',PSt.unplayed.add,'sub:',PSt.unplayed.sub);
+    if (!doFull && PSt.unplayed.sub.length == 0
+        && PSt.unplayed.add.length == 1
+    ) {
+        // Add a single tile
+        refreshUnpAdd();
+    } else if (!doFull && PSt.unplayed.add.length == 0
+        && PSt.unplayed.sub.length > 0
+    ) {
+        // remove one or more tiles
+        refreshUnpSub();
+    } else if (PSt.unplayed.add.length + PSt.unplayed.sub.length > 0) {
+        // Full update
+        refreshUnpFull();
+    }
+}
+function refreshUnpAdd() {
+    //console.log('Add tiles: ', PSt.unplayed.add);
+    if (PSt.unplayed.sub.length == 0 && PSt.unplayed.add.length == 1) {
+        let c = openCoords(); // pick an open spot near the end
+        let classes = ["tile-lg", "tile-mv", "add-pulse"];
+        addTile(domUnplayed(), PSt.unplayed.add.pop(), c, classes);
+    }
+}
+function refreshUnpSub() {
+    //console.log('Sub tiles: ', PSt.unplayed.sub);
     let unp = domUnplayed();
+    if (PSt.unplayed.sub.length == 1
+        && lastDiscard.tile == PSt.unplayed.sub[0]
+        && lastDiscard.elem
+        && lastDiscard.tile == svgToTileString(lastDiscard.elem)
+    ) {
+        // Remove tile that was dragged to discard
+        unp.removeChild(lastDiscard.elem);
+        lastDiscard.elem = null;
+        lastDiscard.tile = "";
+    } else {
+        //Remove any matching tiles
+        childrenOfClass(unp, 'tile-mv', child => {
+            let tile = svgToTileString(child);
+            const index = PSt.unplayed.sub.indexOf(tile);
+            if (index >= 0) {
+                PSt.unplayed.sub.splice(index, 1);
+                unp.removeChild(child)
+            }
+        });
+    }
+    PSt.unplayed.sub.length = 0;
+}
+
+// Full update of unplayed tiles
+function refreshUnpFull() {
+    const coords = gridAutoPlacement(); // initial tile grid coords
+    const u = PSt.unplayed.full;
+    const isAdd1 = (PSt.unplayed.add.length == 1 && PSt.unplayed.sub.length == 0);
+    const tadd = isAdd1 ? PSt.unplayed.add[0] : "-";
+    const unp = domUnplayed();
+    const classes = ["tile-lg", "tile-mv"];
     rmChildrenOfClass(unp, 'tile-mv'); // remove any previously added tiles
 
+    let tsvg = null; // added tile, if adding single tile
     for (let i = 0; i < coords.length; i++) {
-        // <svg class="tile-lg tile-mv"><use href="media/stiles.svg#CN"/></svg>
-        let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        svg.classList.add("tile-lg", "tile-mv");
-        let use = document.createElementNS("http://www.w3.org/2000/svg", "use");
-        use.setAttribute("href", "media/stiles.svg#" + u[i]);
-        svg.appendChild(use);
-        unp.appendChild(svg);
-        toGridXY(svg, coords[i]);
-        tileMvListeners(svg);
+        let svg = addTile(unp, u[i], coords[i], classes);
+        if (tadd == u[i]) {tsvg = svg;} // gets last occurence
     }
+    if (tsvg) {tsvg.classList.add("add-pulse");}
+    PSt.unplayed.add.length = 0;
+    PSt.unplayed.sub.length = 0;
+}
+function addTile(parent, tile, coords, classes) {
+    // <svg class="tile-lg tile-mv"><use href="media/stiles.svg#CN"/></svg>
+    let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.classList.add(...classes);
+    let use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+    use.setAttribute("href", "media/stiles.svg#" + tile);
+    svg.appendChild(use);
+    parent.appendChild(svg);
+    toGridXY(svg, coords);
+    tileMvListeners(svg);
+    return svg;
 }
 function svgSetTileString(elem, tile, pos) {
     let uses = elem.getElementsByTagName('use');
@@ -443,4 +564,5 @@ function init(opts) {
 export {
     init, refreshGrid, refreshUnplayed, deselectAll,
     svgToTileString, svgSetTileString,
+    domUnpAutoSort, rmPlayedAndUnplayedAnims, unpAutoSortClicked,
 }
