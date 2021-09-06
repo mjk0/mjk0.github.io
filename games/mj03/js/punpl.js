@@ -303,7 +303,6 @@ function rmUnplayedAnims() {
 function rmPlayedAnims() {
     const tp0 = document.getElementById("tilesp0");
     rmClass(tp0, "add-pulse");
-    console.log('rmPlayedAnims');
 }
 function rmPlayedAndUnplayedAnims() {
     rmUnplayedAnims();
@@ -445,14 +444,16 @@ function refreshUnpAdd() {
         addTile(domUnplayed(), PSt.unplayed.add.pop(), c, classes);
     }
 }
+function isDiscardUnpSub() {
+    return PSt.unplayed.sub.length == 1 && PSt.unplayed.add.length == 0
+        && lastDiscard.tile == PSt.unplayed.sub[0]
+        && lastDiscard.elem
+        && lastDiscard.tile == svgToTileString(lastDiscard.elem);
+}
 function refreshUnpSub() {
     //console.log('Sub tiles: ', PSt.unplayed.sub);
     let unp = domUnplayed();
-    if (PSt.unplayed.sub.length == 1
-        && lastDiscard.tile == PSt.unplayed.sub[0]
-        && lastDiscard.elem
-        && lastDiscard.tile == svgToTileString(lastDiscard.elem)
-    ) {
+    if (isDiscardUnpSub()) {
         // Remove tile that was dragged to discard
         unp.removeChild(lastDiscard.elem);
         lastDiscard.elem = null;
@@ -562,7 +563,7 @@ function init(opts) {
 }
 
 export {
-    init, refreshGrid, refreshUnplayed, deselectAll,
+    init, refreshGrid, refreshUnplayed, isDiscardUnpSub, deselectAll,
     svgToTileString, svgSetTileString,
     domUnpAutoSort, rmPlayedAndUnplayedAnims, unpAutoSortClicked,
 }

@@ -85,6 +85,17 @@ function rcvHands(data) {
 // Unplayed tiles in our hand
 function rcvUnplayed(data) {
     PSt.rcvUnplayed(data);
+    if (PUnpl.isDiscardUnpSub()) {
+        // our discard confirmation.  Gen fake TilePlay action:
+        PSt.rcvTilePlay({"action":"tileplay","pc":[],
+            "tile":PSt.unplayed.sub[0],"src":PSt.ourSeat
+        });
+        //PSt.addDiscard(tile); // addDiscard done by rcvTilePlay
+        PUI.refreshDiscardHistBtn();
+        PUI.refreshDiscardTile(); // update tile SVG
+        PUI.refreshDiscard(); // show tile for local hand (view0)
+        PUI.refreshThinking(); // show thinking for others
+    }
     PUI.refreshUnplayed();
 }
 // Current position, wind, and dealer
@@ -194,18 +205,24 @@ function reqUndo(offset) {
     Ws.sendMsg({"action":"redo", offset, "v":[]});
 }
 function reqScoreHist() {
-    Ws.sendMsg({"action":"scorehist", "h":[]});
+    if (PSt.allScores == null) {
+        Ws.sendMsg({"action":"scorehist", "h":[]});
+    } else {
+        PUI.showScoreHist();
+    }
 }
 function reqDiscardHist() {
-    Ws.sendMsg({"action":"discards", "v":"", "deck":""});
+    if (PSt.allDiscards == null) {
+        Ws.sendMsg({"action":"discards", "v":"", "deck":""});
+    } else {
+        PUI.showDiscards();
+    }
 }
 
 /// UI callbacks
 function uicbDiscard(tile) {
     console.log("Discard %s", tile);
     wsSendTilePlay("discard", tile);
-    PSt.addDiscard(tile);
-    PUI.refreshDiscardHistBtn();
     PUnpl.rmPlayedAndUnplayedAnims();
 }
 

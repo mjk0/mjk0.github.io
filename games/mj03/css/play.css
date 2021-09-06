@@ -5,6 +5,11 @@ use { width: 100%; height: 100%; }
 .tile-lgp, .tile-lgp svg { width: 10.4vh; height: 13.87vh; max-width: 11.6vw; max-height: 15.47vw; }
 .tile-mm, .tile-mm svg { width: 4.8vh; height: 6.4vh; max-width: 4.8vw; max-height: 6.4vw; }
 .tile-m, .tile-m svg { width: 3.6vh; height: 4.8vh; max-width: 3.6vw; max-height: 4.8vw; }
+.tile-mt svg {
+    width: 3.6vh; height: calc(4.8vh + 0.3vmin);
+    max-width: 3.6vw; max-height: calc(4.8vw + 0.3vmin);
+    padding-bottom: 0.3vmin; border-radius: 0.7vmin;
+}
 .tile-s, .tile-s svg { width: 2.8vh; height: 3.733vh; max-width: 2.7vw; max-height: 3.6vw; }
 td.tile-m, td.tile-lg { display: contents; }
 #discardRecent { width: 5.6vh; height: 3.733vh; max-width: 5.4vw; max-height: 3.6vw; margin: 0 0 0.1em 0; }
@@ -132,14 +137,16 @@ i.material-icons.right.helpdd { margin-left: 0px; }
 #chatLog { display: block; overflow: auto; height: 20vh; }
 .chatBubble, .w4Bubble {
     border-radius: 0.1em; box-shadow: 0 0 1pt 1pt black;
-    font-size: 2vmin; margin: 0.3em 0;
+    font-size: 2vmin;
 }
-.chatBubble { display: table; clear: both;}
-.w4Bubble { display: inline-block; padding: 0em 0.5em 0.2em;}
-.East, .seat0 { background-color: white; color: black; }
-.South, .seat1 { background-color: green; color: white; }
-.West, .seat2 { background-color: orange; color: black; }
-.North, .seat3 { background-color: darkred; color: white; }
+.chatBubble { display: table; clear: both; margin: 0.3em 0;}
+.w4Bubble { margin: 0.3em auto; padding: 0em 0.5em 0.2em;
+    width: fit-content;
+}
+.East, .seat0 { background-color: darkkhaki; color: black; }
+.South, .seat1 { background-color: palegreen; color: black; }
+.West, .seat2 { background-color: lightcoral; color: black; }
+.North, .seat3 { background-color: lightskyblue; color: black; }
 .gameTable th, .seat-1 {background-color: lightslategrey; color: white; }
 .privTable th {background-color: peru; color: white; }
 .gameTable table, .privTable table,
@@ -233,13 +240,15 @@ th.gameSectionTitle { text-align: left; font-style: italic; }
         1.3em 0.5em 0 0em white,
         -1.8em 2.3em 0 -0.85em white;
 }
-.thinking1, .thinking2, .thinking3 {position: absolute;
+.thinking0, .thinking1, .thinking2, .thinking3 {position: absolute;
     font-size: 2vmin; color: black;
 }
+.thinking0 { right: 25%; bottom: -2vh; z-index: 1; }
 .thinking1 { right: 1em; bottom: -2em; }
 .thinking2 { right: 0; bottom: 1vh; }
 .thinking3 { right: 0.7em; top: -8vh; }
-.thinking1 img, .thinking2 img, .thinking3 img { width: 3.5em; height: 3.5em; }
+.thinking0 img, .thinking1 img, .thinking2 img,
+.thinking3 img { width: 3.5em; height: 3.5em; }
 .think-q, .think-draw, .think-tail,
 .think-cha, .think-po, .think-gng, .think-woo {
     border-radius: 50%; padding: 0em 0.2em 0.1em;
@@ -298,6 +307,7 @@ legend { font-size: 80%; }
 .bGG { color: darkgreen; }
 .bRR { color: red; }
 .l-gap { margin-left: 0.1em; }
+.anim-discard-view0 { position: absolute; right: 15%; bottom: -2vh; z-index: 1;}
 .anim-discard-view1 { position: absolute; left: -3vw; top: 66%;
     animation: slideInLeft 3s ease-in-out 0s forwards;
 }
@@ -377,6 +387,10 @@ th.shDate { font-size: 70%; }
 .sctbl td { padding: 0px 0px 0px 5px; }
 .sctbl svg { width: 2.15vmin; height: 2.7vmin; vertical-align: sub; }
 .sctbl { font-size: 2vmin; border: 0.1em solid white; }
+.score-lmult {
+    background-color: yellow; box-shadow: 0 0 1px 1px black;
+    font-size: 0.7em; border-radius: 25%;
+}
 #score-hand { display: inline-block; width: auto; max-width: 100%; overflow: hidden;
     background-color: darkgreen; border-radius: 0.5em;
 }
@@ -388,7 +402,6 @@ th.shDate { font-size: 70%; }
 tr#pts-names > th { padding: 3px 0px 3px 0px;}
 tr#pts-names { border-bottom: 0px solid blue;}
 tr#pts-diff { border-bottom: 1px solid black;}
-#p-n0, #p-n1, #p-n2, #p-n3 { border-radius: 0.5em; padding: 0 0.2em; box-shadow: 0 0 1pt 1pt black;}
 tr#pts-diff > td { background-color: beige; color: black; }
 tr#pts-tot > td { background-color: #859c5e; color: white; }
 .fs-r { padding: 0.2em 0.2em; border-radius: .4em;
@@ -411,14 +424,6 @@ div.on-ready {
     animation-duration: 0.01s;
     animation-name: nodeReady;
 }
-#discardHistory { font-size: 2vmin;
-    border: 0.5em solid teal; background-color: navajowhite;
-}
-#discardHistory div.modal-footer { height: auto; background-color: beige;}
-#discardHistory legend {
-    border-radius: 0.6em; border: 1px solid black;
-    background-color: beige; padding: 0 0.3em;
-}
 #unp-sort { position: absolute; bottom: -1em; right: 0;
     width: fit-content; line-height: 0.5em; padding: 0 0.2em;
     background-color: darkgreen;
@@ -437,7 +442,7 @@ div.on-ready {
     border-radius: 15%;
 }
 #handp0 .add-pulse { animation: added-pulse 1.8s infinite; }
-#unplayed .add-pulse { animation: add2-pulse 2s infinite alternate; }
+#unplayed .add-pulse { animation: add2-pulse 0.7s infinite alternate; }
 @keyframes added-pulse {
     0% { box-shadow: 0 0 0.3em 0 rgba(12,13,100, 1); }
     70% { box-shadow: 0 0 0.3em 0.3em rgba(12,13,100, 0); }
@@ -446,4 +451,47 @@ div.on-ready {
 @keyframes add2-pulse {
     0% { box-shadow: 0 0 0.3em 0.3em white; }
     100% { box-shadow: 0 0 0.1em 0.1em darkgreen; }
+}
+#discardHistory { font-size: 2vmin;
+    border: 0.5em solid teal; background-color: navajowhite;
+}
+#discardHistory div.modal-footer { height: auto; background-color: beige;}
+#discardHistory-legend { width: fit-content; display: inline-block;
+    background-color: beige;
+    border-radius: 0.6em; border: 1px solid black;
+    padding: 0 0.3em; margin-right: 1em;
+}
+.ESWN { color: black; }
+div.cc-selector { display: inline-block;}
+.cc-selector input {
+    margin:0;padding:0;
+    -webkit-appearance:none;
+       -moz-appearance:none;
+            appearance:none;
+}
+.cc-selector input:active +.label-cc {
+    opacity: .9;
+}
+.cc-selector input:checked +.label-cc {
+    -webkit-filter: none;
+       -moz-filter: none;
+            filter: none;
+}
+.cc-selector input:checked +.label-cc {
+    box-shadow: 0 0 0.4em 0.2em steelblue;
+}
+.label-cc {
+    cursor:pointer; filter: opacity(0.5);
+    background-size:contain;
+    display:inline-block;
+    text-align: center;
+    outline: 1px solid grey;
+    font-size: 2vmin; line-height: 1.3em;
+}
+.label-cc span { padding: 0 0.3em; }
+.label-cc:hover {
+    outline-style: dotted;
+    -webkit-filter: brightness(1.2) grayscale(.5) opacity(.9);
+       -moz-filter: brightness(1.2) grayscale(.5) opacity(.9);
+            filter: brightness(1.2) grayscale(.5) opacity(1);
 }

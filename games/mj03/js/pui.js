@@ -94,7 +94,9 @@ function refreshPlayerNames() {
         let iv = posGame2View(seat); // view positions (0=bottom)
         let name = seatPlayerName(seat);
         document.getElementById('seatname'+iv).innerHTML = name;
-        document.getElementById("p-n"+seat).innerHTML = name;
+        for (let e of document.getElementsByClassName("p-n"+seat)) {
+            e.innerHTML = name;
+        }
     }
     if (UI.view == "gameend") {
         refreshScoring();
@@ -124,20 +126,28 @@ function getSvgTileString(elem) {
 
 // {"action":"discards","v":"M7-3,FA-0,B1-1,B8c3","deck":"WE,M9,...,M1"}
 // discard encoding is "tt", then play as a single char, then src
-function discardsAsSingleSet(data) {
-    let r = '<legend>Discarded tiles for all players</legend>';
-    data.v.split(',').forEach((v,i) => {
-        r += '<svg class="tile-m"><use href="media/stiles.svg#'
-            +v.substr(0,2)+'"/></svg>';
+function discardsAsSingleSet() {
+    const selWho = discardsFromWho(); // 0-3, 4 for all
+    let r = '';
+    PSt.allDiscards.v.split(',').forEach((v,i) => {
+        const who = v.substr(3);
+        if (selWho > 3 || selWho == who) {
+            const dirL = posGame2DirL(who);
+            r += '<svg class="'+dirL+'"><use href="media/stiles.svg#'
+                +v.substr(0,2)+'"/></svg>';
+        }
     });
     document.getElementById('discardSingle').innerHTML = r;
     // Deck remaining, if given (at end of game only)
     r = '';
-    if (data.deck.length > 0) {
+    if (PSt.allDiscards.deck.length > 0) {
         r = '<legend>Deck remaining tiles</legend>';
-        r += mkTileSvg(data.deck, 1, 'tile-m');
+        r += mkTileSvg(PSt.allDiscards.deck, 1, 'tile-m');
     }
     document.getElementById('deck').innerHTML = r;
+}
+function discardsFromWho() {
+    return document.querySelector('input[name="disradio"]:checked').value ||0;
 }
 
 function refreshCurrWind() {
@@ -156,6 +166,8 @@ function refreshCurrDealer() {
 function posGame2View(seat) { return (seat+4 - PSt.ourSeat) & 0x3; }
 // Translate from game positions (0=East) to view directions: "E", "S", "W", "N"
 function posGame2Dir(seat) { return "ESWN".charAt(seat); }
+const g2DirL = ["East", "South", "West", "North"];
+function posGame2DirL(seat) { return g2DirL[seat]; }
 
 // When view changes, may need to refresh all ready flags.
 // "init" and "gameend" views force ready floags off.
@@ -275,16 +287,17 @@ function refreshThinking() {
             let gpos = (PSt.curr.pos + off) & 0x3;
             let rp = PSt.plays.resp[gpos]
             let vpos = posGame2View(gpos);
-            setThinking(vpos, rp? rp : 'q', true);
+            setThinking(vpos, rp? rp : (vpos>0? 'q':''), true);
         }
         // Hide discarder's thinking bubbles
         setThinking(vcurr, "", false);
     } else {
         // Show curr player's bubbles for last play
         let play = PSt.plays.resp[PSt.curr.pos];
-        if (play != "woo") setThinking(vcurr, play, false);
+        const hideCpBubble = (play == "woo" || PSt.isOurTurn());
+        if (!hideCpBubble) setThinking(vcurr, play, false);
         // Hide other thinking bubbles
-        let off = (play == "woo") ? 0 : 1;
+        let off = hideCpBubble? 0 : 1;
         for (; off < 4; ++off) {
             let vpos = (vcurr + off) & 0x3;
             setThinking(vpos, '', false);
@@ -300,7 +313,6 @@ const tk2text = {
 const tk2hide = {'pass':1, 'draw':1, '':1};
 const tk2css = {'pass':"q", 'chal':"cha", 'cham':"cha", 'chah':"cha"};
 function setThinking(vpos, val, doFlash) {
-  if (vpos > 0) { // For now, no bubbles for our hand
     let tt = document.getElementsByClassName('thinking'+vpos);
     if (tt.length > 0) {
         if (!tk2hide.hasOwnProperty(val)) {
@@ -316,19 +328,20 @@ function setThinking(vpos, val, doFlash) {
     } else {
         console.error("Couldn't find thinking"+vpos);
     }
-  }
 }
 
 // Show or hide discarded tile
 function refreshDiscard() {
     let odiscard = document.getElementById('other-discard');
     // Do we need a discard animation?
-    if (PSt.isOtherDiscard()) {
+    const isDiscardCycle = PSt.isDiscardCycle();
+    const isOurTurn = PSt.isOurTurn();
+    if (isDiscardCycle && isOurTurn) {
+        odiscard.className = 'anim-discard-view0 odiscard-tile';
+    } else if (isDiscardCycle && !isOurTurn) {
         let currv = posGame2View(PSt.curr.pos); // view pos of curr player
         odiscard.className = 'anim-discard-view'+currv;
-        //set_elem_visibility(odiscard, 1); // 'hide-me' already removed
     } else {
-        //set_elem_visibility(odiscard, 0); // hidden on next line
         odiscard.className = 'hide-me';
     }
 }
@@ -414,9 +427,17 @@ function setViewTilePlay() {
 }
 
 // Msg from server telling us who we're waiting on, and why
+const why2m = { // complete the sentence: "Waiting for ..."
+    see:"all to see", discardack:"all to see",
+    discard:"player to discard",
+    taildraw:"player to draw from the flower pile",
+    // Reshuffle variants are handled with gameend view
+    woo:"next game", reshuffle:"next game", exceptionreshuffle:"next game",
+    // Also possible, "restore error: ...".  Not mapped
+};
 // {"action":"waiton","who":[0],"why":"discard"}
 function rcvWaitOn(data) {
-    UI.waitOn.why = data.why || "??";
+    UI.waitOn.why = why2m[data.why] || data.why || "??";
     UI.waitOn.who = data.who || [];
     if (PSt.hasGameEnded()) {
         gameEndWaitOn();
@@ -541,7 +562,12 @@ function refreshScoring() {
     document.getElementById("pts-detail").innerHTML = d;
     // Hand score differential
     let tr_diffs = document.getElementById("pts-diff");
-    PSt.scoring.diffs.forEach((v,i) => { tr_diffs.childNodes[i+1].innerHTML = v.toString()});
+    PSt.scoring.diffs.forEach((v,i) => {
+        const lMult = -v/score;
+        let vs = (lMult<2 ? v.toString()
+        : `${v} <span class="score-lmult">&times;${lMult}</span>`);
+        tr_diffs.childNodes[i+1].innerHTML = vs;
+    });
     // Game running total points
     let tr_pts = document.getElementById("pts-tot");
     for (let i = 0; i < 4; ++i) {
@@ -562,14 +588,22 @@ function clearGameEndScoring() {
 
 // Display shared dialog for score history
 function rcvScoreHist(data) {
-    CUI.rcvScoreHist(data, PSt.players);
+    PSt.rcvScoreHist(data);
+    showScoreHist();
+}
+function showScoreHist() {
+    CUI.rcvScoreHist(PSt.allScores, PSt.players);
 }
 
 // Display discard history
 // {"action":"discards","v":"M7-3,FA-0,B1-1,B8c3","deck":"WE,M9,...,M1"}
 // discard encoding is "tt", then play as a single char, then src
 function rcvDiscards(data) {
-    discardsAsSingleSet(data);
+    PSt.rcvDiscards(data);
+    showDiscards();
+}
+function showDiscards() {
+    discardsAsSingleSet();
     $('#discardHistory').modal('open');
 }
 
@@ -651,7 +685,8 @@ export {
     showWsOn, chatShow, chatIncoming, getSvgTileString,
     setPlayView, setViewTilePlay,
     rcvWaitOn, rcvReDo, rcvScoreHist, rcvDiscards,
+    showDiscards, discardsAsSingleSet,
     refreshDiscard, refreshThinking, refreshDiscardTile,
-    refreshWaitOn, clearGameEndScoring,
-    playResultWoo, refreshScoring, gameShutdown,
+    refreshWaitOn, gameShutdown, clearGameEndScoring,
+    playResultWoo, refreshScoring, showScoreHist,
 }

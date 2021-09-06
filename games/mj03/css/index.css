@@ -76,10 +76,6 @@ td.sgseat { padding-bottom: 0px; }
 .serhint { color: red; font-style: italic; font-size: 80%; }
 .usersTable td { background-color: palegreen; }
 .gameTableDir { padding: 0px 0.3em; box-shadow: 0 0 1pt 1pt; border-radius: 5px; }
-.East, .East.gameTableDir { background-color: white; color: black; }
-.South, .South.gameTableDir { background-color: green; color: white; }
-.West, .West.gameTableDir { background-color: orange; color: black; }
-.North, .North.gameTableDir { background-color: darkred; color: white; }
 th.gameSectionTitle { text-align: left; font-style: italic; }
 button.inviteBtn {
     height: 1.6em; line-height: 1;
@@ -129,6 +125,9 @@ td.bordbot { border-bottom: black solid 2px; }
 #diaInvite label > span { margin-left: 1em; width: calc(100% - 2em); }
 .invitee { background-color: #e6faff ; }
 .invitee span { font-weight: bold; }
+table.diatable { position: relative; }
+.diaTable thead th { position: sticky; top: 0; }
+.diaTable tbody th { background-color: black; }
 .diaTable { width: max-content; }
 .diaTable th, .diaTable td { text-align: center; padding: 0em 0.5em;
     border: 2px solid black;

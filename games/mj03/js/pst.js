@@ -14,6 +14,8 @@ var uuid = null;
 var email = null;
 var plays = {'allowDiscard': false, 'more': [], tile:"", src:-1, resp:[]};
 var recentDiscards = Array(4).fill("backwhite"); // last 4 discards
+var allDiscards = null; // {v:"...", deck:"..."}
+var allScores = null; // 
 var scoring = null; // save scoring info for UI, in case of player name change at game end
 var diffFlags = {addedFlower:false, addedSet:false};
 
@@ -99,8 +101,12 @@ function rcvPlayers(data) {
         players = data.seats;
     }
 }
+
 // Save complete scoring message for UI
-function rcvScoring(data) { scoring = data }
+function rcvScoring(data) {
+    scoring = data; // save data for UI
+    allScores = null; // clear cached series score results
+}
 
 // {"action":"hands","ibase":0,"h":[
 //   {"sets":[{"s":"","secret":0}],"nu":13,"r":0},
@@ -201,6 +207,7 @@ function rcvTilePlay(data) {
     }
 }
 function addDiscard(tile) {
+    allDiscards = null; // flush cache of full-game discards
     recentDiscards.push(tile);
     while (recentDiscards.length > 4) recentDiscards.shift();
 }
@@ -211,6 +218,8 @@ function rcvDiscardL4(data) {
     clearDiscards();
     data.v.split(',').forEach((v,i) => addDiscard(v.substr(0,2)));
 }
+function rcvDiscards(data) { allDiscards = data; }
+function rcvScoreHist(data) { allScores = data; }
 
 // Play has advanced to a new current position
 // {"action":"tplayres","tile":"M8","pos":2,"pc":"draw"}
@@ -243,12 +252,15 @@ function init() {
 
 export {
     players, ourGame, ourSeat, username, uuid, email,
-    hands, unplayed, curr, plays, scoring, recentDiscards,
+    hands, unplayed, curr, plays, scoring,
+    recentDiscards, allDiscards, allScores,
     init, getUrlParam, getSessionInfo,
     setHand, setUnplayed, isSameSuitConsecutive, tileSuit,
     isOurTurn, isDiscardCycle, isOtherDiscard, hasGameEnded,
-    tpIsDiscardTile, tpIsDiscardResponse, addDiscard, getInHandGngPlays,
+    tpIsDiscardTile, tpIsDiscardResponse, addDiscard,
+    getInHandGngPlays,
     clearDiffPlayed, hasAddedFlower, hasAddedSet,
     rcvSitAt, rcvPlayers, rcvHands, rcvUnplayed, rcvCurrent,
-    rcvTilePlay, rcvTPlayRes, rcvScoring, rcvDiscardL4, rcvReshuffle,
+    rcvTilePlay, rcvTPlayRes, rcvScoring, rcvScoreHist,
+    rcvDiscards, rcvDiscardL4, rcvReshuffle,
 };

@@ -127,6 +127,12 @@
                         <div id="other-discard" class="anim-discard-view1 hide-me">
                             <svg id="fs-tile" class="tile-mm"><use href="media/stiles.svg#B8"/></svg>
                         </div>
+                        <div class="thinking0 hide-me">
+                            <div class="fluffy-cloud3"><span
+                                class="think-q">?</span>
+                            </div>
+                            <img src="media/thinking_anim.gif"/>
+                        </div>
                         <fieldset id="playfs" class="midfs hide-me"><legend>Play Selection</legend>
                             <button id="fs-draw" class="HoverBtnPass BtnDraw" onclick="PMj.playNt('draw');"
                                 title="Draw a new tile"><span><br /></span><svg class="tile-s">
@@ -216,10 +222,10 @@
                             </div>
                             <div class="box">
                                 <table id="score-pts" class="sctbl">
-                                    <tr id="pts-names"><th></th><th><span id="p-n0" class="East">E</span></th>
-                                        <th><span id="p-n1" class="South">S</span></th>
-                                        <th><span id="p-n2" class="West">W</span></th>
-                                        <th><span id="p-n3" class="North">N</span></th></tr>
+                                    <tr id="pts-names"><th></th><th><span class="p-n0">E</span></th>
+                                        <th><span class="p-n1">S</span></th>
+                                        <th><span class="p-n2">W</span></th>
+                                        <th><span class="p-n3">N</span></th></tr>
                                     <tr id="pts-diff"><th>Pts</th><td>E</td><td>S</td><td>W</td><td>N</td></tr>
                                     <tr id="pts-tot"><th>Tot</th><td>E</td><td>S</td><td>W</td><td>N</td></tr>
                                 </table>
@@ -342,7 +348,21 @@
 
     <!-- Modal discard history -->
     <div id="discardHistory" class="modal">
-        <fieldset id='discardSingle'></fieldset>
+        <div id="discardHistory-sel"><div id="discardHistory-legend">Discarded tiles for:
+            </div><div class="cc-selector">
+                <input checked="checked" id="dall" type="radio" name="disradio" value="4" onclick="PUI.discardsAsSingleSet()" />
+                <label class="label-cc" for="dall"><span class="ESWN">all players</span></label>
+                <input id="d0" type="radio" name="disradio" value="0" onclick="PUI.discardsAsSingleSet()" />
+                <label class="label-cc" for="d0"><span class="East p-n0">E</span></label>
+                <input id="d1" type="radio" name="disradio" value="1" onclick="PUI.discardsAsSingleSet()" />
+                <label class="label-cc" for="d1"><span class="South p-n1">S</span></label>
+                <input id="d2" type="radio" name="disradio" value="2" onclick="PUI.discardsAsSingleSet()" />
+                <label class="label-cc" for="d2"><span class="West p-n2">W</span></label>
+                <input id="d3" type="radio" name="disradio" value="3" onclick="PUI.discardsAsSingleSet()" />
+                <label class="label-cc" for="d3"><span class="North p-n3">N</span></label>
+            </div>
+        </div>
+        <fieldset id='discardSingle' class="tile-mt"></fieldset>
         <fieldset id="deck"></fieldset>
         <div class="modal-footer">
             <a class="modal-close btn-score btn-r">Close</a>
