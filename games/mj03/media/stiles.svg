@@ -365,6 +365,20 @@
   <image x="0" y="0" height="100%" width="100%"  href="media/mjs/windnorth.svg" />
 </symbol>
 
+<!-- Overlays for Woo, Gng, Po, Cha -->
+<symbol id="ovwoo" viewBox="0 0 65 84">
+  <image x="3" y="50" height="28" width="58"  href="media/mjs/awoo.svg" />
+</symbol>
+<symbol id="ovgng" viewBox="0 0 65 84">
+  <image x="6" y="49" height="30" width="52"  href="media/mjs/agng.svg" />
+</symbol>
+<symbol id="ovpo" viewBox="0 0 65 84">
+  <image x="16" y="49" height="30" width="36"  href="media/mjs/apo.svg" />
+</symbol>
+<symbol id="ovcha" viewBox="0 0 65 84">
+  <image x="6" y="49" height="30" width="52"  href="media/mjs/acha.svg" />
+</symbol>
+
 <!-- Logo -->
 <symbol id="CNx3" viewBox="0 0 195 84">
   <image x="0" y="0" width="65" height="84"  href="media/mjs/dragonred.svg" />

@@ -235,11 +235,15 @@ function openCoords() {
     let allrows = discoverUnplayedInGrid();
 
     // starting from last spot, search backwards until open spot found
+    let foundOccupied = false;
+    let lastOpen = null;
     for (let ri=grid.nh-1; ri>=0; --ri) {
         for (let ci=grid.nw-1; ci>=0; --ci) {
             if (allrows[ri][ci] == null) { // null means unoccupied
-                return {x:ci,y:ri};
-            }
+                lastOpen = {x:ci,y:ri};
+                if (foundOccupied) {return lastOpen;}
+            } else if (lastOpen) {return lastOpen;}
+            else {foundOccupied = true;}
         }
     }
     console.error("no open spots for incoming tile");

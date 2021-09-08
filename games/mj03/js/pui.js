@@ -131,10 +131,18 @@ function discardsAsSingleSet() {
     let r = '';
     PSt.allDiscards.v.split(',').forEach((v,i) => {
         const who = v.substr(3);
+        const action = action2Long[v.substr(2,1)]; // "-" means no action
         if (selWho > 3 || selWho == who) {
-            const dirL = posGame2DirL(who);
-            r += '<svg class="'+dirL+'"><use href="media/stiles.svg#'
+            let cl = posGame2DirL(who);
+            if (action) {cl += ' dh-at'}
+            r += '<svg class="'+cl+'"><use href="media/stiles.svg#'
                 +v.substr(0,2)+'"/></svg>';
+
+            // If there was a play action, include action overlay tile
+            if (action) {
+                r += '<svg class="dh-ov"><use href="media/stiles.svg#ov'
+                +action+'"/></svg>';
+            }
         }
     });
     document.getElementById('discardSingle').innerHTML = r;
@@ -149,6 +157,7 @@ function discardsAsSingleSet() {
 function discardsFromWho() {
     return document.querySelector('input[name="disradio"]:checked').value ||0;
 }
+const action2Long = {"-":null, w:"woo", g:"gng", p:"po", c:"cha"};
 
 function refreshCurrWind() {
     let elem = document.getElementById('tilewind');
@@ -310,7 +319,7 @@ const tk2text = {
     'chal':"Cha!", 'cham':"Cha!", 'chah':"Cha!",
     'po':"PO!", 'gng':"Gng!", 'woo':"WOO!", 
 }; // remap play token to text and CSS style
-const tk2hide = {'pass':1, 'draw':1, '':1};
+const tk2hide = {'pass':1, '':1};
 const tk2css = {'pass':"q", 'chal':"cha", 'cham':"cha", 'chah':"cha"};
 function setThinking(vpos, val, doFlash) {
     let tt = document.getElementsByClassName('thinking'+vpos);

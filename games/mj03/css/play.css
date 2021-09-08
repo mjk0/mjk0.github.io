@@ -5,7 +5,7 @@ use { width: 100%; height: 100%; }
 .tile-lgp, .tile-lgp svg { width: 10.4vh; height: 13.87vh; max-width: 11.6vw; max-height: 15.47vw; }
 .tile-mm, .tile-mm svg { width: 4.8vh; height: 6.4vh; max-width: 4.8vw; max-height: 6.4vw; }
 .tile-m, .tile-m svg { width: 3.6vh; height: 4.8vh; max-width: 3.6vw; max-height: 4.8vw; }
-.tile-mt svg {
+.tile-mt svg { position: relative;
     width: 3.6vh; height: calc(4.8vh + 0.3vmin);
     max-width: 3.6vw; max-height: calc(4.8vw + 0.3vmin);
     padding-bottom: 0.3vmin; border-radius: 0.7vmin;
@@ -461,6 +461,8 @@ div.on-ready {
     border-radius: 0.6em; border: 1px solid black;
     padding: 0 0.3em; margin-right: 1em;
 }
+svg.dh-at { position: absolute; }
+svg.dh-ov { opacity: 90%; }
 .ESWN { color: black; }
 div.cc-selector { display: inline-block;}
 .cc-selector input {

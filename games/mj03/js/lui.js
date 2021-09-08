@@ -47,7 +47,7 @@ function fill_users_table(tbl, hasPriU) {
                 ds = ud.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
             } else {
                 const diffDays = Math.ceil((today - ud) / (1000 * 60 * 60 * 24));
-                console.log('diffDays = ', diffDays);
+                //console.log('diffDays = ', diffDays);
                 if (diffDays < 365) {
                     ds = ud.toLocaleString(undefined, {month:'short', day:'numeric'})
                 } else {
@@ -86,15 +86,14 @@ function update_games_display() {
     const priv = [];
     var gt = $('#opengtable');
     gt.empty();  // Clear out previous games list
-    for (const gk in St.games) {
-        if (St.games.hasOwnProperty(gk)) {
-            if (St.isOpen(gk)) {
-                gt.append(addRowGamesDisplay(gk));
-            } else if (St.username == gk) {
-                priv.unshift(gk); // private game owner, move to first spot
-            } else if (St.isInvited(gk)) {
-                priv.push(gk); // private game invitee
-            }
+    const openSorted = Object.keys(St.games).sort((a,b)=>{return a-b});
+    for (const gk of openSorted) {
+        if (St.isOpen(gk)) {
+            gt.append(addRowGamesDisplay(gk));
+        } else if (St.username == gk) {
+            priv.unshift(gk); // private game owner, move to first spot
+        } else if (St.isInvited(gk)) {
+            priv.push(gk); // private game invitee
         }
     }
 
