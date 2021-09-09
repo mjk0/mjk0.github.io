@@ -212,7 +212,7 @@ function reqScoreHist() {
     }
 }
 function reqDiscardHist() {
-    if (PSt.allDiscards == null) {
+    if (PSt.allDiscards.latest == null) {
         Ws.sendMsg({"action":"discards", "v":"", "deck":""});
     } else {
         PUI.showDiscards();

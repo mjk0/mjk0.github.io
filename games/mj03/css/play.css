@@ -5,11 +5,12 @@ use { width: 100%; height: 100%; }
 .tile-lgp, .tile-lgp svg { width: 10.4vh; height: 13.87vh; max-width: 11.6vw; max-height: 15.47vw; }
 .tile-mm, .tile-mm svg { width: 4.8vh; height: 6.4vh; max-width: 4.8vw; max-height: 6.4vw; }
 .tile-m, .tile-m svg { width: 3.6vh; height: 4.8vh; max-width: 3.6vw; max-height: 4.8vw; }
-.tile-mt svg { position: relative;
+.tile-mt div, .tile-mt svg {
     width: 3.6vh; height: calc(4.8vh + 0.3vmin);
     max-width: 3.6vw; max-height: calc(4.8vw + 0.3vmin);
-    padding-bottom: 0.3vmin; border-radius: 0.7vmin;
 }
+.tile-mt svg { padding-bottom: 0.3vmin; border-radius: 0.7vmin; }
+.tile-mt div { position: relative; display: inline-block; top: 0; left: 0;}
 .tile-s, .tile-s svg { width: 2.8vh; height: 3.733vh; max-width: 2.7vw; max-height: 3.6vw; }
 td.tile-m, td.tile-lg { display: contents; }
 #discardRecent { width: 5.6vh; height: 3.733vh; max-width: 5.4vw; max-height: 3.6vw; margin: 0 0 0.1em 0; }
@@ -26,7 +27,7 @@ td.tile-m, td.tile-lg { display: contents; }
     border-radius: 1vw; padding: 0.3vw;
 }
 .tile-set {
-    background-color: sandybrown; display: inline-flex;
+    background-color: darkseagreen; display: inline-flex;
 }
 #tilesp0 div.tile-set { border-radius: 1.8vw; }
 .tile-set-ureveal {
@@ -229,8 +230,8 @@ th.gameSectionTitle { text-align: left; font-style: italic; }
 }
 .hide-me { display: none; }
 .played-local {
-    background-color: bisque; color: white; line-height: 1;
-    border: white solid 0.5vw; border-radius: 2vw;
+    background-color: #208020; color: green; line-height: 1;
+    border: green solid 0.5vw; border-radius: 2vw;
     font-size: 6vh; width: 99vw; min-height: 8.2vh; margin-top: 3vh;
 }
 .fluffy-cloud3 { background-color: white; border-radius: 50%;

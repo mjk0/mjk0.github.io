@@ -129,28 +129,31 @@ function getSvgTileString(elem) {
 function discardsAsSingleSet() {
     const selWho = discardsFromWho(); // 0-3, 4 for all
     let r = '';
-    PSt.allDiscards.v.split(',').forEach((v,i) => {
+    PSt.allDiscards.viewing.v.split(',').forEach((v,i) => {
         const who = v.substr(3);
         const action = action2Long[v.substr(2,1)]; // "-" means no action
         if (selWho > 3 || selWho == who) {
             let cl = posGame2DirL(who);
-            if (action) {cl += ' dh-at'}
+            if (action) {
+                r += '<div>';
+                cl += ' dh-at';
+            }
             r += '<svg class="'+cl+'"><use href="media/stiles.svg#'
                 +v.substr(0,2)+'"/></svg>';
 
             // If there was a play action, include action overlay tile
             if (action) {
                 r += '<svg class="dh-ov"><use href="media/stiles.svg#ov'
-                +action+'"/></svg>';
+                +action+'"/></svg></div>';
             }
         }
     });
     document.getElementById('discardSingle').innerHTML = r;
     // Deck remaining, if given (at end of game only)
     r = '';
-    if (PSt.allDiscards.deck.length > 0) {
+    if (PSt.allDiscards.viewing.deck.length > 0) {
         r = '<legend>Deck remaining tiles</legend>';
-        r += mkTileSvg(PSt.allDiscards.deck, 1, 'tile-m');
+        r += mkTileSvg(PSt.allDiscards.viewing.deck, 1, 'tile-m');
     }
     document.getElementById('deck').innerHTML = r;
 }
@@ -248,7 +251,7 @@ function refreshPlayed(ibase, num) {
             }
         }
         if (html.length == 0) {
-            html = 'played tiles';
+            //html = 'flowers and sets';
         }
         elem.innerHTML = html; // clear old contents
         // update ready flag
@@ -471,11 +474,16 @@ function showWaitOn() {
 function gameEndWaitOn() {
     // Show which positions have responded
     let html = "";
+    let weResponded = true; // will switch to false if present in list
     for (const ig of UI.waitOn.who || []) {
         let pname = seatPlayerName(ig);
         html += `<div>${pname}</div>`;
+        if (ig == PSt.ourSeat) {weResponded = false;}
     }
     document.getElementById("ge-wo").innerHTML = html; // gameend waiting on who
+    // If we have responded, hide our buttons
+    set_id_visibility("b0-pa", !weResponded);
+    set_id_visibility("b1-pa", weResponded);
     setPlayView('gameend');
 }
 // If in the "waiton" view, refresh display after player name list update
@@ -612,8 +620,11 @@ function rcvDiscards(data) {
     showDiscards();
 }
 function showDiscards() {
-    discardsAsSingleSet();
-    $('#discardHistory').modal('open');
+    PSt.allDiscards.viewing = PSt.allDiscards.latest;
+    if (PSt.allDiscards.viewing != null) {
+        discardsAsSingleSet();
+        $('#discardHistory').modal('open');
+    }
 }
 
 function gameShutdown() {

@@ -14,7 +14,7 @@ var uuid = null;
 var email = null;
 var plays = {'allowDiscard': false, 'more': [], tile:"", src:-1, resp:[]};
 var recentDiscards = Array(4).fill("backwhite"); // last 4 discards
-var allDiscards = null; // {v:"...", deck:"..."}
+var allDiscards = {latest:null, viewing:null}; // {v:"...", deck:"..."}
 var allScores = null; // 
 var scoring = null; // save scoring info for UI, in case of player name change at game end
 var diffFlags = {addedFlower:false, addedSet:false};
@@ -106,6 +106,7 @@ function rcvPlayers(data) {
 function rcvScoring(data) {
     scoring = data; // save data for UI
     allScores = null; // clear cached series score results
+    allDiscards.latest = null; // Allow viewing deck after win
 }
 
 // {"action":"hands","ibase":0,"h":[
@@ -207,7 +208,7 @@ function rcvTilePlay(data) {
     }
 }
 function addDiscard(tile) {
-    allDiscards = null; // flush cache of full-game discards
+    allDiscards.latest = null; // flush cache of full-game discards
     recentDiscards.push(tile);
     while (recentDiscards.length > 4) recentDiscards.shift();
 }
@@ -218,7 +219,7 @@ function rcvDiscardL4(data) {
     clearDiscards();
     data.v.split(',').forEach((v,i) => addDiscard(v.substr(0,2)));
 }
-function rcvDiscards(data) { allDiscards = data; }
+function rcvDiscards(data) { allDiscards.latest = data; }
 function rcvScoreHist(data) { allScores = data; }
 
 // Play has advanced to a new current position
