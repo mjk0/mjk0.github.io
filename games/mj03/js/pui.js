@@ -126,39 +126,49 @@ function getSvgTileString(elem) {
 
 // {"action":"discards","v":"M7-3,FA-0,B1-1,B8c3","deck":"WE,M9,...,M1"}
 // discard encoding is "tt", then play as a single char, then src
-function discardsAsSingleSet() {
-    const selWho = discardsFromWho(); // 0-3, 4 for all
-    let r = '';
+function discardsSummary() {
+    const sep = discardsAsSeparate(); // false for combined, true for separate
+    let r = ['','','',''];
+    for (let ri = (sep? 0:4); ri < 4; ++ri) {
+        const pn = seatPlayerName(ri);
+        let cl = posGame2DirL(ri);
+        r[ri] = `<legend class="dh-legend ${cl}">${pn}</legend>`
+    }
     PSt.allDiscards.viewing.v.split(',').forEach((v,i) => {
         const who = v.substr(3);
+        const ri = (sep? who : 0); // put all in r[0] if not separated
         const action = action2Long[v.substr(2,1)]; // "-" means no action
-        if (selWho > 3 || selWho == who) {
-            let cl = posGame2DirL(who);
-            if (action) {
-                r += '<div>';
-                cl += ' dh-at';
-            }
-            r += '<svg class="'+cl+'"><use href="media/stiles.svg#'
-                +v.substr(0,2)+'"/></svg>';
+        let cl = posGame2DirL(who);
+        if (action) {
+            r[ri] += '<div>';
+            cl += ' dh-at';
+        }
+        r[ri] += '<svg class="'+cl+'"><use href="media/stiles.svg#'
+            +v.substr(0,2)+'"/></svg>';
 
-            // If there was a play action, include action overlay tile
-            if (action) {
-                r += '<svg class="dh-ov"><use href="media/stiles.svg#ov'
-                +action+'"/></svg></div>';
-            }
+        // If there was a play action, include action overlay tile
+        if (action) {
+            r[ri] += '<svg class="dh-ov"><use href="media/stiles.svg#ov'
+            +action+'"/></svg></div>';
         }
     });
-    document.getElementById('discardSingle').innerHTML = r;
+    for (let ri = 0; ri < 4; ++ri) {
+        const fid = 'discards'+ri;
+        document.getElementById(fid).innerHTML = r[ri];
+        set_id_visibility(fid, ri==0 || sep);
+    }
     // Deck remaining, if given (at end of game only)
     r = '';
-    if (PSt.allDiscards.viewing.deck.length > 0) {
-        r = '<legend>Deck remaining tiles</legend>';
+    const isDeckVisible = PSt.allDiscards.viewing.deck.length > 0;
+    if (isDeckVisible) {
+        r = '<legend class="dh-legend">Deck remaining tiles:</legend>';
         r += mkTileSvg(PSt.allDiscards.viewing.deck, 1, 'tile-m');
     }
     document.getElementById('deck').innerHTML = r;
+    set_id_visibility('deck', isDeckVisible);
 }
-function discardsFromWho() {
-    return document.querySelector('input[name="disradio"]:checked').value ||0;
+function discardsAsSeparate() {
+    return (document.querySelector('input[name="disradio"]:checked').value ||0)>0;
 }
 const action2Long = {"-":null, w:"woo", g:"gng", p:"po", c:"cha"};
 
@@ -622,7 +632,7 @@ function rcvDiscards(data) {
 function showDiscards() {
     PSt.allDiscards.viewing = PSt.allDiscards.latest;
     if (PSt.allDiscards.viewing != null) {
-        discardsAsSingleSet();
+        discardsSummary();
         $('#discardHistory').modal('open');
     }
 }
@@ -705,7 +715,7 @@ export {
     showWsOn, chatShow, chatIncoming, getSvgTileString,
     setPlayView, setViewTilePlay,
     rcvWaitOn, rcvReDo, rcvScoreHist, rcvDiscards,
-    showDiscards, discardsAsSingleSet,
+    showDiscards, discardsSummary,
     refreshDiscard, refreshThinking, refreshDiscardTile,
     refreshWaitOn, gameShutdown, clearGameEndScoring,
     playResultWoo, refreshScoring, showScoreHist,

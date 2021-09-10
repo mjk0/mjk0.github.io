@@ -349,22 +349,19 @@
 
     <!-- Modal discard history -->
     <div id="discardHistory" class="modal">
-        <div id="discardHistory-sel"><div id="discardHistory-legend">Discarded tiles for:
+        <div id="discardHistory-sel"><div id="discardHistory-legend">Discarded tiles for all players:
             </div><div class="cc-selector">
-                <input checked="checked" id="dall" type="radio" name="disradio" value="4" onclick="PUI.discardsAsSingleSet()" />
-                <label class="label-cc" for="dall"><span class="ESWN">all players</span></label>
-                <input id="d0" type="radio" name="disradio" value="0" onclick="PUI.discardsAsSingleSet()" />
-                <label class="label-cc" for="d0"><span class="East p-n0">E</span></label>
-                <input id="d1" type="radio" name="disradio" value="1" onclick="PUI.discardsAsSingleSet()" />
-                <label class="label-cc" for="d1"><span class="South p-n1">S</span></label>
-                <input id="d2" type="radio" name="disradio" value="2" onclick="PUI.discardsAsSingleSet()" />
-                <label class="label-cc" for="d2"><span class="West p-n2">W</span></label>
-                <input id="d3" type="radio" name="disradio" value="3" onclick="PUI.discardsAsSingleSet()" />
-                <label class="label-cc" for="d3"><span class="North p-n3">N</span></label>
+                <input checked="checked" id="dall" type="radio" name="disradio" value="0" onclick="PUI.discardsSummary()" />
+                <label class="label-cc" for="dall"><span>combined</span></label>
+                <input id="dsep" type="radio" name="disradio" value="1" onclick="PUI.discardsSummary()" />
+                <label class="label-cc" for="dsep"><span>separated</span></label>
             </div>
-        </div>
-        <fieldset id='discardSingle' class="tile-mt"></fieldset>
-        <fieldset id="deck"></fieldset>
+        </div><div id="discardHistory-fsd">
+        <fieldset id='discards0' class="tile-mt"></fieldset>
+        <fieldset id='discards1' class="tile-mt hide-me"></fieldset>
+        <fieldset id='discards2' class="tile-mt hide-me"></fieldset>
+        <fieldset id='discards3' class="tile-mt hide-me"></fieldset>
+        <fieldset id="deck"></fieldset></div>
         <div class="modal-footer">
             <a class="modal-close btn-score btn-r">Close</a>
         </div>
