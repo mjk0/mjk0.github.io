@@ -411,6 +411,7 @@ const pcButtons = [
 ];
 function setViewTilePlay() {
     set_id_visibility("discard-line", PSt.plays.allowDiscard);
+    set_id_visibility("fs-discard", PSt.plays.allowDiscard);
     for (const pcid of pcButtons) {
         const id = "fs-"+pcid;
         if (PSt.plays.more.includes(pcid)) {
@@ -566,6 +567,7 @@ const m2tiles = {
     "3x all word sets": function() { return wordSetsOfMinLen(3) },
     "3+3+2 all words": function() { return wordSetsOfMinLen(2) },
 };
+const dice = '<img class="svg-icon" src="media/Dice-2r1-Icon.svg"/>';
 
 // Scoring result for the game.  Only handled in the UI
 // {"action":"scoring","addv":[1,20],"adds":["Flowers","7 pairs"],
@@ -591,8 +593,9 @@ function refreshScoring() {
     let tr_diffs = document.getElementById("pts-diff");
     PSt.scoring.diffs.forEach((v,i) => {
         const lMult = -v/score;
-        let vs = (lMult<2 ? v.toString()
-        : `${v} <span class="score-lmult">&times;${lMult}</span>`);
+        const dd = (PSt.curr.dealer == i? dice : ""); // dealer dice?
+        let vs = (lMult<2 ? v.toString()+dd
+        : `${v} ${dd}<span class="score-lmult">&times;${lMult}</span>`);
         tr_diffs.childNodes[i+1].innerHTML = vs;
     });
     // Game running total points

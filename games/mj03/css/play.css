@@ -203,10 +203,9 @@ th.gameSectionTitle { text-align: left; font-style: italic; }
     cursor: pointer;
 }
 .btn-s { font-size: 50%; }
-.nb-active { background-color: yellow; }
-.nb-inactive { background-color: lightsteelblue; }
 .namebar {
     position: relative;
+    background-color: lightsteelblue;
     font-size: 3vmin; line-height: normal;
     border: black solid 1px; text-align: left; padding: 0px;
 }
@@ -230,7 +229,7 @@ th.gameSectionTitle { text-align: left; font-style: italic; }
     height: 5vh; width: 5vh;  max-width: 10vw; max-height: 10vw;
     font-size: 2.5vh; text-align: center; line-height: 5vh;
 }
-.hide-me { display: none; }
+.hide-me { display: none !important; }
 .played-local {
     background-color: #208020; color: green; line-height: 1;
     border: green solid 0.5vw; border-radius: 2vw;
@@ -284,14 +283,16 @@ legend { font-size: 80%; }
 .HoverBtnPass { background-color: bisque; width: calc(2.2em + 12px); }
 .HoverBtnG { background-color: lime;}
 .HoverBtnR { background-color: salmon;}
-.HoverBtn, .HoverBtnW, .HoverBtnG, .HoverBtnR, .HoverBtnPass {
-    color: black;
-    border: 2px solid black; border-radius: 0.7em;
-    padding: 2px 4px;
+.HoverBtn, .HoverBtnW, .HoverBtnG, .HoverBtnR, .HoverBtnPass, .NotABtn {
+    padding: 2px 4px; border-radius: 0.7em;
     line-height: 150%; vertical-align: bottom;
     font-size: min(2vh,2vw);
 }
-.HoverBtn, .HoverBtnW, .HoverBtnPass {
+.HoverBtn, .HoverBtnW, .HoverBtnG, .HoverBtnR, .HoverBtnPass, .NotABtn {
+    color: black; border: 2px solid black;
+}
+.NotABtn { color: darkgray; border: 2px solid gray; }
+.HoverBtn, .HoverBtnW, .HoverBtnPass, .NotABtn {
     height: min(8.5vh, 10vw);
 }
 .HoverBtn svg.tile-s { vertical-align: sub; }
@@ -299,13 +300,11 @@ legend { font-size: 80%; }
 .HoverBtnW:hover, .HoverBtnG:hover, .HoverBtnR:hover {
     border-color: white;
 }
+.NotABtn { display: inline-block; }
 .rainbow, .think-woo {
     background: linear-gradient(to bottom, red, orange, yellow, lime, DodgerBlue, Orchid, violet);
 }
-.woo-hand div.tile-set {
-    background: linear-gradient(to right, red, orange, yellow, lime, DodgerBlue, Orchid, violet);
-}
-.woo-hand { background-color: ivory; text-align: center; }
+.woo-hand { text-align: center; background-color: limegreen; }
 .curr-hand { box-shadow: 0 0 7px 4px white; border-radius: 1.5vmin; }
 .bGG { color: darkgreen; }
 .bRR { color: red; }
@@ -407,6 +406,7 @@ tr#pts-names { border-bottom: 0px solid blue;}
 tr#pts-diff { border-bottom: 1px solid black;}
 tr#pts-diff > td { background-color: beige; color: black; }
 tr#pts-tot > td { background-color: #859c5e; color: white; }
+#pts-diff img.svg-icon { margin-bottom: -0.1em; }
 .fs-r { padding: 0.2em 0.2em; border-radius: .4em;
     display: inline-block; width: max-content;
 }

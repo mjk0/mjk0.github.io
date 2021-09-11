@@ -223,6 +223,8 @@ function reqDiscardHist() {
 function uicbDiscard(tile) {
     console.log("Discard %s", tile);
     wsSendTilePlay("discard", tile);
+    PSt.markDiscardInProgress();
+    PUI.setViewTilePlay(); // remove discard and optional play choices
     PUnpl.rmPlayedAndUnplayedAnims();
 }
 

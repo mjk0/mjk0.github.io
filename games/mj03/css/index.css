@@ -137,3 +137,8 @@ table.diatable { position: relative; }
 td.shWin { background-color: lightgreen; }
 th.shDate { font-size: 70%; }
 #scoreHistory { border: 0.5em solid orange; }
+.svg-icon { display: inline-block; }
+.svg-icon svg, svg.svg-icon, img.svg-icon {
+    height:1.2em; width:1.2em; vertical-align: middle;
+}
+.btn-small img.svg-icon { margin: 0 -0.7em 0 0.2em; }

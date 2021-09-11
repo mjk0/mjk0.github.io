@@ -207,6 +207,10 @@ function rcvTilePlay(data) {
         }
     }
 }
+function markDiscardInProgress() {
+    plays.allowDiscard = false;
+    plays.more = [];
+}
 function addDiscard(tile) {
     allDiscards.latest = null; // flush cache of full-game discards
     recentDiscards.push(tile);
@@ -259,7 +263,7 @@ export {
     setHand, setUnplayed, isSameSuitConsecutive, tileSuit,
     isOurTurn, isDiscardCycle, isOtherDiscard, hasGameEnded,
     tpIsDiscardTile, tpIsDiscardResponse, addDiscard,
-    getInHandGngPlays,
+    getInHandGngPlays, markDiscardInProgress,
     clearDiffPlayed, hasAddedFlower, hasAddedSet,
     rcvSitAt, rcvPlayers, rcvHands, rcvUnplayed, rcvCurrent,
     rcvTilePlay, rcvTPlayRes, rcvScoring, rcvScoreHist,

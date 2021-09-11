@@ -162,6 +162,7 @@ function jshow(jq, f) {
     else { $(jq).hide(); }
 }
 
+const dice = '<img class="svg-icon" src="media/Dice-2r1-Icon.svg"/>';
 // Create HTML for games table entry.  gk is game name, gd is game data
 // gk:"\t2", gd:{"seats":[null,null,null,null],"status":0,"invited":[]}
 function addRowGamesDisplay(gk) {
@@ -173,9 +174,12 @@ function addRowGamesDisplay(gk) {
     // Fill in seat info
     St.games[gk].seats.forEach((s,i) => {
         // Seat occupied or available to sit/join?
-        let sit = (s?s:
+        const nd = (St.games[gk].status==0 // 'nd' only valid b4 game starts
+            && (!sid && i==0 || sid && i==St.series[sid].nd)? dice: ""
+        );
+        let sit = (s?s+nd:
             '<button class="btn-small" onClick="LMj.sitAt(\''+gk+'\','+i+')">'
-            +(St.games[gk].status ? 'join' : 'sit')
+            +(St.games[gk].status ? 'join' : 'sit'+nd)
             +'</button>'
         );
         // if series, hint of who last sat at this position
