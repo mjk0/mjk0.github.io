@@ -406,6 +406,12 @@ tr#pts-names { border-bottom: 0px solid blue;}
 tr#pts-diff { border-bottom: 1px solid black;}
 tr#pts-diff > td { background-color: beige; color: black; }
 tr#pts-tot > td { background-color: #859c5e; color: white; }
+.ptsWin {
+    animation: tada 1s infinite;
+    box-shadow: 0 0 0.1em 0em palegreen; border-radius: 1em;
+}
+#pts-names div.ptsWin { text-shadow: 0 0 4px black; }
+#pts-diffs div.ptsWin { text-shadow: 0 0 4px palegreen; }
 #pts-diff img.svg-icon { margin-bottom: -0.1em; }
 .fs-r { padding: 0.2em 0.2em; border-radius: .4em;
     display: inline-block; width: max-content;

@@ -568,6 +568,6 @@ function init(opts) {
 
 export {
     init, refreshGrid, refreshUnplayed, isDiscardUnpSub, deselectAll,
-    svgToTileString, svgSetTileString,
+    svgToTileString, svgSetTileString, rmClass,
     domUnpAutoSort, rmPlayedAndUnplayedAnims, unpAutoSortClicked,
 }

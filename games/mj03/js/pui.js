@@ -591,12 +591,17 @@ function refreshScoring() {
     document.getElementById("pts-detail").innerHTML = d;
     // Hand score differential
     let tr_diffs = document.getElementById("pts-diff");
+    let tr_names = document.querySelectorAll('#pts-names div');
     PSt.scoring.diffs.forEach((v,i) => {
-        const lMult = -v/score;
+        const lMult = (score > 0? -v/score : 0);
         const dd = (PSt.curr.dealer == i? dice : ""); // dealer dice?
-        let vs = (lMult<2 ? v.toString()+dd
+        let vs = (lMult<2 ? (lMult>=0 ? v.toString()+dd
+        : '<div class="ptsWin">'+v.toString()+dd+'</div>')
         : `${v} ${dd}<span class="score-lmult">&times;${lMult}</span>`);
         tr_diffs.childNodes[i+1].innerHTML = vs;
+        if (lMult < 0) { // winner?
+            tr_names[i].classList.add('ptsWin');
+        }
     });
     // Game running total points
     let tr_pts = document.getElementById("pts-tot");
@@ -614,6 +619,8 @@ function tableRow(arr, thd) {
 // in case current game ends in stalemate
 function clearGameEndScoring() {
     refreshTileOnId('last-tile', "ZT"); // empty tile until real woo
+    // Remove win animation
+    PUnpl.rmClass(document.getElementById("score-pts"), "ptsWin");
 }
 
 // Display shared dialog for score history
