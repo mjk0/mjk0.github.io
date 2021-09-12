@@ -161,8 +161,12 @@ function discardsSummary() {
     r = '';
     const isDeckVisible = PSt.allDiscards.viewing.deck.length > 0;
     if (isDeckVisible) {
-        r = '<legend class="dh-legend">Deck remaining tiles:</legend>';
-        r += mkTileSvg(PSt.allDiscards.viewing.deck, 1, 'tile-m');
+        // Is the deck field a comma-separated tile list, or just a count?
+        // deck:"WE,M9,...,M1" or deck:"32"
+        const c0 = PSt.allDiscards.viewing.deck.charAt(0);
+        const cs = (c0 >= '0' && c0 <= '9'? " "+PSt.allDiscards.viewing.deck : "");
+        r = `<legend class="dh-legend">Deck remaining tiles:${cs}</legend>`;
+        if (!cs) r += mkTileSvg(PSt.allDiscards.viewing.deck, 1, 'tile-m');
     }
     document.getElementById('deck').innerHTML = r;
     set_id_visibility('deck', isDeckVisible);
