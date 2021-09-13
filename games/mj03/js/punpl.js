@@ -52,8 +52,10 @@ function toGridXY(tgt, xy) {
     return tgtleft;
 }
 function tileLeftTop(e) {
-    let left = mdown.left + (e.clientX - mdown.cx);
-    let top = mdown.top + (e.clientY - mdown.cy);
+    const cY = e.touches ? e.touches[0].clientY : e.clientY;
+    const cX = e.touches ? e.touches[0].clientX : e.clientX;
+    let left = mdown.left + (cX - mdown.cx);
+    let top = mdown.top + (cY - mdown.cy);
     if (left > grid.leftmax) left = grid.leftmax;
     if (left < grid.leftmin) left = grid.leftmin;
     if (top > grid.topmax) top = grid.topmax;
@@ -63,8 +65,9 @@ function tileLeftTop(e) {
 function startDrag(e) {
     e.preventDefault();
     mdown.elem = e.target.parentNode; // e.target is svg use.  Parent is svg
-    mdown.cx = e.clientX;
-    mdown.cy = e.clientY;
+    const isTouches = e.touches ? true : false;
+    mdown.cx = e.touches ? e.touches[0].clientX : e.clientX;
+    mdown.cy = e.touches ? e.touches[0].clientY : e.clientY;
     let cstyle = getComputedStyle(mdown.elem);
     mdown.left = parseFloat(cstyle.left);
     mdown.top = parseFloat(cstyle.top);
@@ -550,7 +553,7 @@ function parentMvListeners(el) {
     //el.addEventListener('mouseleave', endDrag);
     el.addEventListener('touchmove', drag);
     el.addEventListener('touchend', endDrag);
-    //el.addEventListener('touchleave', endDrag);
+    el.addEventListener('touchleave', endDrag);
     el.addEventListener('touchcancel', endDrag);
 }
 
