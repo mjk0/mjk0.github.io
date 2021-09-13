@@ -8,6 +8,8 @@
     <link type="text/css" rel="stylesheet" href="/css/materialize.css" media="screen,projection"/>
     <link type="text/css" rel="stylesheet" href="/css/animate.min.css">
     <link type="text/css" rel="stylesheet" href="css/play.css">
+    <link rel="modulepreload" href="js/copts.js">
+    <link rel="modulepreload" href="js/cui.js">
     <link rel="modulepreload" href="js/pst.js">
     <link rel="modulepreload" href="js/pmj.js">
     <link rel="modulepreload" href="js/ws.js">
@@ -383,6 +385,8 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script type="text/javascript" src="/js/materialize.min.js"></script>
     <script type="module">
+        import * as COpts from './js/copts.js';
+        window.COpts = COpts;
         import * as PSt from './js/pst.js';
         window.PSt = PSt;
         import * as PMj from './js/pmj.js';

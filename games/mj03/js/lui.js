@@ -1,5 +1,5 @@
 "use strict";
-//const urlParams = new URLSearchParams(window.location.search);
+import * as COpts from './copts.js';
 import * as St from './st.js';
 
 var gamepanel, signinpanel, signin_right;
@@ -14,7 +14,10 @@ function set_sign_in_state(f) { // f is truthy if already signed in
     jshow(notices, !f);
 }
 function welcome_username() {
-    $('#span_username').text(St.username);
+    const devs = (COpts.get('mj-dev') == "1"?
+        ' <i class="material-icons">beach_access</i>' : ""
+    );
+    $('#span_username').html(St.username+devs);
 }
 function update_users_display() {
     fill_users_table('#userstable', false);

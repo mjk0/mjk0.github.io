@@ -7,6 +7,8 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link type="text/css" rel="stylesheet" href="/css/materialize.css" media="screen,projection"/>
     <link type="text/css" rel="stylesheet" href="css/index.css">
+    <link rel="modulepreload" href="js/copts.js">
+    <link rel="modulepreload" href="js/cui.js">
     <link rel="modulepreload" href="js/lmj.js">
     <link rel="modulepreload" href="js/lui.js">
     <link rel="modulepreload" href="js/ws.js">
@@ -151,6 +153,8 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script type="text/javascript" src="/js/materialize.min.js"></script>
     <script type="module">
+        import * as COpts from './js/copts.js';
+        window.COpts = COpts;
         import * as LMj from './js/lmj.js';
         window.LMj = LMj;
         import * as CUI from './js/cui.js';

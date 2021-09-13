@@ -1,7 +1,6 @@
 // Mj State objects and methods
+import * as COpts from './copts.js';
 "use strict";
-
-const urlParams = new URLSearchParams(window.location.search);
 
 var players = []; // player 0 is East
 var hands = []; // hand 0 is East, then S W N. {nu:3, r:0, sets:[{"s":"","secret":0}]}
@@ -28,10 +27,6 @@ const tile2u = {
     CN:0x51, FA:0x52, BB:0x53,
     F1:0x61, F2:0x62, F3:0x63, F4:0x64, F5:0x65, F6:0x66, F7:0x67, F8:0x68,
 };
-function getUrlParam(name, def) {
-    let value = urlParams.get(name);
-    return (value === null) ? def : value;
-}
 
 function setHand(i, h) {
     if (i >= 0 && i < 4) {
@@ -245,11 +240,11 @@ function getInHandGngPlays() {
 }
 
 function getSessionInfo() {
-    username = sessionStorage.getItem("mj_username") || null;
-    uuid = sessionStorage.getItem("mj_uuid") || null;
-    email = sessionStorage.getItem("mj_email") || null;
-    ourGame = sessionStorage.getItem("mj_game") || null;
-    ourSeat = parseInt(sessionStorage.getItem("mj_seat") || 0);
+    username = COpts.get("mj_username");
+    uuid = COpts.get("mj_uuid");
+    email = COpts.get("mj_email");
+    ourGame = COpts.get("mj_game");
+    ourSeat = parseInt(COpts.get("mj_seat"));
 }
 function init() {
     getSessionInfo();
@@ -259,7 +254,7 @@ export {
     players, ourGame, ourSeat, username, uuid, email,
     hands, unplayed, curr, plays, scoring,
     recentDiscards, allDiscards, allScores,
-    init, getUrlParam, getSessionInfo,
+    init, getSessionInfo,
     setHand, setUnplayed, isSameSuitConsecutive, tileSuit,
     isOurTurn, isDiscardCycle, isOtherDiscard, hasGameEnded,
     tpIsDiscardTile, tpIsDiscardResponse, addDiscard,

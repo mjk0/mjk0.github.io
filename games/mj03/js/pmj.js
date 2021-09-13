@@ -1,10 +1,8 @@
 "use strict";
+import * as COpts from './copts.js';
 import * as Ws from './ws.js';
 import * as PSt from './pst.js';
 import * as PUI from './pui.js';
-const params = {
-    'auto': PSt.getUrlParam('auto', true),
-};
 
 const WsOptions = {
     serverBase: "wss://pizzamonster.org:3031/games/mahjong/",
@@ -53,7 +51,7 @@ function rcvSitAt(data) { // server confirmation of seat request
 }
 function rcvErr(data) {
     if (data.err == "authenticate") {
-        if (params.auto) {
+        if (COpts.get('mj-ar') == "1") {
             document.location.href = "./";
         } else {
             console.log('Must signin again');
@@ -230,9 +228,7 @@ function uicbDiscard(tile) {
 
 // Function that executes jQuery code after page load is complete
 $(document).ready(function(){
-    //let a_start = document.getElementById("a_start");
-    //a_start.addEventListener("click", pre_puzzle);
-
+    COpts.init(WsOptions); // modifies serverUrl if needed
     PSt.init();
     wsUuidInit();
 

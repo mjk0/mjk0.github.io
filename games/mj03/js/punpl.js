@@ -1,5 +1,4 @@
 "use strict";
-//const urlParams = new URLSearchParams(window.location.search);
 import * as PSt from './pst.js';
 
 let UiOptions = null; // UI action callbacks

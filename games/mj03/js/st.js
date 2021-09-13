@@ -14,9 +14,9 @@ function rcvUuid(data, uname, email0) {
     if ('uuid' in data && data.uuid) {
         uuid = data.uuid;
         username = uname;
-        sessionStorage.setItem("mj_username", username);
-        sessionStorage.setItem("mj_uuid", uuid);
-        sessionStorage.setItem("mj_email", email0);
+        COpts.set("mj_username", username);
+        COpts.set("mj_uuid", uuid);
+        COpts.set("mj_email", email0);
     }
     console.info('UUID is ', uuid, 'username is ', username);
 }
@@ -26,10 +26,10 @@ function clrUuid() {
     username = null;
     ourGame = null;
     ourSeat = -1;
-    sessionStorage.removeItem("mj_username");
-    sessionStorage.removeItem("mj_uuid");
-    sessionStorage.removeItem("mj_game");
-    sessionStorage.removeItem("mj_seat");
+    COpts.rm("mj_username");
+    COpts.rm("mj_uuid");
+    COpts.rm("mj_game");
+    COpts.rm("mj_seat");
     console.info('UUID is ', uuid);
 }
 
@@ -62,11 +62,11 @@ function isInvited(gname) {
 function rcvSitAt(data) {
     if (data.hasOwnProperty('game')) {
         ourGame = data.game.length > 0 ? data.game : null;
-        sessionStorage.setItem("mj_game", ourGame);
+        COpts.set("mj_game", ourGame);
     }
     if (data.hasOwnProperty('seat') && data.seat >= 0 && data.seat <= 3) {
         ourSeat = ourGame ? data.seat : -1;
-        sessionStorage.setItem("mj_seat", ourSeat);
+        COpts.set("mj_seat", ourSeat);
     }
 }
 function hasOurGameStarted() {

@@ -28,8 +28,8 @@ function rcvUuid(data) {
     // if UUID is valid, also set username & email with login value
     St.rcvUuid(
         data,
-        LUI.uname_dom().value || sessionStorage.getItem("mj_username"),
-        LUI.email_dom().value || sessionStorage.getItem("mj_email") || ""
+        LUI.uname_dom().value || COpts.get("mj_username"),
+        LUI.email_dom().value || COpts.get("mj_email") || ""
     );
     LUI.welcome_username();
     LUI.set_sign_in_state(St.uuid); // truthy values enable post-sign-in UI
@@ -155,9 +155,9 @@ function netOnOnline() { // back online
 
 // If already had been assigned a UUID, try auto-login
 function try_autologin() {
-    let mjuname = sessionStorage.getItem("mj_username");
-    let mjuuid = sessionStorage.getItem("mj_uuid");
-    let mjemail = sessionStorage.getItem("mj_email") || "";
+    let mjuname = COpts.get("mj_username");
+    let mjuuid = COpts.get("mj_uuid");
+    let mjemail = COpts.get("mj_email") || "";
     if (mjuname && mjuuid) {
         // login is only valid on WebSocket connection
         // In case this is a re-connect, clear any queued messages
@@ -185,8 +185,7 @@ function submit(e) {
 
 // Function that executes jQuery code after page load is complete
 $(document).ready(function(){
-    //let a_start = document.getElementById("a_start");
-    //a_start.addEventListener("click", pre_puzzle);
+    COpts.init(WsOptions); // modifies serverUrl if needed
     Ws.init(WsOptions);
     LUI.init();
 

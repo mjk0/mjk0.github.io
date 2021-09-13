@@ -1,5 +1,5 @@
 "use strict";
-//const urlParams = new URLSearchParams(window.location.search);
+import * as COpts from './copts.js';
 import * as PSt from './pst.js';
 import * as PUnpl from './punpl.js';
 
@@ -51,8 +51,9 @@ function is_visible(id) {
 
 // Update visual status for WebSocket connection state
 function showWsOn(bool) {
+    const good = (COpts.get("mj-dev") == "1"? "beach_access" : "verified_user");
     document.getElementById("ws-status").innerHTML
-     = (bool ? 'verified_user' : 'sync_problem');
+     = (bool ? good : 'sync_problem');
 }
 
 // Show the chat window, and clear any chat msg animation
