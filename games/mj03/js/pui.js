@@ -453,7 +453,27 @@ function setViewTilePlay() {
     set_id_visibility("fs-gng1", gngt.length > 1);
     set_id_visibility("fs-gng2", gngt.length > 2);
 
+    PUnpl.rmClass(document.getElementById("playfs"), "PlayGone");
     setPlayView("tileplay"); // show the buttons
+}
+const pcBtnRank = {"fs-po":1, "fs-gng":1, "fs-chal":0, "fs-cham":0, "fs-chah":0}; // woo:2
+function checkPlayRestrictions() {
+    if (UI.view == "tileplay" && PSt.isOtherDiscard()) {
+        const mrank = PSt.maxDiscardPlayRank();
+        if (mrank > 0) {
+            if (is_visible("fs-draw")) {
+                console.log('Replacing Draw btn with Pass', mrank);
+                // Swap Draw and Pass-only visibility
+                set_id_visibility("fs-draw", false);
+                set_id_visibility("fs-pass-only", true);
+            }
+            for (const [p,r] of Object.entries(pcBtnRank)) {
+                if (r < mrank && is_visible(p)) {
+                    document.getElementById(p).classList.add('PlayGone');
+                }
+            }
+        }
+    }
 }
 
 // Msg from server telling us who we're waiting on, and why
@@ -741,7 +761,7 @@ export {
     refreshPlayerDirs, refreshPlayerNames,
     refreshPlayed, refreshUnplayed, refreshDiscardHistBtn,
     showWsOn, chatShow, chatIncoming, getSvgTileString,
-    setPlayView, setViewTilePlay,
+    setPlayView, setViewTilePlay, checkPlayRestrictions,
     rcvWaitOn, rcvReDo, rcvScoreHist, rcvDiscards,
     showDiscards, discardsSummary,
     refreshDiscard, refreshThinking, refreshDiscardTile,

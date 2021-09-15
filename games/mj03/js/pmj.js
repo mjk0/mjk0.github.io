@@ -116,6 +116,10 @@ function rcvTilePlay(data) {
     }
     if (!PSt.tpIsDiscardResponse(data)) {
         PUI.setViewTilePlay();
+    } else {
+        // Check if other's response invalidates our options
+        // e.g. other Woo -> our only option is Woo or Pass
+        PUI.checkPlayRestrictions();
     }
     PUI.refreshDiscard();
     PUI.refreshThinking();

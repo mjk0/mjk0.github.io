@@ -304,6 +304,9 @@ legend { font-size: 80%; }
 .rainbow, .think-woo {
     background: linear-gradient(to bottom, red, orange, yellow, lime, DodgerBlue, Orchid, violet);
 }
+.PlayGone {
+    text-decoration: line-through; text-decoration-color: red;
+}
 .woo-hand { text-align: center; background-color: limegreen; }
 .curr-hand { box-shadow: 0 0 7px 4px white; border-radius: 1.5vmin; }
 .bGG { color: darkgreen; }
@@ -461,7 +464,7 @@ div.on-ready {
     0% { box-shadow: 0 0 0.3em 0.3em white; }
     100% { box-shadow: 0 0 0.1em 0.1em darkgreen; }
 }
-#discardHistory { font-size: 2vmin; width: 90%;
+#discardHistory { font-size: 2vmin; width: 80%;
     border: 0.5em solid teal; background-color: teal;
 }
 #discardHistory-fsd { background-color: navajowhite; padding-top: 2px; }

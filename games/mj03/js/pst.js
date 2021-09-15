@@ -206,6 +206,20 @@ function markDiscardInProgress() {
     plays.allowDiscard = false;
     plays.more = [];
 }
+
+// When a discard is in progress, look for responses from other
+// that could invalidate our play choices.
+const tpRespRank = { po:1, gng:1, woo:2 };
+function maxDiscardPlayRank() {
+    let rank = 0;
+    plays.resp.forEach(v => {
+        if (v in tpRespRank && tpRespRank[v] > rank) {
+            rank = tpRespRank[v];
+        }
+    });
+    return rank;
+}
+
 function addDiscard(tile) {
     allDiscards.latest = null; // flush cache of full-game discards
     recentDiscards.push(tile);
@@ -258,7 +272,7 @@ export {
     setHand, setUnplayed, isSameSuitConsecutive, tileSuit,
     isOurTurn, isDiscardCycle, isOtherDiscard, hasGameEnded,
     tpIsDiscardTile, tpIsDiscardResponse, addDiscard,
-    getInHandGngPlays, markDiscardInProgress,
+    getInHandGngPlays, markDiscardInProgress, maxDiscardPlayRank,
     clearDiffPlayed, hasAddedFlower, hasAddedSet,
     rcvSitAt, rcvPlayers, rcvHands, rcvUnplayed, rcvCurrent,
     rcvTilePlay, rcvTPlayRes, rcvScoring, rcvScoreHist,
