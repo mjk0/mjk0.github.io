@@ -21,6 +21,10 @@ function get(k,def) { return sessionStorage.getItem(k) || def || sess_k[k] }
 function set(k,v) { return sessionStorage.setItem(k,v) }
 function rm(k) { return sessionStorage.removeItem(k) }
 
+function lget(k,def) { return localStorage.getItem(k) || def }
+function lset(k,v) { return localStorage.setItem(k,v) }
+function lrm(k) { return localStorage.removeItem(k) }
+
 function init(WsOptions) {
     // Initialize from optional URL parameters
     initFromUrlParam('mj-ar');
@@ -37,5 +41,5 @@ function init(WsOptions) {
 }
 
 export {
-    init, get, set, initFromUrlParam, rm,
+    init, get, set, initFromUrlParam, rm, lget, lset, lrm,
 };

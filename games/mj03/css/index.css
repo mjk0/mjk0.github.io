@@ -111,7 +111,7 @@ button.inviteBtn { background-color: darkblue; }
 .play-lg { font-size: xx-large !important; }
 td.bordbot { border-bottom: black solid 2px; }
 .userspanel {
-    display: none;
+    display: none; max-height: 50vh; overflow: auto;
     background-color: white; padding: .2em;
 }
 #diaInvite { width: max-content; max-height: 85%; }

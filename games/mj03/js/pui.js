@@ -173,7 +173,9 @@ function discardsSummary() {
     set_id_visibility('deck', isDeckVisible);
 }
 function discardsAsSeparate() {
-    return (document.querySelector('input[name="disradio"]:checked').value ||0)>0;
+    const v = document.querySelector('input[name="disradio"]:checked').value;
+    if (v) {COpts.lset("mj-discards-separated", v);}
+    return (v ||0)>0;
 }
 const action2Long = {"-":null, w:"woo", g:"gng", p:"po", c:"cha"};
 
@@ -611,7 +613,7 @@ function refreshScoring() {
     // Game running total points
     let tr_pts = document.getElementById("pts-tot");
     for (let i = 0; i < 4; ++i) {
-        tr_pts.childNodes[i+1].innerHTML = PSt.scoring.score[seatPlayerName(i)] || "--";
+        tr_pts.childNodes[i+1].innerHTML = seatToTotPts(i);
     }
 }
 function tableRow(arr, thd) {
@@ -626,6 +628,10 @@ function clearGameEndScoring() {
     refreshTileOnId('last-tile', "ZT"); // empty tile until real woo
     // Remove win animation
     PUnpl.rmClass(document.getElementById("score-pts"), "ptsWin");
+}
+function seatToTotPts(i) {
+    const name = seatPlayerName(i);
+    return (name in PSt.scoring.score? PSt.scoring.score[name].toString() : "--");
 }
 
 // Display shared dialog for score history
@@ -721,6 +727,13 @@ function init(opts) {
     //PUnpl.updateGrid(); // calc grid sizes
     let odiscard = document.getElementById('other-discard');
     odiscard.addEventListener("animationend", onDiscardAnimEnd);
+
+    // Discards summary dialog: remember last setting
+    const v = COpts.lget("mj-discards-separated");
+    if (v) {
+        document.getElementById("dall").checked = (v == "0");
+        document.getElementById("dsep").checked = (v != "0");
+    }
 }
 
 export {
