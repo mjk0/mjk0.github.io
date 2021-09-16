@@ -9,7 +9,7 @@ use { width: 100%; height: 100%; }
 td.tile-m, td.tile-lg { display: contents; }
 #discardRecent { width: 5.6vh; height: 3.733vh; max-width: 5.4vw; max-height: 3.6vw; margin: 0 0 0.1em 0; }
 #discardText { vertical-align: top; line-height: 2.5em; font-size: 50%;}
-.unplayed-lg { width: 98vw; height: 26vh; }
+.unplayed-lg { width: 100%; height: 26vh; }
 .tile-anchor { position: relative; }
 .tile-mv { position: absolute; top: 1vh; left: 9vh; cursor: move; }
 .tile-out { position: absolute; top: 1vh; left: 1vh; }
@@ -117,6 +117,7 @@ fieldset.tile-mt, #deck { padding: 0.2em 0.4em 0em 0.3em;}
 .dropdown-content { background-color: #ee6e73; }
 .dropdown-content li > a { color: white; }
 i.material-icons.right.helpdd { margin-left: 0px; }
+#chatWindow { width: 25vw; height: 99%; box-shadow: 0 0 0.5em 0.4em #ee6e73; }
 .chatMsg {
     animation-name: chatMsg;
     animation-duration: 1s;
@@ -128,16 +129,14 @@ i.material-icons.right.helpdd { margin-left: 0px; }
     from {color: greenyellow;}
     to {color: yellowgreen;}
 }
-#chatWindow {
-    position: absolute; top: 0; left: 0; bottom: 0; right: 0;
-    background-color: bisque; width: 100%; box-shadow: 0 0 1pt 1pt red;
-}
-.chatH { text-align: left; display: inline-block; width: 100%;
+.chatW { background-color: bisque; border-left: 2px solid white; }
+.chatH { height: 2em; width: 100%; display: inline-block;
     background-color: yellowgreen; color: black;
+    font-size: 2vmin; text-align: left;
 }
 .chatH a { cursor: pointer; }
-.chatE { background-color: brown; }
-#chatLog { display: block; overflow: auto; height: 20vh; }
+.chatE { background-color: brown; height: 3em; }
+.chatLog { height: calc(100% - 6em); overflow: auto; }
 .chatBubble, .w4Bubble {
     border-radius: 0.1em; box-shadow: 0 0 1pt 1pt black;
     font-size: 2vmin;
@@ -165,7 +164,8 @@ i.material-icons.right.helpdd { margin-left: 0px; }
 .gameTableDir { padding: 0px 0.3em; box-shadow: 0 0 1pt 1pt; border-radius: 5px; }
 th.gameSectionTitle { text-align: left; font-style: italic; }
 .play-lg { font-size: xx-large !important; }
-#sidenav-r { width: 30em; max-width: 50%; }
+#sidenav-m { width: 30em; max-width: 50%; }
+#sidenav-c { width: 20em; max-width: 80%; }
 .top-info {
     background-color: burlywood; color: black;
     border: white solid 2px; border-radius: 10px;
@@ -334,9 +334,6 @@ legend { font-size: 80%; }
     to {content: "抓牌"}
 }
 @keyframes flash2 { from {opacity: 0.0} to {opacity:1}}
-.animYourPlay {
-    animation: fadeIn 4s cubic-bezier(0.95, 0.05, 0.795, 0.035), flash 4s ease 4s infinite;
-}
 #hand svg.slideOutUp {
     animation-duration: 100ms;
 }
@@ -428,26 +425,24 @@ tr#pts-tot > td { background-color: #859c5e; color: white; }
 #shutdown { background-color: gold; text-align: center; border: 1vw solid red; }
 #shutdown p { font-size: 3vw; }
 #shutdown i { vertical-align: text-bottom; font-size: 4vw; }
-@keyframes nodeReady {  
-    from { outline-color: #fff; }
-    to { outline-color: #000; }  
-}
-div.on-ready {
-    animation-duration: 0.01s;
-    animation-name: nodeReady;
-}
 #unp-sort { position: absolute; bottom: -1em; right: 0;
     width: fit-content; line-height: 0.5em; padding: 0 0.2em;
     background-color: darkgreen;
     box-shadow: 0 0 1pt 1pt lightgreen; border-radius: 0.4em;
 }
 #unp-auto-sort:checked + span:not(.lever):before {
-    top: -4px; left: -5px; width: 12px; height: 22px;
+    top: -4px; left: -5px; width: 0.7em; height: 1.4em;
     border-right: 2px solid lightgreen;
     border-bottom: 2px solid lightgreen;
     transform: rotate(40deg);
     backface-visibility: hidden;
     transform-origin: 100% 100%;
+}
+#unp-sort span {
+    height: 1.5em;
+    line-height: 1.5em;
+    font-size: 1em;
+    padding-left: 2em;
 }
 .add-pulse {
     box-shadow: 0 0 0 0 rgba(20,13,250, 1);

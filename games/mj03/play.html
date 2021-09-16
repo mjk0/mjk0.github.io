@@ -29,36 +29,72 @@
         <li><a href="help.html" target="_blank">Game Help</a></li>
     </ul>
     <ul id="dropdown_g" class="dropdown-content">
-        <li><a onclick="PUI.setPlayView('tileplay')">Play Sel</a></li>
-        <li><a onclick="PUI.setPlayView('gameend')">View - gameend</a></li>
+        <li><a onclick="PMj.reqScoreHist()">Scores</a></li>
+        <li><a onclick="PMj.reqDiscardHist()">Discards</a></li>
     </ul>
     <nav><div class="nav-wrapper">
             <a class="brand-logo left">Mahjong Beta<i id="ws-status"
                     class="material-icons right">sync_problem</i></a>
-            <a data-target="sidenav-r"
+            <a data-target="sidenav-m"
                 class="sidenav-trigger right hide-on-med-and-up"><i
                 class="material-icons">menu</i></a>
             <ul class="right">
-                <li><a onclick="PUI.chatShow(-1)"><i id="chat-icon"
-                    class="material-icons">chat</i></a></li>
+                <li class="hide-on-small-only"
+                    ><a onclick="PUI.chatShow(-1)"><i
+                    class="material-icons chat-icon">chat</i></a></li>
+                <li class="hide-on-med-and-up"
+                    ><a data-target="sidenav-c"
+                    class="sidenav-trigger right"><i
+                    class="material-icons chat-icon">chat</i></a></li>
                 <li><a href="./">Stand</a></li>
-                <li><a class="dropdown-trigger hide-on-small-only"
+                <li class="hide-on-small-only"
+                    ><a class="dropdown-trigger"
                      data-target="dropdown_h">Help<i
                     class="material-icons right helpdd">arrow_drop_down</i></a></li>
-                <li><a class="dropdown-trigger hide-on-small-only"
+                <li class="hide-on-small-only"
+                    ><a class="dropdown-trigger"
                     data-target="dropdown_g"><i
                     class="material-icons">more_vert</i></a></li>
             </ul>
         </div>
     </nav>
-    <ul id="sidenav-r" class="sidenav sidenav-close">
+    <!-- Chat slide-out for small screens -->
+    <div id="sidenav-c" class="sidenav chatW">
+        <div class="chatH"><span>Messages</span>
+            <a class="right sidenav-close"><i
+            class="material-icons">close</i></a>
+        </div>
+        <div class="chatLog"></div>
+        <div class="chatE">
+            <form onsubmit="return PMj.chatsubmit(event)">
+                <input type="text" id="cstext"
+                placeholder="type message">
+            </form>
+        </div>
+    </div>
+    <ul id="sidenav-m" class="sidenav sidenav-close">
         <li><a href="rules.html" target="_blank">Rules</a></li>
         <li><a href="help.html" target="_blank">Game Help</a></li>
         <li class="divider"></li>
-        <li><a onclick="alert('trick 1')">Trick 1</a></li>
-        <li><a onclick="alert('trick 2')">Trick 2</a></li>
+        <li><a onclick="PMj.reqScoreHist()">Scores</a></li>
+        <li><a onclick="PMj.reqDiscardHist()">Discards</a></li>
     </ul>
 
+    <!-- Chat panel for large screens -->
+    <div id="chatWindow" class="right chatW hide-me">
+        <div class="chatH"><span>Messages</span>
+            <a class="right"
+            onclick="PUI.chatShow(0)"><i
+            class="material-icons">close</i></a>
+        </div>
+        <div class="chatLog"></div>
+        <div class="chatE">
+            <form onsubmit="return PMj.chatsubmit(event)">
+                <input type="text" id="cptext"
+                placeholder="type message">
+            </form>
+        </div>
+    </div>
     <div class="flex-container greenStripes">
         <div class="box box-2 row w100p">
             <!-- Left column -->
@@ -243,23 +279,7 @@
             <!-- Right column -->
             <div class="col s3">
                 <div class="flex-container">
-                    <div class="box box-2">
-                        <!-- Chat window -->
-                        <div id="chatWindow" class="hide-me">
-                            <div class="chatH"><span>Messages</span>
-                                <a class="right"
-                                onclick="PUI.chatShow(0)"><i
-                                class="material-icons">close</i></a>
-                            </div>
-                            <div id="chatLog"></div>
-                            <div class="chatE">
-                                <form onsubmit="return PMj.chatsubmit(event)">
-                                    <input type="text" id="chattext"
-                                    placeholder="type message">
-                                </form>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="box box-2"></div>
                     <div class="box box-svg-m tile-anchor">
                         <table id="handp3" class="table-svg-m"><tr>
                             <td id="tilesp3">flower</td>
@@ -299,7 +319,7 @@
                     </div>
                 </div>
                 <div class="box box-svg-lg">
-                    <div id="unplayed" class="unplayed-lg tile-anchor on-ready">
+                    <div id="unplayed" class="unplayed-lg tile-anchor">
                         <div id="unp-sort"><label class="orange-text"><input id="unp-auto-sort"
                             type="checkbox" value="sort" onclick="PUnpl.unpAutoSortClicked()"
                             checked><span>auto sort tiles</span></label>

@@ -9,11 +9,7 @@ let UI = {
     waitOn: {'why':'why', 'who':[]},
 };
 let unpBB = null; // DIV#unplayed getBoundingClientRect()
-
-function onResize() {
-    // Refresh unplayed grid if it's visible
-    if (is_visible("unplayed")) PUnpl.refreshGrid();
-}
+var unpResizeObserver; // init after DOM ready
 
 // Refresh our unplayed tiles
 function refreshUnplayed() {
@@ -22,13 +18,15 @@ function refreshUnplayed() {
     }
     PUnpl.refreshUnplayed();
 }
-function onReadyUnplayed() { // called once unplayed DOM ready
-    //this.classList.remove("on-ready");
-    let bb = document.getElementById("unplayed").getBoundingClientRect();
-    //console.log('completed on-ready anim, unplayed rect: ', bb);
-    if (bb.width != unpBB.width || bb.height != unpBB.height) {
-        console.log("unplayed size change, re-grid");
-        PUnpl.refreshGrid();
+function onResizeUnplayed() { // called once unplayed DOM ready
+    if (is_visible("unplayed")) {
+        let bb = document.getElementById("unplayed").getBoundingClientRect();
+        //console.log('unplayed rect: ', bb, unpBB);
+        if (bb.width != unpBB.width || bb.height != unpBB.height) {
+            //console.log("unplayed size change, re-grid", bb, unpBB);
+            unpBB = bb;
+            PUnpl.refreshGrid();
+        }
     }
 }
 
@@ -56,26 +54,42 @@ function showWsOn(bool) {
      = (bool ? good : 'sync_problem');
 }
 
-// Show the chat window, and clear any chat msg animation
+// Show the chat window for large screens, and clear any chat msg animation
 function chatShow(boolish) {
-    document.getElementById("chat-icon").classList.remove("chatMsg");
-    set_id_visibility('chatWindow', boolish);
+    chatShush();
+    set_id_visibility('chatWindow', boolish); // large screen panel
+    if (is_visible('chatWindow')) {
+        document.getElementById("cptext").focus();
+    }
 }
+function chatShush() { allOfClass("chat-icon", e => e.classList.remove("chatMsg"));}
+function chatSliderDiv() { return document.getElementById('sidenav-c');}
+function isChatVisible() {
+    return M.Sidenav.getInstance(chatSliderDiv()).isOpen || is_visible('chatWindow');
+}
+function chatSliderOnOpen() {
+    chatShush();
+    document.getElementById("cstext").focus();
+}
+function allOfClass(cl, f) {
+    let list = document.getElementsByClassName(cl);
+    for (let e of list) { f(e); }
+}
+
 function chatIncoming(text) {
-    if (!is_visible('chatWindow')) {
-        document.getElementById("chat-icon").classList.add("chatMsg");
+    if (!isChatVisible()) {
+        allOfClass("chat-icon", e => e.classList.add("chatMsg"));
     }
     let seat =  (/^\d\//.test(text)? parseInt(text.charAt(0)) : -1);
     let t2 = (seat >= 0 ? text.substring(2) : text);
-    let p = document.createElement("p");
-    p.classList.add('seat'+seat, 'chatBubble');
-    if (seat == PSt.ourSeat) {
-        p.classList.add('right');
-    }
-    p.innerHTML = t2;
-    let cl = document.getElementById('chatLog');
-    cl.appendChild(p);
-    cl.scrollTop = cl.scrollHeight; // scroll to bottom if needed
+    allOfClass("chatLog", e => {
+        let p = document.createElement("p");
+        p.classList.add('seat'+seat, 'chatBubble');
+        if (seat == PSt.ourSeat) { p.classList.add('right'); }
+        p.innerHTML = t2;
+        e.appendChild(p);
+        e.scrollTop = e.scrollHeight; // scroll to bottom if needed
+    });
 }
 
 // Upon being granted a seat (rcvSitAt), update all seat directions
@@ -733,18 +747,18 @@ function init(opts) {
     $('#shutdown').modal({'dismissible': false});
 
     // Initialize drop-down menus
-    let elems = document.querySelectorAll('#sidenav-r');
+    let elems = document.querySelectorAll('.sidenav');
     M.Sidenav.init(elems, { edge: 'right' });
+    M.Sidenav.init(chatSliderDiv(), { edge: 'right', onOpenEnd: chatSliderOnOpen });
     $(".dropdown-trigger").dropdown({ coverTrigger: false }); // nav-bar drop-down
 
     PUnpl.init(opts);
     setPlayView(UI.view);
-    // Allow grid refresh on window resize and unplayed render done
-    window.addEventListener("resize", onResize);
+    // Allow grid refresh on unplayed resize
     let unp = document.getElementById("unplayed");
     unpBB = unp.getBoundingClientRect(); // on change, refreshGrid
-    unp.addEventListener("animationend", onReadyUnplayed);
-    //PUnpl.updateGrid(); // calc grid sizes
+    unpResizeObserver = new ResizeObserver(onResizeUnplayed).observe(unp);
+
     let odiscard = document.getElementById('other-discard');
     odiscard.addEventListener("animationend", onDiscardAnimEnd);
 

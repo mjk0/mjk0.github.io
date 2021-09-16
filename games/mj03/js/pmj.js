@@ -63,10 +63,19 @@ function rcvErr(data) {
 function rcvChat(data) {
     PUI.chatIncoming(data.text); // notify user of incoming chat message
 }
+// Submit event can be from either of 2 forms (small or large screen)
+// Check input field of both forms
 function chatsubmit(event) {
-    let chat = document.getElementById('chattext');
-    Ws.sendMsg({"action":"chat", "text": chat.value});
-    chat.value = '';
+    let v = '';
+    for (const n of ["cstext", "cptext"]) {
+        if (event.target.elements[n]) { // null if not present
+            if (event.target.elements[n].value) {
+                v += event.target.elements[n].value;
+                event.target.elements[n].value = '';
+            }
+        }
+    }
+    Ws.sendMsg({"action":"chat", "text": v});
     event.preventDefault();
 }
 

@@ -265,9 +265,11 @@ function gridAutoPlacement() {
     let x=0, y=0;
     let coords = []; // each entry is {x,y}
     let u = PSt.unplayed.full;
+    let xg = grid.nw * grid.nh - u.length; // extra grid spots available
     for (let i = 0; i < u.length; ++i) {
-        if (i > 0 && !PSt.isSameSuitConsecutive(u, i-1)) {
+        if (i > 0 && xg > 0 && !PSt.isSameSuitConsecutive(u, i-1)) {
             x += 1; // inter-suit gap
+            xg -= 1;
         }
         if (x >= grid.nw) {
             y += Math.floor(x/grid.nw); // wrap to next row
@@ -368,6 +370,15 @@ function leftShiftGridRow(allrows, xy) {
 
 // When the display area resizes, re-position tiles as needed
 function refreshGrid() {
+    if (domUnpAutoSort().checked) {
+        // Since auto-sort is enabled, update grid then full update of unplayed
+        grid = updateGrid();
+        refreshUnpFull();
+    } else {
+        refreshGridInPlace();
+    }
+}
+function refreshGridInPlace() {
     let allrows = discoverUnplayedInGrid();
     let oldgrid = grid; // remember old grid bounds
     grid = updateGrid();
