@@ -52,8 +52,14 @@ function toGridXY(tgt, xy) {
     return tgtleft;
 }
 function tileLeftTop(e) {
-    const cY = e.touches ? e.touches[0].clientY : e.clientY;
-    const cX = e.touches ? e.touches[0].clientX : e.clientX;
+    const cY = e.touches && e.touches[0] ? e.touches[0].clientY
+        : (e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientY
+        : e.clientY
+    );
+    const cX = e.touches && e.touches[0] ? e.touches[0].clientX
+        : (e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientX
+        : e.clientX
+    );
     let left = mdown.left + (cX - mdown.cx);
     let top = mdown.top + (cY - mdown.cy);
     if (left > grid.leftmax) left = grid.leftmax;
