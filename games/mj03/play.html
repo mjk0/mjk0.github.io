@@ -320,9 +320,12 @@
                 </div>
                 <div class="box box-svg-lg">
                     <div id="unplayed" class="unplayed-lg tile-anchor">
-                        <div id="unp-sort"><label class="orange-text"><input id="unp-auto-sort"
+                        <div id="unp-sort" class="checkem"><label
+                            class="orange-text"><input id="unp-auto-sort"
                             type="checkbox" value="sort" onclick="PUnpl.unpAutoSortClicked()"
                             checked><span>auto sort tiles</span></label>
+                            <a class="label-cc" onclick="PUnpl.unpAutoSortOpts()"><i
+                            class="material-icons">settings</i></a>
                         </div>
                         <svg id="OutTgt" class="tile-lg tile-ref"><use href="media/stiles.svg#OutTgt"/></svg>
                         <svg id="DiscardTgt" class="tile-lgp tile-ref"><use href="media/stiles.svg#SymDTgt"/></svg>
@@ -387,6 +390,27 @@
         <fieldset id='discards2' class="tile-mt hide-me"></fieldset>
         <fieldset id='discards3' class="tile-mt hide-me"></fieldset>
         <fieldset id="deck"></fieldset></div>
+        <div class="modal-footer">
+            <a class="modal-close btn-score btn-r">Close</a>
+        </div>
+    </div>
+
+    <!-- Modal settings -->
+    <div id="settings" class="modal checkem">
+        <fieldset><legend>Tile Auto-Sort Options</legend>
+            <p>
+                <label>
+                    <input id="gapsuit" type="checkbox" checked="checked"
+                    onclick="PUnpl.unpAutoSortOptsClicked()" />
+                    <span>Leave a gap between suits</span>
+                </label><br>
+                <label id="gapwords_lbl" class="in1">
+                    <input id="gapwords" type="checkbox" checked="checked"
+                    onclick="PUnpl.unpAutoSortOptsClicked()" />
+                    <span>Separate winds and other words</span>
+                </label>
+            </p>
+        </fieldset>
         <div class="modal-footer">
             <a class="modal-close btn-score btn-r">Close</a>
         </div>

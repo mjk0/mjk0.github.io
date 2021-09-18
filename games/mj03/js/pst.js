@@ -69,8 +69,9 @@ function setUnplayed(arr) {
     unplayed.full = arr;
 }
 
-function isSameSuitConsecutive(arr, i) {
-    return (tileSuit(arr[i]) == tileSuit(arr[i+1]))
+function isSameSuitConsecutive(arr, i, wnwTogether) {
+    const wt = wnwTogether || false; // wind & non-wind not together by default
+    return (tileSuit(arr[i]) == tileSuit(arr[i+1]) || wt && tileSuit(arr[i]) == 'W')
 }
 function tileSuit(tile) {
     if (tile == "CN" || tile == "FA" || tile == "BB") {

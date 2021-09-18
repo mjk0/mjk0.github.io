@@ -1,5 +1,6 @@
 "use strict";
 import * as PSt from './pst.js';
+import * as COpts from './copts.js';
 
 let UiOptions = null; // UI action callbacks
 let mdown = {
@@ -272,8 +273,10 @@ function gridAutoPlacement() {
     let coords = []; // each entry is {x,y}
     let u = PSt.unplayed.full;
     let xg = grid.nw * grid.nh - u.length; // extra grid spots available
+    const sgap = document.getElementById('gapsuit').checked;
+    const wt = !document.getElementById('gapwords').checked; // words together?
     for (let i = 0; i < u.length; ++i) {
-        if (i > 0 && xg > 0 && !PSt.isSameSuitConsecutive(u, i-1)) {
+        if (i > 0 && xg > 0 && sgap && !PSt.isSameSuitConsecutive(u, i-1, wt)) {
             x += 1; // inter-suit gap
             xg -= 1;
         }
@@ -439,6 +442,25 @@ function unpAutoSortClicked() {
         rmPlayedAndUnplayedAnims();
     }
 }
+function unpAutoSortOpts() {
+    $('#settings').modal('open');
+}
+function unpAutoSortOptsSuitgap() {
+    const suitgap = document.getElementById('gapsuit').checked;
+    if (suitgap) {
+        document.getElementById('gapwords_lbl').classList.remove('disabled');
+    } else {
+        document.getElementById('gapwords_lbl').classList.add('disabled');
+    }
+    return suitgap;
+}
+function unpAutoSortOptsClicked() {
+    const suitgap = unpAutoSortOptsSuitgap();
+    COpts.lset('mj-sort-gapsuit', suitgap? "1":"0");
+    const wordsgap = document.getElementById('gapwords').checked;
+    COpts.lset('mj-sort-gapwords', wordsgap? "1":"0");
+    unpAutoSortClicked();
+}
 
 // Partial or full update of unplayed tile positions
 function refreshUnplayed() {
@@ -583,10 +605,17 @@ function init(opts) {
     let ct = document.getElementsByClassName('greenStripes')[0];
     parentMvListeners(ct);
     grid = updateGrid(); // initialize the unplayed tiles grid
+
+    // Unplayed auto-sort: remember previous settings
+    ["gapsuit", "gapwords"].forEach(k => {
+        const v = COpts.lget("mj-sort-"+k);
+        if (v) { document.getElementById(k).checked = (v == "1"); }
+    });
+    unpAutoSortOptsSuitgap(); // gray dependent if needed
 }
 
 export {
     init, refreshGrid, refreshUnplayed, isDiscardUnpSub, deselectAll,
-    svgToTileString, svgSetTileString, rmClass,
-    domUnpAutoSort, rmPlayedAndUnplayedAnims, unpAutoSortClicked,
+    svgToTileString, svgSetTileString, rmClass, rmPlayedAndUnplayedAnims,
+    domUnpAutoSort, unpAutoSortClicked, unpAutoSortOpts, unpAutoSortOptsClicked,
 }

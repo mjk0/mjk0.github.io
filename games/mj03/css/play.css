@@ -425,12 +425,12 @@ tr#pts-tot > td { background-color: #859c5e; color: white; }
 #shutdown { background-color: gold; text-align: center; border: 1vw solid red; }
 #shutdown p { font-size: 3vw; }
 #shutdown i { vertical-align: text-bottom; font-size: 4vw; }
-#unp-sort { position: absolute; bottom: -1em; right: 0;
-    width: fit-content; line-height: 0.5em; padding: 0 0.2em;
-    background-color: darkgreen;
+#unp-sort { position: absolute; bottom: -1em; right: 10px;
+    font-size: 1.5vmin; width: fit-content; line-height: 0.5em;
+    background-color: darkgreen; padding: 0 0.2em;
     box-shadow: 0 0 1pt 1pt lightgreen; border-radius: 0.4em;
 }
-#unp-auto-sort:checked + span:not(.lever):before {
+.checkem input[type="checkbox"]:checked + span:not(.lever):before {
     top: -4px; left: -5px; width: 0.7em; height: 1.4em;
     border-right: 2px solid lightgreen;
     border-bottom: 2px solid lightgreen;
@@ -438,12 +438,15 @@ tr#pts-tot > td { background-color: #859c5e; color: white; }
     backface-visibility: hidden;
     transform-origin: 100% 100%;
 }
-#unp-sort span {
+.checkem [type="checkbox"] + span:not(.lever) {
     height: 1.5em;
     line-height: 1.5em;
     font-size: 1em;
     padding-left: 2em;
 }
+.checkem label { font-size: 1em; }
+.checkem label.disabled { opacity: 0.5; }
+i.material-icons { font-size: 100%; vertical-align: middle; }
 .add-pulse {
     box-shadow: 0 0 0 0 rgba(20,13,250, 1);
     border-radius: 15%;
@@ -507,3 +510,12 @@ div.cc-selector { display: inline-block;}
        -moz-filter: brightness(1.2) grayscale(.5) opacity(.9);
             filter: brightness(1.2) grayscale(.5) opacity(1);
 }
+#settings { background-color: bisque;
+    font-size: 3vmin; border: 0.3em solid teal;
+}
+#settings fieldset { border-radius: 0.5em; color: darkslateblue }
+#settings label { color: black; font-size: 0.8em; }
+#settings div.modal-footer {
+    background-color: beige; height: auto; font-size: 0.7em;
+}
+.in1 { margin-left: 2em; }
