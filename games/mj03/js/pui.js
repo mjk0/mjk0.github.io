@@ -69,7 +69,7 @@ function isChatVisible() {
 }
 function chatSliderOnOpen() {
     chatShush();
-    document.getElementById("cstext").focus();
+    //document.getElementById("cstext").focus();
 }
 function allOfClass(cl, f) {
     let list = document.getElementsByClassName(cl);
