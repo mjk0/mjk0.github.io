@@ -757,7 +757,12 @@ function init(opts) {
     // Allow grid refresh on unplayed resize
     let unp = document.getElementById("unplayed");
     unpBB = unp.getBoundingClientRect(); // on change, refreshGrid
-    unpResizeObserver = new ResizeObserver(onResizeUnplayed).observe(unp);
+    if (window.ResizeObserver) {
+        unpResizeObserver = new ResizeObserver(onResizeUnplayed).observe(unp);
+    } else {
+        unpResizeObserver = new ResizeObserverPolyfill.ResizeObserver(onResizeUnplayed).observe(unp);
+        //chatIncoming('Using ResizeObserverPolyfill');
+    }
 
     let odiscard = document.getElementById('other-discard');
     odiscard.addEventListener("animationend", onDiscardAnimEnd);

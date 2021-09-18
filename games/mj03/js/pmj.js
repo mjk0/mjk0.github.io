@@ -241,6 +241,7 @@ function uicbDiscard(tile) {
 
 // Function that executes jQuery code after page load is complete
 $(document).ready(function(){
+  try {
     COpts.init(WsOptions); // modifies serverUrl if needed
     PSt.init();
     wsUuidInit();
@@ -254,6 +255,12 @@ $(document).ready(function(){
 
     // Initiate login and seating at running game
     loginAndSit();
+  } catch (err) {
+    const viewinit = document.getElementById("viewinit");
+    let div = document.createElement("div");
+    div.innerText = err.message;
+    viewinit.appendChild(div);
+  }
 });
 
 export {
