@@ -7,7 +7,7 @@ use { width: 100%; height: 100%; }
 .tile-m, .tile-m svg { width: 3.6vh; height: 4.8vh; max-width: 3.6vw; max-height: 4.8vw; }
 .tile-s, .tile-s svg { width: 2.8vh; height: 3.733vh; max-width: 2.7vw; max-height: 3.6vw; }
 td.tile-m, td.tile-lg { display: contents; }
-#discardRecent { width: 5.6vh; height: 3.733vh; max-width: 5.4vw; max-height: 3.6vw; margin: 0 0 0.1em 0; }
+#discardRecent { width: 8.33vh; height: 4vh; max-width: 8.33vw; max-height: 4vw; margin: 0 0 0.1em 0; }
 #discardText { vertical-align: top; line-height: 2.5em; font-size: 50%;}
 .unplayed-lg { width: 100%; height: 26vh; }
 .tile-anchor { position: relative; }
@@ -362,7 +362,7 @@ legend { font-size: 80%; }
 @media only screen and (max-width: 600px) {
     #diaUndo { font-size: 3vmin; }
 }
-#rdy0, #rdy1, #rdy2, #rdy3 { position: absolute; right: 0; bottom: -8px; }
+#rdy0, #rdy1, #rdy2, #rdy3 { position: absolute; right: 0.4em; bottom: -8px; }
 #rdy0 svg { width: 0.7em; height: 0.9em; }
 #rdy1 svg, #rdy2 svg, #rdy3 svg { width: 1.4em; height: 1.8em; }
 .rdyFlagAnim {
@@ -370,8 +370,8 @@ legend { font-size: 80%; }
     animation-direction: alternate; animation-duration: 0.4s;
 }
 @keyframes opacityAnim {
-    from {opacity: 1;}
-    to {opacity: 0;}
+    from {opacity: 1; transform: scale(1.5);}
+    to {opacity: 0; transform: scale(1);}
 }
 table.diatable { position: relative; }
 .diaTable thead th { position: sticky; top: 0; }

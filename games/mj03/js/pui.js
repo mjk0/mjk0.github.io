@@ -402,7 +402,7 @@ function refreshDiscardHistBtn() {
     // Refresh recent discards on discard history button
     let oid = document.getElementById('discardRecent');
     PSt.recentDiscards.forEach((t,i) => {
-        if (i<4) PUnpl.svgSetTileString(oid, t, i);
+        if (i<4) PUnpl.svgSetTileString(oid, t, i+1); // skip first of 5
     });
 }
 // Refresh the SVG use link to show the given tile

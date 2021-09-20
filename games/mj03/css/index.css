@@ -141,8 +141,16 @@ th.shDate { font-size: 70%; }
 .svg-icon svg, svg.svg-icon, img.svg-icon {
     height:1.2em; width:1.2em; vertical-align: middle;
 }
+.iem { height:1.2em; vertical-align: middle; }
 .btn-small img.svg-icon { margin: 0 -0.7em 0 0.2em; }
 button.btn-small {
     height: 2.4em; line-height: 2.4em;
     font-size: 0.9em;
 }
+.clearr { clear: right; }
+figure { text-align: center;}
+.min-content { width: min-content;}
+.orangered-text { color: orangered; }
+.h-signin { width: 33vw; height: 18.7373vw; margin-left: 1em; }
+.h-lobby { width: 33vw; height: 17.76vw; margin-left: 1em; }
+.h-invite { width: 33vw; height: 11.536vw; margin-left: 1em; }
