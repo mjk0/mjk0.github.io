@@ -9,126 +9,297 @@
     <link type="text/css" rel="stylesheet" href="css/index.css">
 </head>
 <body>
-<div class="row">
-    <div class="logo col s12">
-        <div class="title">Mahjong Beta <i class="material-icons icon-inherit">help</i></div>
-        <div class="j-divider"></div>
-    </div>
-    <div class="col s12">
-        <h4>Overview</h4>
-        <p>This is a 4-player Mahjong game.
-            After selecting your username, you will be able to join any open game,
-            or create a private invitational game.
-            During gameplay, unfilled seats will be filled by robot players.
-        </p>
-        <h4>Sign-In</h4>
-        <div class="right min-content">
-            <figure>
-                <img class="h-signin" src="media/h-SignIn.jpg">
-                <figcaption><i>Fig. 1: Sign-in screen</i></figcaption>
-            </figure>
-            <figure>
-                <img class="h-lobby" src="media/h-Lobby.jpg">
-                <figcaption><i>Fig. 2: Lobby view of players,
-                    games & past series</i></figcaption>
-            </figure>
-        </div>
-        <p>Begin by typing a username in (A).
-            You may select any username that is not already reserved.
-            Your username will identify you in the lobby, and in games
-            once play starts.
-        </p>
-        <p>If you would like to reserve your username so that no one else can use it,
-            add your email address in field (B).  Your email address acts as
-            your password.
-        </p>
-        <h4>Lobby Game Choices</h4>
-        <p>Each Mahjong game seats up to 4 players.
-            Games can be either <i>Public</i>, or <i>Invitational</i>.
-            The difference is that invitational games are private, and only
-            players who are invited may join, whereas public games are
-            open to anyone to join.
-        </p>
-        <p>All players who are currently connected to the server are shown
-            in the player panel (Fig 2-E).
-        </p>
-        <h5>Joining A Public Game</h5>
-        <p>The game server will ensure that there are always empty games available.
-            In the <i>Public Games</i> section (Fig 2-C), wherever you
-            see a button labelled as <b>SIT</b>,
-            <img class="iem" src="media/h-SIT.png" style="width: 1.9em;">,
-            that means that the seat is open, and you may sit there by clicking
-            the button.
-        </p>
-        <p>As soon as one player is seated, a
-            <img class="iem" src="media/h-Start.png" style="width: 1.3em;">
-            start button will appear
-            in the <i>Status</i> column.  If you are not waiting for others
-            to join, you can click the start button at any time.  Empty seats
-            will be automatically filled by robot players.
-        </p>
-        <p>If you see a game with <b>JOIN</b> buttons,
-            <img class="iem" src="media/h-JOIN.png" style="width: 2.43em;">,
-            this means the game has already started, but still has open seats.
-            Clicking on any of the join buttons will immediately take you
-            into that game, where you will replace a robot player.
-        </p>
-        <h5>Creating Your Own Invitational Game</h5>
-        <figure class="right min-content clearr">
-            <img class="h-invite" src="media/h-Invite.png">
-            <figcaption><i>Fig. 3: Invitational: New Game</i></figcaption>
+<div class="logo">
+    <div class="title">Mahjong Beta <i class="material-icons icon-inherit">help</i></div>
+    <div class="j-divider"></div>
+</div>
+<div>
+    <h4>Overview</h4>
+    <p>This is a 4-player Mahjong game.
+        After selecting your username, you will be able to join any open game,
+        or create a private invitational game.
+        During gameplay, unfilled seats will be filled by robot players.
+    </p>
+    <h4>Sign-In</h4>
+    <div class="right min-content">
+        <figure>
+            <img class="h-signin" src="media/h-SignIn.jpg">
+            <figcaption><i>Fig. 1: Sign-in screen</i></figcaption>
         </figure>
-        <p>
-            You can create an invitational game by clicking the <b>NEW GAME</b>
-            button (Fig 2-D).  You will be listed as the owner of
-            a new game with 4 open seat as shown in (Fig 3-D2),
-            and you will have the option of inviting other players to your game.
-            Only the owner and invited players can see the invitational game.
-        </p>
-        <h5>Resuming A Game Series</h5>
-        <p>
-            A game series means that the selection of dealer, wind,
-            and scoring will run continuously through multiple games.
-            When an in-progress game ends in a win (Woo) or a stalemate
-            (because the deck runs out), the players may continue to the next
-            game, with dealer and wind advancing according to the game rules.
-        </p>
-        <p>When game-play has completed, and all players have left the game,
-            the server will save a record of the game series, so that the
-            players can continue the game at a later date.  The saved game
-            series will appear in the lower part of the <i>Invitational Games</i>
-            section, and be visible only to players who participated in the
-            game.
-        </p>
-        <p>Game series controls are shown in Fig 3:-D3-D4-D5.  In this example,
-            there are two saved game series: one that was last played
-            on 2021-09-12 (year-month-date), and another that was last played
-            on 2021-09-18.  Clicking on the date buttons in Fig 3-D4 will
-            show a summary of the running game scores.
-        </p>
-        <p>You can resume a past game series by clicking the resume icon, 
-            <img class="iem" src="media/h-resume.png" style="width: 1.786em;">,
-            found to the left of Fig 3-D3.
-            This creates an invitational game with all past participants
-            invited and listed as owners.  Below each <b>SIT</b> button, the name
-            of the most recent occupant of that seat will be shown.
-        </p>
-        <p>
-            Finally, if you are not interested in resuming a series, you can delete it from
-            the server by clicking the trash icon in Fig 3-D5.
-        </p>
-        <h5>Other Lobby Game Controls</h5>
-        <p>Fig 3-D6 shows additional controls for game owners.
-            The chart icon, <i class="material-icons iem teal-text">timeline</i>,
-            will show a summary of the scores of an in-progress
-            game series, but only once the first game has completed.
-            The orange stop icon,
-            <i class="material-icons iem orangered-text">cancel</i>,
-            will terminate a game, ejecting
-            any seated players.
-        </p>
-        <h4>Game Play</h4>
+        <figure>
+            <img class="h-lobby" src="media/h-Lobby.jpg">
+            <figcaption><i>Fig. 2: Lobby view of players,
+                games & past series</i></figcaption>
+        </figure>
     </div>
+    <p>Begin by typing a username in (A).
+        You may select any username that is not already reserved.
+        Your username will identify you in the lobby, and in games
+        once play starts.
+    </p>
+    <p>If you would like to reserve your username so that no one else can use it,
+        add your email address in field (B).  Your email address acts as
+        your password.
+    </p>
+    <p>After signing in, if you would like to sign in with a different username,
+        click on <i>Sign out</i>, as shown in Fig 2-F.
+    </p>
+    <h4>Lobby Game Choices</h4>
+    <p>Each Mahjong game seats up to 4 players.
+        Games can be either <i>Public</i>, or <i>Invitational</i>.
+        The difference is that invitational games are private, and only
+        players who are invited may join, whereas public games are
+        open to anyone to join.
+    </p>
+    <p>All players who are currently connected to the server are shown
+        in the player panel (Fig 2-E).
+    </p>
+    <h5>Joining A Public Game</h5>
+    <p>The game server will ensure that there are always empty games available.
+        In the <i>Public Games</i> section (Fig 2-C), wherever you
+        see a button labelled as <b>SIT</b>,
+        <img class="iem" src="media/h-SIT.png" style="width: 1.9em;">,
+        that means that the seat is open, and you may sit there by clicking
+        the button.
+    </p>
+    <p>As soon as one player is seated, a
+        <img class="iem" src="media/h-Start.png" style="width: 1.3em;">
+        start button will appear
+        in the <i>Status</i> column.  If you are not waiting for others
+        to join, you can click the start button at any time.  Empty seats
+        will be automatically filled by robot players.
+    </p>
+    <p>If you see a game with <b>JOIN</b> buttons,
+        <img class="iem" src="media/h-JOIN.png" style="width: 2.43em;">,
+        this means the game has already started, but still has open seats.
+        Clicking on any of the join buttons will immediately take you
+        into that game, where you will replace a robot player.
+    </p>
+    <h5>Creating Your Own Invitational Game</h5>
+    <figure class="right min-content clearr">
+        <img class="h-invite" src="media/h-Invite.png">
+        <figcaption><i>Fig. 3: Invitational: New Game</i></figcaption>
+    </figure>
+    <p>
+        You can create an invitational game by clicking the <b>NEW GAME</b>
+        button (Fig 2-D).  You will be listed as the owner of
+        a new game with 4 open seats as shown in (Fig 3-D2),
+        and you will have the option of inviting other players to your game.
+        Only the owner and invited players can see the invitational game.
+    </p>
+    <h5>Resuming A Game Series</h5>
+    <p>
+        A game series means that the selection of dealer, wind,
+        and scoring will run continuously through multiple games.
+        When an in-progress game ends in a win (Woo) or a stalemate
+        (because the deck runs out), the players may continue to the next
+        game, with dealer and wind advancing according to the game rules.
+    </p>
+    <p>When game-play has completed, and all players have left the game,
+        the server will save a record of the game series, so that the
+        players can continue the game at a later date.  The saved game
+        series will appear in the lower part of the <i>Invitational Games</i>
+        section, and be visible only to players who participated in the
+        game.
+    </p>
+    <p>Game series controls are shown in Fig 3:-D3-D4-D5.  In this example,
+        there are two saved game series: one that was last played
+        on 2021-09-12 (year-month-date), and another that was last played
+        on 2021-09-18.  Clicking on the date buttons in Fig 3-D4 will
+        show a summary of the running game scores.
+    </p>
+    <p>You can resume a past game series by clicking the resume icon, 
+        <img class="iem" src="media/h-resume.png" style="width: 1.786em;">,
+        found to the left of Fig 3-D3.
+        This creates an invitational game with all past participants
+        invited and listed as owners.  Below each <b>SIT</b> button, the name
+        of the most recent occupant of that seat will be shown.
+    </p>
+    <p>
+        Finally, if you are not interested in resuming a series, you can delete it from
+        the server by clicking the trash icon in Fig 3-D5.
+    </p>
+    <h5>Other Lobby Game Controls</h5>
+    <p>Fig 3-D6 shows additional controls for game owners.
+        The chart icon, <i class="material-icons iem teal-text">timeline</i>,
+        will show a summary of the scores of an in-progress
+        game series, but only once the first game has completed.
+        The orange stop icon,
+        <i class="material-icons iem orangered-text">cancel</i>,
+        will terminate a game, ejecting
+        any seated players.
+    </p>
+    <h4>Game Play</h4>
+    <p>After joining a game or starting a game in the lobby, your view switches to
+    the game table.  The game server will have already dealt needed tiles to
+    each player, such that the
+    dealer has 14 tiles, and each other player has 13 tiles.  In addition, since
+    flower tiles must always be played immediately, the game server will have
+    already played all flower tiles, and dealt replacements.</p>
+    <p>Game plays starts with the dealer.  When it is your turn,
+        you can make optional plays if you have any available.
+        Your turn ends when you discard a tile, or declare a win (Woo).
+    </p>
+    <h5>The Game Window</h5>
+    <figure class="right min-content clearr">
+        <img class="h-gwindow" src="media/h-gwindow.jpg">
+        <figcaption><i>Fig. 4: The Game Window</i></figcaption>
+    </figure>
+    <p>The game window includes play areas to display tiles for each of the
+        4 players (Fig 4: P1-P4).  Your play area is at the bottom of
+        the window, and includes your flowers & sets (Fig 4-F) and
+        your unplayed tiles (Fig 4-P1).  For the 3 other players, only
+        flowers and sets are visible, with unplayed tiles remaining hidden.
+    </p>
+    <h6>Wind, Score History, and Discards</h6>
+    <p>The area in the upper left corner of the game window, shown
+        in Fig 4-W, displays the current wind and the 4 most recently
+        discarded tiles.  The discarded tiles are also a button. Clicking on
+        them will display a full history of discarded tiles for the
+        current game.
+    </p>
+    <p>Similarly, clicking on the SCORE HISTORY button displays a scoring
+        summary since the beginning of the current game series.
+    </p>
+    <h5>Your Hand</h5>
+    <p>Your unplayed tiles (Fig 4-P1) are initially sorted, with gaps between
+        suit groupings.  If you don't rearrange your tiles, the game will
+        keep the tiles sorted by inserting newly drawn tiles in the appropriate
+        sorted position.
+    </p>
+    <p>You can also choose to rearrange your tiles as you wish.  Moving
+        any tile from its sorted position will disable the
+        <i>auto-sort tiles</i> option shown in Fig 4-A1.  If you prefer
+        have the tiles sorted for you, you can re-enable this option.
+        The gear icon,
+        <i class="material-icons iem seagreen-text">settings</i>,
+        in Fig 4-A2 displays the tile auto-sort settings.
+    </p>
+    <p>If you rearrange your tiles, newly drawn tiles will appear at the
+        end of the existing tiles.  When you move a tile to a spot that's
+        already occupied, the other tiles will shift over to make room.
+        This allows you to move consecutive tiles with a single shift.
+    </p>
+    <h5>Undo a Play</h5>
+    <p>The <b class="white-text"><i class="material-icons iem">replay</i>
+        UNDO A PLAY</b> button, shown in Fig 4-U,
+        allows you to undo the 4 most recent plays.
+        This feature is in testing, and should only be used with the
+        approval of other players.
+    </p>
+    <h5>Play Selection & Play Status</h5>
+    <figure class="right min-content clearr">
+        <img class="h-ih-plays" src="media/h-ih-plays.jpg">
+        <figcaption><i>Fig. 5: In-Hand Plays</i></figcaption>
+    </figure>
+    <figure class="right min-content clearr">
+        <img class="h-draw-flower" src="media/h-draw-flower.png">
+        <figcaption><i>Fig. 5X: Draw from the Flower Pile</i></figcaption>
+    </figure>
+    <p>Plays can be made in two situations:</p>
+    <ul class="browser-default">
+        <li class="browser-default">when it's your turn, or</li>
+        <li class="browser-default">when another player has discarded a tile.</li>
+    </ul>
+    <h6><i>Your turn &mdash; in-hand plays:</i></h6>
+    <p>When it's your turn, the most common situation is that your only
+        possible play is to discard a tile.  This is the case shown
+        in Fig 4.  The play selection area in the center of the screen
+        shows only a discard as a possible play.
+    </p>
+    <p>Occasionally, you may have optional plays.  Fig 5 shows
+        all four possible in-hand plays (5-J, 5-K, 5-L, 5-M):
+    </p>
+    <ul class="browser-default">
+        <li class="browser-default"><b>(5-J):</b> discard a tile (always possible when it's your turn)</li>
+        <li class="browser-default"><b>(5-K):</b> Woo - declare a win</li>
+        <li class="browser-default"><b>(5-L):</b> Gng - convert a 3-set into a 4-set</li>
+        <li class="browser-default"><b>(5-M):</b> Secret Gng - create a hidden 4-set from unplayed tiles</li>
+    </ul>
+    <p>The discard play placeholder shown in Fig. 5-J is not a button,
+        and only serves to remind you that you can always choose to discard
+        a tile.  To discard a tile, drag any of your unplayed tiles above
+        the red line shown in Fig. 5-D.
+    </p>
+    <p>
+        The 3 optional plays shown in Fig. 5-K, 5-L, and 5-M are
+        buttons that you can click to select that action.
+    </p>
+    <p>When you draw a flower tile, or make an optional 
+        <i>Gng</i> play that requires
+        that a replacement tile be drawn, you will see the <i>Draw</i>
+        button with a red center, as shown in Fig 5X.  This means that
+        the tile will be drawn from the flower pile.  When a Woo (win) is
+        declared after drawing from the flower pile, a 2 &times; score
+        multiplier applies, which appears in the scoring table as "ztail".
+    </p>
+    <h6><i>Other players turn &mdash; plays on discarded tiles:</i></h6>
+    <figure class="right min-content clearr">
+        <img class="h-dis-plays" src="media/h-dis-plays.jpg">
+        <figcaption><i>Fig. 6: Plays on a Discarded Tile</i></figcaption>
+    </figure>
+    <p>When other players are taking their turn, you may be able to make a
+        play on their discarded tile.  In the example shown in Fig. 6,
+        the player to your right, <i>r-Easton</i>, has discarded the
+        tile in Fig. 6-R.  You have two possible plays:
+    </p>
+    <ul class="browser-default">
+        <li class="browser-default"><b>(6-P):</b> draw a tile from the deck, ignoring the discarded tile, or</li>
+        <li class="browser-default"><b>(6-Q):</b> Cha - grab the discarded tile to make a 3-straight</li>
+    </ul>
+    <p>If the discarded tile came from any player other than the one on your
+        right, the <i>Draw</i> button would be replaced with a <i>Pass</i>
+        button.  The purpose of the <i>Pass</i> button is to ensure that you
+        have a chance to see the discarded tile, even if you cannot make a
+        play on it.
+    </p>
+    <h6><i>Waiting for other players to respond:</i></h6>
+    <figure class="right min-content clearr">
+        <img class="h-dis-wait" src="media/h-dis-wait.jpg">
+        <figcaption><i>Fig. 7: Waiting on Other Players</i></figcaption>
+    </figure>
+    <p>When there are other humans in the game, you will occasionally see
+        a <i>Waiting for &mldr;</i> panel such as the one in Fig 7-S.
+    </p>
+    <p>
+        For the example in Fig. 7, you have discarded the tile in Fig. 7-R,
+        and you are waiting for other players to respond to your discard.
+        A thinking animation appears for the players who have not yet
+        responded, as shown in Fig. 7-T2 and Fig. 7-T4.  If another player
+        decides to make a play, that play will appear in their thought cloud.
+    </p>
+
+    <h5>Game End</h5>
+    <figure class="right min-content clearr">
+        <img class="h-ready" src="media/h-ready.jpg">
+        <figcaption><i>Fig. 8: Ready Flags</i></figcaption>
+    </figure>
+    <p>When a player is one tile away from a win, they must declare
+        that they are "Ready".  This is shown in the game window as
+        a flashing checkered flag, as shown in the two examples
+        of Fig. 8, R1 and R3.
+    </p>
+
+    <h4>Other Controls</h4>
+    <figure class="right min-content clearr">
+        <img class="h-gnav" src="media/h-gnav.png">
+        <figcaption><i>Fig. 9: Logo & menus</i></figcaption>
+    </figure>
+    <p>You can leave the game at any time by clicking on
+        <b>Stand</b> (stand up from the game table),
+        shown in Fig 9-St.
+    </p>
+    <h5>In-Game Chat</h5>
+    <p>You can chat with other players in your game by opening the
+        chat panel.  The chat icon,
+        <i class="material-icons iem white-text">chat</i>,
+        shown in Fig 9-C acts as a toggle to show or hide the chat panel.
+        It is also a message indicator, and will flash green when you
+        have unread chat messages.
+    </p>
+
+</div>
+<div class="row">
     <div class="col s12 divtiles">
         <h4>Numbered Suit Tiles:</h4>
         <h5>Cakes</h5>
@@ -197,6 +368,6 @@
         <svg class="tilem"><use href="media/stiles.svg#F3"/></svg>
         <svg class="tilem"><use href="media/stiles.svg#F4"/></svg>
     </div>
-
 </div>
+
 </body>

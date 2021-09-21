@@ -151,6 +151,14 @@ button.btn-small {
 figure { text-align: center;}
 .min-content { width: min-content;}
 .orangered-text { color: orangered; }
+.seagreen-text {color: seagreen;}
 .h-signin { width: 33vw; height: 18.7373vw; margin-left: 1em; }
 .h-lobby { width: 33vw; height: 17.76vw; margin-left: 1em; }
 .h-invite { width: 33vw; height: 11.536vw; margin-left: 1em; }
+.h-gwindow { width: 33vw; height: 33.985vw; margin-left: 1em; }
+.h-gnav { width: 33vw; height: 2.6625vw; margin-left: 1em; }
+.h-ih-plays { width: 33vw; height: 26.286vw; margin-left: 1em; }
+.h-dis-plays { width: 33vw; height: 20.828vw; margin-left: 1em; }
+.h-dis-wait { width: 33vw; height: 20.579vw; margin-left: 1em; }
+.h-draw-flower { width: 33vw; height: 17.063vw; margin-left: 1em; }
+.h-ready { width: 33vw; height: 23.775vw; margin-left: 1em; }
