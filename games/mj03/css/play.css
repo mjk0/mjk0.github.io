@@ -307,7 +307,16 @@ legend { font-size: 80%; }
 .PlayGone {
     text-decoration: line-through; text-decoration-color: red;
 }
-.woo-hand { text-align: center; background-color: limegreen; }
+.woo-hand { text-align: center;
+    animation: woo-background 8s ease-in-out 0s infinite;
+}
+@keyframes woo-background {
+    0% { background-color: limegreen; }
+    10% { background-color: transparent; }
+    50% { background-color: transparent; }
+    60% { background-color: limegreen; }
+    100% { background-color: limegreen; }
+}
 .curr-hand { box-shadow: 0 0 7px 4px white; border-radius: 1.5vmin; }
 .bGG { color: darkgreen; }
 .bRR { color: red; }

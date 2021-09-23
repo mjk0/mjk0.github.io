@@ -314,11 +314,20 @@ function refreshCurrPlayerIndicator() {
     for (let iv=0; iv < 4; ++iv) {
         let elem = document.getElementById('tilesp'+iv)
         // winning hand indicator
-        if (iv == woo_iv) elem.classList.add('woo-hand');
-        else elem.classList.remove('woo-hand');
+        setPlayerWon(elem, iv == woo_iv);
         // current hand indicator
         if (iv == curr_iv) elem.classList.add('curr-hand');
         else elem.classList.remove('curr-hand');
+    }
+}
+function setPlayerWon(elem, b) {
+    if (b) {
+        elem.classList.add('woo-hand');
+        elem.parentNode.classList.add('rainbow');
+    }
+    else {
+        elem.classList.remove('woo-hand');
+        elem.parentNode.classList.remove('rainbow');
     }
 }
 
