@@ -283,6 +283,7 @@ button.robitBtn {
     min-height: 27vh; font-size: 80%;
 }
 legend { font-size: 80%; }
+#last-tile-from { font-size: 60%; }
 .tilefs { font-size: 0.7em;}
 .HoverBtn { background-color: lightsteelblue;}
 .HoverBtnPass { background-color: bisque; width: calc(2.2em + 12px); }
@@ -321,14 +322,11 @@ legend { font-size: 80%; }
 }
 .woo-hand span {display: inline-block; vertical-align: middle; line-height: 1em;}
 .woo-hand { text-align: center; background-color: rgba(150,150,150, 0.1);
-    /*animation: woo-background 8s ease-in-out 0s infinite;*/
+    animation: woo-background 2s ease-in-out 0s infinite alternate;
 }
 @keyframes woo-background {
-    0% { background-color: limegreen; }
-    10% { background-color: transparent; }
-    50% { background-color: transparent; }
-    60% { background-color: limegreen; }
-    100% { background-color: limegreen; }
+    0% { background-color: rgba(150,150,150, 0.1); }
+    100% { background-color: rgba(150,150,150, 0.5); }
 }
 .curr-hand { box-shadow: 0 0 7px 4px white; border-radius: 1.5vmin; }
 .bGG { color: darkgreen; }

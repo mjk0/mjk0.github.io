@@ -1,18 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mahjong Rules</title>
+    <meta charset="UTF-8">
+</head>
+<body>
 <h3>Ma-Jong Rules</h3>
 <p>These are the Ma-Jong rules played by at least one family in Shanghai.&nbsp; 
 Add up the points for each matching rule to get your point score.&nbsp; Rules 
 that cause score doubling are listed below the various point rules.</p>
 <h4>Definitions:</h4>
-<p><b>'po'</b> means that you claim a piece as it is being discarded to make a 
+<p><b>'po / 碰牌'</b> means that
+you claim a piece as it is being discarded to make a 
 set of 3 identical pieces.&nbsp; You can 'po' from any player, even if it would 
 not normally have been your turn to play next. The first two pieces of the set 
 of 3 must come from the player's hand.</p>
-<p><b>'cha'</b> means that you claim a piece as it is being discarded to make a 
+<p><b>'cha / 吃'</b> means that you claim a piece as it is being discarded to make a 
 straight of 3.&nbsp; You can only 'cha' from the player to your right since you 
 must follow the normal order of each player's turn.&nbsp; This assumes that 
 players take turns in a clockwise order.&nbsp; Two pieces of the straight of 3 
 must come from the player's hand.</p>
-<p><b>'gahng'</b> means that you are making a set of 4 identical pieces.&nbsp; 
+<p><b>'gahng / 扛'</b> means that you are making a set of 4 identical pieces.&nbsp; 
 This can be done by claiming a piece as it is being discarded by any player, 
 just as with a 'po', and all 'po' rules apply will also apply.&nbsp; It can also 
 be done by drawing a piece from the deck as would normally be done at the start 
@@ -23,8 +31,11 @@ the player draws an extra piece from the flower-end of the deck.&nbsp; If the
 ('po'), then the set of 4 must be played face-down so that others cannot see 
 which set of 4 has been played from the player's hand.&nbsp; For scoring 
 purposes, a set of 4 can always count as a set of 3.</p>
-<p><b>'zzzmo'</b> means that you got the winning piece by drawing it yourself, 
+<p><b>'zzzmo / 自摸'</b> means that you got the winning piece by drawing it yourself, 
 not by claiming a piece as it was being discarded by another player.</p>
+<p><b>'ztail / 槓上開花'</b> is the same as zzzmo, except that the
+winning tile was drawn from the flower pile, which would happen when
+drawing a replacement tile after playing a flower or creating a gahng.</p>
 <p><b>'words'</b> are the pieces that don't have a number associated with them.&nbsp; 
 These include:</p>
 <ul>
@@ -138,8 +149,9 @@ These include:</p>
 		<td width="4">Double</td>
 		<td>
 		<ol type="A">
-			<li>'zzzmo', get the last (winning) piece yourself.&nbsp; If winning 
-			piece came from the flower pile, double again (x4).</li>
+			<li>'zzzmo / 自摸', get the last (winning) piece yourself.&nbsp;
+				If winning piece came from the flower pile,
+				double again (&times;4 / ztail / 槓上開花).</li>
 			<li>dealer always pays/collects double</li>
 			<li>3<sup>rd</sup>-time dealer, stake doubles again.&nbsp; Repeat each deal of current dealer.&nbsp; 
 			3<sup>rd</sup> deal is x4, 4<sup>th</sup> deal is x8, 5<sup>th</sup> 
@@ -156,7 +168,7 @@ These include:</p>
 		<ol type="A">
 			<li>If any single piece is discarded by 4 consecutive players, the 
 			player who first discarded the piece must immediately pay each other 
-			player 10 points</li>
+			player 10 points.  The game server does not implement this rule.</li>
 		</ol>
 		</td>
 	</tr>
@@ -167,7 +179,8 @@ These include:</p>
 <hr>
 
 <address>
-    Last Modified on Dec 31, 2012</address>
+    Last Modified on Sept 24, 2021</address>
 <address>
 Marcel A. LeBlanc / <a href="mailto:marcel.a.leblanc@gmail.com">marcel.a.leblanc@gmail.com</a></address>
-
+</body>
+</html>

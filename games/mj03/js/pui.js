@@ -617,7 +617,9 @@ const m2tiles = {
     "3x all word sets": function() { return wordSetsOfMinLen(3) },
     "3+3+2 all words": function() { return wordSetsOfMinLen(2) },
 };
+const z2txt = {"zzmo": "zzmo/ 自摸", "ztail": "ztail/ 槓上開花"};
 const dice = '<img class="svg-icon" src="media/Dice-2r1-Icon.svg"/>';
+let woo_src = -1; // winning tile source: dealer=0, non-dealer=1, Zzmo/Ztail=2
 
 // Scoring result for the game.  Only handled in the UI
 // {"action":"scoring","addv":[1,20],"adds":["Flowers","7 pairs"],
@@ -633,8 +635,17 @@ function refreshScoring() {
         d += tableRow(["+"+v +": "+ txt])
     });
     // Multiplicative points
+    woo_src = -1; // winning tile source: dealer=0, non-dealer=1, Zzmo/Ztail=2
+    const has_ztail = PSt.scoring.mults.includes("ztail");
     PSt.scoring.multv.forEach((v,i) => { score *= v;
-        d += tableRow([PSt.scoring.mults[i] + "(*"+v+")"])
+        const vs = PSt.scoring.mults[i];
+        if (has_ztail && vs == "zzmo") return; // continue loop
+        const txt = z2txt[vs] || vs;
+        if (z2txt.hasOwnProperty(vs)) { // if zzmo/ztail, show tile src
+            refreshWooTileSrc(2, txt.replace("/ ","<br>"));
+            if (has_ztail) v = 4; // show ztail as *4 since remove zzmo
+        }
+        d += tableRow([txt + " (&times;"+v+")"])
     });
     // Hand score total
     document.getElementById("score-hpts").innerHTML = score.toString();
@@ -644,6 +655,10 @@ function refreshScoring() {
     let tr_names = document.querySelectorAll('#pts-names div');
     PSt.scoring.diffs.forEach((v,i) => {
         const lMult = (score > 0? -v/score : 0);
+        if (lMult >= 2) {
+            const msrc = (PSt.curr.dealer == i? 0: 1);
+            refreshWooTileSrc(msrc, "from<br>"+seatPlayerName(i));
+        }
         const dd = (PSt.curr.dealer == i? dice : ""); // dealer dice?
         let vs = (lMult<2 ? (lMult>=0 ? v.toString()+dd
         : '<div class="ptsWin">'+v.toString()+dd+'</div>')
@@ -669,12 +684,19 @@ function tableRow(arr, thd) {
 // in case current game ends in stalemate
 function clearGameEndScoring() {
     refreshTileOnId('last-tile', "ZT"); // empty tile until real woo
+    document.getElementById("last-tile-from").innerHTML = '';
     // Remove win animation
     PUnpl.rmClass(document.getElementById("score-pts"), "ptsWin");
 }
 function seatToTotPts(i) {
     const name = seatPlayerName(i);
     return (name in PSt.scoring.score? PSt.scoring.score[name].toString() : "--");
+}
+function refreshWooTileSrc(src, html) {
+    if (src > woo_src) {
+        woo_src = src;
+        document.getElementById("last-tile-from").innerHTML = html;
+    }
 }
 
 // Display shared dialog for score history
