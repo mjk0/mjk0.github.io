@@ -284,7 +284,7 @@ function refreshPlayed(ibase, num) {
         if (html.length == 0) {
             //html = 'flowers and sets';
         }
-        elem.innerHTML = html; // clear old contents
+        elem.innerHTML = '<span>'+html+'</span>'; // clear old contents
         // update ready flag
         set_id_visibility("rdy"+iv, vrdyok && PSt.hands[ig].r);
     }

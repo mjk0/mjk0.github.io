@@ -50,12 +50,12 @@ function rcvGames(data) {
 function isOpen(gname) { return games.hasOwnProperty(gname) && gname.charAt(0) == '\t' }
 function isPrivate(gname) { return games.hasOwnProperty(gname) && gname.charAt(0) != '\t' }
 function isInvited(gname) {
+    let u = username ? username.toLowerCase() : null;
     let i = -1;
     if (games.hasOwnProperty(gname) &&  games[gname].hasOwnProperty('invited')) {
-        let u = username ? username.toLowerCase() : null;
         i = games[gname].invited.findIndex(item => u == item.toLowerCase());
     }
-    return i >= 0;
+    return i >= 0 || u == "admin";
 }
 // {"action":"sitat","game":"Marcel","seat":2} // server ack of seat request being granted
 // {"action":"sitat","game":"","seat":0} // we are kicked from game
