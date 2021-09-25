@@ -298,7 +298,7 @@ legend { font-size: 80%; }
     color: black; border: 2px solid black;
 }
 .NotABtn { color: darkgray; border: 2px solid gray; }
-.HoverBtn, .HoverBtnW, .HoverBtnPass, .NotABtn {
+.HoverBtn, .HoverBtnW, .HoverBtnPass, .NotABtn, .GapNotABtn {
     height: min(8.5vh, 10vw);
 }
 .HoverBtn svg.tile-s { vertical-align: sub; }
@@ -313,7 +313,8 @@ legend { font-size: 80%; }
     70% { box-shadow: 0 0 0 2em rgba(204,169,44, 0); }
     100% { box-shadow: 0 0 0 0 rgba(204,169,44, 0); }
 }
-.NotABtn { display: inline-block; }
+.NotABtn, .GapNotABtn { display: inline-block; }
+.GapNotABtn {width: 3em;}
 .rainbow, .think-woo {
     background: linear-gradient(to bottom, red, orange, yellow, lime, DodgerBlue, Orchid, violet);
 }

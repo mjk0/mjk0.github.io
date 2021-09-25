@@ -439,18 +439,24 @@ const pcButtons = [
     "woo", "po", "gng", /* "gng0", "gng1", */
     "chal", "cham", "chah"
 ];
+let pcBtnCnt = 0; // allow counting of visible buttons
+function cnt_btn_visibility(id, flag) {
+    if (flag) ++pcBtnCnt;
+    set_id_visibility(id, flag);
+}
 function setViewTilePlay() {
+    pcBtnCnt = 0;
     set_id_visibility("discard-line", PSt.plays.allowDiscard);
-    set_id_visibility("fs-discard", PSt.plays.allowDiscard);
+    cnt_btn_visibility("fs-discard", PSt.plays.allowDiscard);
     for (const pcid of pcButtons) {
         const id = "fs-"+pcid;
         if (PSt.plays.more.includes(pcid)) {
             if (pcid.startsWith("cha")) {
                 setSVGOnBtn(id); // show tiles in CHA button
             }
-            set_id_visibility(id, 1);
+            cnt_btn_visibility(id, 1);
         } else {
-            set_id_visibility(id, 0);
+            cnt_btn_visibility(id, 0);
         }
     }
 
@@ -458,8 +464,8 @@ function setViewTilePlay() {
     const passNeeded = PSt.plays.more.includes("pass");
     const passOnly = passNeeded && PSt.plays.more.length == 1;
     const passMulti = passNeeded && PSt.plays.more.length > 1;
-    set_id_visibility("fs-pass-only", passOnly);
-    set_id_visibility("fs-pass-multi", passMulti);
+    cnt_btn_visibility("fs-pass-only", passOnly);
+    cnt_btn_visibility("fs-pass-multi", passMulti);
 
     // GngAdd and GngSecret need to show the tile, in case of multiple
     const gngt = PSt.getInHandGngPlays();
@@ -472,9 +478,14 @@ function setViewTilePlay() {
             }
         }
     });
-    set_id_visibility("fs-gng0", gngt.length > 0);
-    set_id_visibility("fs-gng1", gngt.length > 1);
-    set_id_visibility("fs-gng2", gngt.length > 2);
+    cnt_btn_visibility("fs-gng0", gngt.length > 0);
+    cnt_btn_visibility("fs-gng1", gngt.length > 1);
+    cnt_btn_visibility("fs-gng2", gngt.length > 2);
+
+    // If more than one button/not-a-btn is visible, put gap to prevent click
+    // If more than 2 buttons, enable line break
+    set_id_visibility("fs-gap", pcBtnCnt > 1);
+    set_id_visibility("fs-br", pcBtnCnt > 2);
 
     PUnpl.rmClass(document.getElementById("playfs"), "PlayGone");
     setPlayView("tileplay"); // show the buttons
