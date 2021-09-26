@@ -49,7 +49,7 @@ function is_visible(id) {
 
 // Update visual status for WebSocket connection state
 function showWsOn(bool) {
-    const good = (COpts.get("mj-dev") == "1"? "beach_access" : "verified_user");
+    const good = (COpts.isDev? "beach_access" : "verified_user");
     document.getElementById("ws-status").innerHTML
      = (bool ? good : 'sync_problem');
 }

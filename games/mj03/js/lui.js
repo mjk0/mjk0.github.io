@@ -13,7 +13,7 @@ function set_sign_in_state(f) { // f is truthy if already signed in
     CUI.show_id('changelog', !f);
 }
 function welcome_username() {
-    const devs = (COpts.get('mj-dev') == "1"?
+    const devs = (COpts.isDev?
         ' <i class="material-icons">beach_access</i>' : ""
     );
     document.getElementById('span_username').innerHTML = St.username+devs;

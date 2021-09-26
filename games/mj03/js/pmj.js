@@ -239,7 +239,7 @@ function uicbDiscard(tile) {
     PUnpl.rmPlayedAndUnplayedAnims();
 }
 
-// Function that executes jQuery code after page load is complete
+// Function that executes after DOM construction is complete
 document.addEventListener('DOMContentLoaded', function(){
   try {
     COpts.init(WsOptions); // modifies serverUrl if needed

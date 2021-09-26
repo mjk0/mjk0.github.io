@@ -8,8 +8,9 @@ const sess_k = { // value is default
 
     // URL params
     'mj-ar': "1", // autoReconnect
-    'mj-dev': "1", // true / false -> port 3031 / 3030
+    'mj-dev': "1", // "1" / "0" -> port 3031 / 3030
 };
+var isDev = false;
 
 // if the given URL parameter is defined, save it to session storage
 function initFromUrlParam(k) {
@@ -29,7 +30,7 @@ function init(WsOptions) {
     // Initialize from optional URL parameters
     initFromUrlParam('mj-ar');
     initFromUrlParam('mj-dev');
-    const isDev = get('mj-dev') == "1";
+    isDev = get('mj-dev') >= 1;
     if (!isDev) { //true/false -> port 3031/3030
         if (WsOptions.hasOwnProperty('serverUrl')) {
             WsOptions.serverUrl = WsOptions.serverUrl.replace(':3031',':3030');
@@ -41,5 +42,6 @@ function init(WsOptions) {
 }
 
 export {
+    isDev,
     init, get, set, initFromUrlParam, rm, lget, lset, lrm,
 };
