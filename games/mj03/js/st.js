@@ -27,6 +27,7 @@ function clrUuid() {
     ourGame = null;
     ourSeat = -1;
     COpts.rm("mj_username");
+    COpts.rm("mj_email");
     COpts.rm("mj_uuid");
     COpts.rm("mj_game");
     COpts.rm("mj_seat");

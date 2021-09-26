@@ -593,7 +593,7 @@ function rcvReDo(data) {
         }
     }
     elem.innerHTML = html;
-    $('#diaUndo').modal('open');
+    M.Modal.getInstance(document.getElementById("diaUndo")).open();
 }
 const undoPlay2Str = {'gngadd': 'gng', 'gngsecret': 'gng-secret'};
 function undoPlayStr(play) {
@@ -730,12 +730,12 @@ function showDiscards() {
     PSt.allDiscards.viewing = PSt.allDiscards.latest;
     if (PSt.allDiscards.viewing != null) {
         discardsSummary();
-        $('#discardHistory').modal('open');
+        M.Modal.getInstance(document.getElementById("discardHistory")).open();
     }
 }
 
 function gameShutdown() {
-    $('#shutdown').modal('open');
+    M.Modal.getInstance(document.getElementById("shutdown")).open();
     //window.location.replace("./"); // back to lobby
 }
 
@@ -783,16 +783,15 @@ function setPlayView(vname) {
 function init(opts) {
     UiOptions = opts || {};
     // Initialize modal dialogs
-    //elems = document.querySelectorAll('.modal');
-    //instances = M.Modal.init(elems, {}); // materialize init
-    $('.modal').modal(); // jQuery init
-    $('#shutdown').modal({'dismissible': false});
+    M.Modal.init(document.querySelectorAll('.modal')); // materialize init
+    M.Modal.init(document.getElementById("shutdown"), {'dismissible': false});
 
     // Initialize drop-down menus
-    let elems = document.querySelectorAll('.sidenav');
-    M.Sidenav.init(elems, { edge: 'right' });
+    let snavs = document.querySelectorAll('.sidenav');
+    M.Sidenav.init(snavs, { edge: 'right' });
     M.Sidenav.init(chatSliderDiv(), { edge: 'right', onOpenEnd: chatSliderOnOpen });
-    $(".dropdown-trigger").dropdown({ coverTrigger: false }); // nav-bar drop-down
+    let dts = document.querySelectorAll('.dropdown-trigger'); // nav-bar drop-down
+    M.Dropdown.init(dts, { coverTrigger: false });
 
     PUnpl.init(opts);
     setPlayView(UI.view);

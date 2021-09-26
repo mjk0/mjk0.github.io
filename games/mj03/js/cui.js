@@ -52,13 +52,34 @@ function rcvScoreHist(data, players) {
         html += `<tr><td colspan="${cols}"><i>no score history yet</i></td></tr>`;
     }
     document.getElementById("scoreHbody").innerHTML = html;
-    $('#scoreHistory').modal('open');
+    const eSh = document.getElementById("scoreHistory");
+    // open modal dialog
+    M.Modal.getInstance(eSh).open();
     // scroll to bottom of the score history:
-    $("#scoreHistory").scrollTop($("#scoreHistory")[0].scrollHeight);
+    eSh.scrollTop = eSh.scrollHeight;
 }
 const rplayers = ["r-Easton","r-Sudly","r-Westen","r-Norwin"];
+
+// Set(1) or clear(0), or toggle(-1) "hide-me" class on element
+// .hide-me { display: none !important; }
+function show_elem(elem, boolish) {
+    if (boolish < 0) {
+        elem.classList.toggle("hide-me");
+    } else if (boolish) {
+        elem.classList.remove("hide-me");
+    } else {
+        elem.classList.add("hide-me");
+    }
+}
+function show_id(id, boolish) {show_elem(document.getElementById(id), boolish);}
+function show_qs(qs, boolish) {show_elem(document.querySelector(qs), boolish);}
+
+function is_visible(id) {
+    return !document.getElementById(id).classList.contains("hide-me");
+}
 
 export {
     rplayers,
     posGame2Dir, rcvScoreHist,
+    show_elem, show_id, show_qs, is_visible,
 };

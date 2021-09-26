@@ -443,7 +443,7 @@ function unpAutoSortClicked() {
     }
 }
 function unpAutoSortOpts() {
-    $('#settings').modal('open');
+    M.Modal.getInstance(document.getElementById("settings")).open();
 }
 function unpAutoSortOptsSuitgap() {
     const suitgap = document.getElementById('gapsuit').checked;

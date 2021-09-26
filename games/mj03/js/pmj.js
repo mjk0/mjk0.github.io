@@ -240,7 +240,7 @@ function uicbDiscard(tile) {
 }
 
 // Function that executes jQuery code after page load is complete
-$(document).ready(function(){
+document.addEventListener('DOMContentLoaded', function(){
   try {
     COpts.init(WsOptions); // modifies serverUrl if needed
     PSt.init();

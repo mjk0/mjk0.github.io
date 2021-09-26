@@ -1,33 +1,31 @@
 "use strict";
 import * as COpts from './copts.js';
 import * as St from './st.js';
+import * as CUI from './cui.js';
 
-var gamepanel, signinpanel, signin_right;
-var notices, userspanel;
 var email_placeholder;
 
 function set_sign_in_state(f) { // f is truthy if already signed in
-    jshow(gamepanel, f);
-    jshow(userspanel, f);
-    jshow(signin_right, f);
-    jshow(signinpanel, !f);
-    jshow(notices, !f);
+    CUI.show_qs('.gamepanel', f);
+    CUI.show_qs('.userspanel', f);
+    CUI.show_id('signin-right', f);
+    CUI.show_qs('.signin', !f);
+    CUI.show_id('changelog', !f);
 }
 function welcome_username() {
     const devs = (COpts.get('mj-dev') == "1"?
         ' <i class="material-icons">beach_access</i>' : ""
     );
-    $('#span_username').html(St.username+devs);
+    document.getElementById('span_username').innerHTML = St.username+devs;
 }
 function update_users_display() {
-    fill_users_table('#userstable', false);
+    fill_users_table('userstable', false);
 }
 function update_invites_display() {
-    fill_users_table('#diaInviteUsers', true);
+    fill_users_table('diaInviteUsers', true);
 }
 function fill_users_table(tbl, hasPriU) {
-    const ut = $(tbl);
-    ut.empty();  // Clear out previous users list
+    let ut = '';
     const priu = hasPriU ? St.pastInvited : {};
     // Sort by time, with most recent at the beginning
     let ukeys = Object.keys(St.users);
@@ -59,11 +57,12 @@ function fill_users_table(tbl, hasPriU) {
             }
         }
         let r = hasPriU ? priv_users_table_row(u, ds) : '<tr><td>'+u+'</td><td>'+ds+'</td></tr>';
-        ut.append(r);
+        ut += r;
     }
     if (hasPriU && ukeys.length <= 1) {
-        ut.append('<tr><td colspan="3"><i>no one to invite</i></td></tr>');
+        ut += '<tr><td colspan="3"><i>no one to invite</i></td></tr>';
     }
+    document.getElementById(tbl).innerHTML = ut;
 }
 function priv_users_table_row(u, ds) {
     let pinv = St.pastInvited.hasOwnProperty(u);
@@ -79,49 +78,49 @@ function priv_users_table_row(u, ds) {
 }
 function get_priv_invite_selection() {
     const inv = []; // invited list
-    const q = $('#diaInviteUsers input[type=checkbox]:checked');
-    q.each(function(){inv.push($(this).next().text()) });
+    const q = document.querySelectorAll('#diaInviteUsers input[type=checkbox]:checked + span');
+    q.forEach(v => inv.push(v.innerHTML));
     return inv;
 }
 
 // Update open & private games lists
 function update_games_display() {
     const priv = [];
-    var gt = $('#opengtable');
-    gt.empty();  // Clear out previous games list
+    let gt = '';  // Clear out previous games list
     const openSorted = Object.keys(St.games).sort((a,b)=>{return a-b});
     for (const gk of openSorted) {
         if (St.isOpen(gk)) {
-            gt.append(addRowGamesDisplay(gk));
+            gt += addRowGamesDisplay(gk);
         } else if (St.username == gk) {
             priv.unshift(gk); // private game owner, move to first spot
         } else if (St.isInvited(gk)) {
             priv.push(gk); // private game invitee
         }
     }
+    document.getElementById('opengtable').innerHTML = gt;
 
     // Show private games
-    var privt = $('#privgtable');
-    privt.empty(); // clear out previous private games list
+    let privt = ''; // clear out previous private games list
     priv.forEach( gk => {
-        privt.append(addRowGamesDisplay(gk));
+        privt += addRowGamesDisplay(gk);
     });
     // If we don't have a private game yet.  Offer to create one
     let createBtnVisible = priv.length==0 || priv[0] != St.username;
-    jshow('#privCreate', createBtnVisible);
-    jshow('#privTableHeading', priv.length > 0); // hide heading if no private games
+    CUI.show_id('privCreate', createBtnVisible);
+    CUI.show_id('privTableHeading', priv.length > 0); // hide heading if no private games
+    document.getElementById('privgtable').innerHTML = privt;
 
     // Show past series that can be resumed
-    var sert = $('#seriesgtable');
     let hasVisibleSeries = false;
-    sert.empty(); // clear out previous game series list
+    let sert = ''; // clear out previous game series list
     Object.keys(St.series).forEach( sid => {
         if (!St.hasSeriesGame(sid)) {
-            sert.append(addRowSeriesDisplay(sid));
+            sert += addRowSeriesDisplay(sid);
             hasVisibleSeries = true;
         }
     });
-    jshow('.seriesTable', hasVisibleSeries);
+    document.getElementById('seriesgtable').innerHTML = sert;
+    CUI.show_qs('.seriesTable', hasVisibleSeries);
 }
 
 // Create HTML for series table entry.
@@ -157,12 +156,6 @@ function seriesDisplayName(sid) {
         if (v.length > 0) r.push(v.charAt(0));
     });
     return r.join('+');
-}
-
-// Show or hide a jQuery object
-function jshow(jq, f) {
-    if (f) { $(jq).show(); }
-    else { $(jq).hide(); }
 }
 
 const dice = '<img class="svg-icon" src="media/Dice-2r1-Icon.svg"/>';
@@ -235,32 +228,27 @@ function lobbyGameStatus(started, gk) {
 
 // Set or clear visible error indicators for this input field
 function sign_in_err_state_email() {
-    $('#email').addClass('flag-err');
-    $('#email')[0].setAttribute('placeholder', 'email address did not match');
+    const email = email_dom();
+    email.classList.add('flag-err');
+    email.placeholder = 'email address did not match';
 }
 function sign_in_err_state_username() {
-    $('#username').addClass('in-uname');
+    uname_dom().classList.add('in-uname');
 }
 function sign_in_err_state_clear(){
-    $('#email').removeClass('flag-err');
-    $('#email')[0].setAttribute('placeholder', email_placeholder);
-    $('#username').removeClass('in-uname');
+    const email = email_dom();
+    email.classList.remove('flag-err');
+    email.placeholder = email_placeholder;
+    uname_dom().classList.remove('in-uname');
 }
 function uname_dom() { return document.getElementById('username') }
 function email_dom() { return document.getElementById('email') }
 
 function init() {
-    gamepanel = $('.gamepanel');
-    signinpanel = $('.signin');
-    signin_right = $('#signin-right');
-    notices = $('#changelog');
-    userspanel = $('.userspanel');
-    email_placeholder = $('#email')[0].getAttribute('placeholder');
+    email_placeholder = email_dom().getAttribute('placeholder');
 
     // Initialize modal dialogs
-    //elems = document.querySelectorAll('.modal');
-    //instances = M.Modal.init(elems, {}); // materialize init
-    $('.modal').modal(); // jQuery init
+    M.Modal.init(document.querySelectorAll('.modal')); // materialize init
 }
 
 export {

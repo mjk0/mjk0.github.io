@@ -1,6 +1,7 @@
 body, .body-bg {
     background-color: #9FACB9;
 }
+.hide-me { display: none !important; }
 div.logo.col { padding: 0px; }
 .title {
     font-size: 6vw; height: 1.3em; line-height: 1.3em;
@@ -52,7 +53,6 @@ i.material-icons.icon-inherit { font-size: inherit; }
     background-color: #e0e0e0;
 }
 .gamepanel {
-    display: none;
     background-color: white; padding: .2em;
 }
 .gamepanel div.divider { margin: 8px 0 0 0; }
@@ -111,7 +111,7 @@ button.inviteBtn { background-color: darkblue; }
 .play-lg { font-size: xx-large !important; }
 td.bordbot { border-bottom: black solid 2px; }
 .userspanel {
-    display: none; max-height: 50vh; overflow: auto;
+    max-height: 50vh; overflow: auto;
     background-color: white; padding: .2em;
 }
 #diaInvite { width: max-content; max-height: 85%; }

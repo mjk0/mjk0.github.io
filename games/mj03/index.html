@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link type="text/css" rel="stylesheet" href="/css/materialize.css" media="screen,projection"/>
+    <link type="text/css" rel="stylesheet" href="/css/materialize.min.css" media="screen,projection"/>
     <link type="text/css" rel="stylesheet" href="css/index.css">
     <link rel="modulepreload" href="js/copts.js">
     <link rel="modulepreload" href="js/cui.js">
@@ -45,7 +45,7 @@
                     </form>
                     <p><i>Entering your email address reserves your username</i></p>
                 </div>
-                <div class="card-panel gamepanel">
+                <div class="card-panel gamepanel hide-me">
                     <table class="privTable cTable"><thead>
                         <tr><th colspan="7" class="gameSectionTitle">
                             Invitational Games
@@ -97,7 +97,7 @@
                         In-progress games will be flushed.</p>
                     <p>This game does not work at all with Internet Explorer.  Chrome is recommended.</p>
                 </div>
-                <div class="card-panel userspanel">
+                <div class="card-panel userspanel hide-me">
                     <table class="usersTable cTable"><thead>
                         <tr><th colspan="2" class="gameSectionTitle">
                             Players</th></tr>
@@ -150,7 +150,6 @@
     </div>
 
     <!--JavaScript at end of body for optimized loading-->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script type="text/javascript" src="/js/materialize.min.js"></script>
     <script type="module">
         import * as COpts from './js/copts.js';

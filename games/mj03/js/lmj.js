@@ -101,7 +101,7 @@ function gameKill(game) {
 // Open private invite dialog
 function privInvite() {
     LUI.update_invites_display();
-    $('#diaInvite').modal('open');
+    M.Modal.getInstance(document.getElementById("diaInvite")).open();
 }
 // Forget a previously invited player
 function privForget(u) {
@@ -184,7 +184,7 @@ function submit(e) {
 
 
 // Function that executes jQuery code after page load is complete
-$(document).ready(function(){
+document.addEventListener('DOMContentLoaded', function(){
     COpts.init(WsOptions); // modifies serverUrl if needed
     Ws.init(WsOptions);
     LUI.init();
