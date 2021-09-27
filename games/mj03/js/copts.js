@@ -8,7 +8,7 @@ const sess_k = { // value is default
 
     // URL params
     'mj-ar': "1", // autoReconnect
-    'mj-dev': "1", // "1" / "0" -> port 3031 / 3030
+    'mj-dev': "0", // "1" / "0" -> port 3031 / 3030
 };
 var isDev = false;
 
