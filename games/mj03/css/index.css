@@ -1,5 +1,6 @@
 body, .body-bg {
     background-color: #9FACB9;
+    font-size: min(1rem, 3vmin);
 }
 .hide-me { display: none !important; }
 div.logo.col { padding: 0px; }
@@ -20,10 +21,11 @@ div.logo.col { padding: 0px; }
     max-width: 39vh; max-height: 16.8vh;
 }
 .margin-r2 { margin-right: 2vw; }
-nav i.material-icons {
+nav i.material-icons { font-size: min(24px,2em);
     display: inline-block; vertical-align: bottom;
 }
-ul#signin-right.right li i { font-size: 1rem; }
+nav ul a { font-size: unset; padding: 0 1em; }
+ul#signin-right.right li i { font-size: 1em; }
 .card-bgg { background-color: #546e7a; } /* blue-grey darken-1 */
 .card-content button {
     background-color: #ee6e73;
@@ -147,7 +149,7 @@ th.shDate { font-size: 70%; }
 .btn-small img.svg-icon { margin: 0 -0.7em 0 0.2em; }
 button.btn-small {
     height: 2.4em; line-height: 2.4em;
-    font-size: 0.9em;
+    font-size: 0.9em; padding: 0 1em;
 }
 .clearr { clear: right; }
 figure { text-align: center;}
