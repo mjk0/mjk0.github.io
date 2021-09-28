@@ -1,5 +1,6 @@
 // Mahjong Beta shared options and parameters
 const urlParams = new URLSearchParams(window.location.search);
+const urlPkeys = ['mj-ar', 'mj-dev'];
 
 const sess_k = { // value is default
     // Session persistence (each browser tab is different)
@@ -17,6 +18,7 @@ function initFromUrlParam(k) {
     let value = urlParams.get(k);
     if (value !== null) set(k,value);
 }
+function clrPastUrlParams() { urlPkeys.forEach(k => rm(k)); }
 
 function get(k,def) { return sessionStorage.getItem(k) || def || sess_k[k] }
 function set(k,v) { return sessionStorage.setItem(k,v) }
@@ -28,8 +30,7 @@ function lrm(k) { return localStorage.removeItem(k) }
 
 function init(WsOptions) {
     // Initialize from optional URL parameters
-    initFromUrlParam('mj-ar');
-    initFromUrlParam('mj-dev');
+    urlPkeys.forEach(k => initFromUrlParam(k));
     isDev = get('mj-dev') >= 1;
     if (!isDev) { //true/false -> port 3031/3030
         if (WsOptions.hasOwnProperty('serverUrl')) {
@@ -43,5 +44,5 @@ function init(WsOptions) {
 
 export {
     isDev,
-    init, get, set, initFromUrlParam, rm, lget, lset, lrm,
+    init, get, set, clrPastUrlParams, rm, lget, lset, lrm,
 };

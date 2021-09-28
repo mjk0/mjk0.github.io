@@ -1,5 +1,5 @@
 User-agent: *
 Disallow: /
-Allow: /games/A45s/index.html
-Allow: /games/mj03/index.html
-Allow: /games/jigsaw/index.html
+Allow: /games/A45s/
+Allow: /games/mj03/
+Allow: /games/jigsaw/

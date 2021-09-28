@@ -70,6 +70,8 @@ i.material-icons.icon-inherit { font-size: inherit; }
 .seriesTable td {background-color: white;
     color: peru; font-style: italic; padding: 0.1em;
 }
+#seriesgtable tr td:first-child{ width: 2.4em; }
+th.gsLeft { padding-left: 0.8em; }
 .seriesTable i.material-icons { font-size: 120%; vertical-align: bottom; }
 .seriesExtras { font-size: 70%; }
 td.sgseat { padding-bottom: 0px; }
