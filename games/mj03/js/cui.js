@@ -20,7 +20,7 @@ function rcvScoreHist(data, players) {
     let name_order = [...players]; // copy players array
     for (const n of players) { nmap[n] = 1; } // mark those already listed
     for (const n of names) { if (nmap[n] == 0) name_order.push(n); }
-    let hdr = "<th>W</th>";
+    let hdr = "<th>💨</th>";
     for (const n of name_order) { hdr += "<th>"+n+"</th>" }
     document.getElementById("scoreHhead").innerHTML = hdr;
 
