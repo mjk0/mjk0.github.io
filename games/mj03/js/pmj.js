@@ -243,6 +243,11 @@ function uicbDiscard(tile) {
 document.addEventListener('DOMContentLoaded', function(){
   try {
     COpts.init(WsOptions); // modifies serverUrl if needed
+    if (COpts.isTester) { // testing
+        COpts.set("mj_uuid", COpts.uget("uuid"));
+        COpts.set("mj_game", "\t2");
+        COpts.set("mj_seat", COpts.uget("seat"));
+    }
     PSt.init();
     wsUuidInit();
 

@@ -151,6 +151,7 @@ button.btn-small {
     height: 2.4em; line-height: 2.4em;
     font-size: 0.9em; padding: 0 1em;
 }
+button.btn-floating.btn-small { padding: 0; }
 .clearr { clear: right; }
 figure { text-align: center;}
 .min-content { width: min-content;}

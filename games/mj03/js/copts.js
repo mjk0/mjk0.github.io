@@ -12,12 +12,14 @@ const sess_k = { // value is default
     'mj-dev': "0", // "1" / "0" -> port 3031 / 3030
 };
 var isDev = false;
+var isTester = false;
 
 // if the given URL parameter is defined, save it to session storage
 function initFromUrlParam(k) {
     let value = urlParams.get(k);
     if (value !== null) set(k,value);
 }
+function uget(k) { return urlParams.get(k);}
 function clrPastUrlParams() { urlPkeys.forEach(k => rm(k)); }
 
 function get(k,def) { return sessionStorage.getItem(k) || def || sess_k[k] }
@@ -32,6 +34,8 @@ function init(WsOptions) {
     // Initialize from optional URL parameters
     urlPkeys.forEach(k => initFromUrlParam(k));
     isDev = get('mj-dev') >= 1;
+    isTester = get('mj-dev') >= 99;
+    if (isTester) { set("mj_username", "tester"); }
     if (!isDev) { //true/false -> port 3031/3030
         if (WsOptions.hasOwnProperty('serverUrl')) {
             WsOptions.serverUrl = WsOptions.serverUrl.replace(':3031',':3030');
@@ -43,6 +47,6 @@ function init(WsOptions) {
 }
 
 export {
-    isDev,
-    init, get, set, clrPastUrlParams, rm, lget, lset, lrm,
+    isDev, isTester,
+    init, get, set, clrPastUrlParams, rm, lget, lset, lrm, uget,
 };

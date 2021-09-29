@@ -191,8 +191,7 @@ document.addEventListener('DOMContentLoaded', function(){
     LUI.init();
 
     LUI.set_sign_in_state(false); // start with sign-in UI
-    if (COpts.get('mj-dev') == "99") { // testing
-        COpts.set("mj_username", "tester");
+    if (COpts.isTester) { // testing
         COpts.set("mj_uuid", "fake_uuid");
     }
     try_autologin();
