@@ -747,7 +747,7 @@ function playResultWoo() {
 
 const playViewIds = [
     'playfs', 'discard-line', 'wait4fs', "unplayed",
-    'viewwoo', 'viewinit'
+    'viewwoo', 'viewinit', 'undo'
 ];
 function enaPlayViewPieces(opts) {
     for (const pvid of playViewIds) {
@@ -763,12 +763,12 @@ function setPlayView(vname) {
         set_id_visibility("other-discard", 0);
         break;
     case "tileplay": // both in-hand and on-discard
-        enaPlayViewPieces({"playfs":1, "unplayed":1,
+        enaPlayViewPieces({"playfs":1, "unplayed":1, "undo":1,
             "discard-line":PSt.plays.allowDiscard
         });
         break;
     case "waiton":
-        enaPlayViewPieces({"wait4fs":1, "unplayed":1});
+        enaPlayViewPieces({"wait4fs":1, "unplayed":1, "undo":1});
         break;
     case "gameend":
         enaPlayViewPieces({"viewwoo":1});
