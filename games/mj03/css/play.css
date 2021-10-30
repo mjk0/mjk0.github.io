@@ -443,9 +443,9 @@ tr#pts-tot > td { background-color: #859c5e; color: white; }
     font-size: 60%;
 }
 #ge-wo { width: 10vmin; margin-top: 0.5em;}
-#shutdown { background-color: gold; text-align: center; border: 1vw solid red; }
-#shutdown p { font-size: 3vw; }
-#shutdown i { vertical-align: text-bottom; font-size: 4vw; }
+.eviction { background-color: gold; text-align: center; border: 1vw solid red; }
+.eviction p { font-size: 3vw; }
+.eviction i { vertical-align: text-bottom; font-size: 4vw; }
 #unp-sort { position: absolute; bottom: -1em; right: 10px;
     font-size: 1.5vmin; width: fit-content; line-height: 0.5em;
     background-color: darkgreen; padding: 0 0.2em;

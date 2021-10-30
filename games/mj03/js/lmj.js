@@ -41,6 +41,11 @@ function rcvErr(data) {
     } else if (data.err == "authenticate") {
         LUI.set_sign_in_state(false);
         try_autologin();
+    } else if (data.err == "duplicate_login") {
+        let username = St.username;
+        St.clrUuid(); // sets to null
+        LUI.set_sign_in_state(false);
+        LUI.playerEviction(username);
     }
 }
 

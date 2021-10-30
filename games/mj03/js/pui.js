@@ -739,6 +739,12 @@ function gameShutdown() {
     //window.location.replace("./"); // back to lobby
 }
 
+function playerEviction(username) {
+    document.getElementById("dl_username").text = username;
+    M.Modal.getInstance(document.getElementById("duplicate_login")).open();
+    //window.location.replace("./"); // back to lobby
+}
+
 function playResultWoo() {
     // Refresh the SVG use link to show the last tile before Woo
     refreshTileOnId('last-tile', PSt.plays.tile);
@@ -784,7 +790,7 @@ function init(opts) {
     UiOptions = opts || {};
     // Initialize modal dialogs
     M.Modal.init(document.querySelectorAll('.modal')); // materialize init
-    M.Modal.init(document.getElementById("shutdown"), {'dismissible': false});
+    M.Modal.init(document.querySelectorAll('.eviction'), {'dismissible': false});
 
     // Initialize drop-down menus
     let snavs = document.querySelectorAll('.sidenav');
@@ -827,4 +833,5 @@ export {
     refreshDiscard, refreshThinking, refreshDiscardTile,
     refreshWaitOn, gameShutdown, clearGameEndScoring,
     playResultWoo, refreshScoring, showScoreHist,
+    playerEviction,
 }

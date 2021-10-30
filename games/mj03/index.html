@@ -15,7 +15,7 @@
     <link rel="modulepreload" href="js/lui.js">
     <link rel="modulepreload" href="js/ws.js">
     <link rel="modulepreload" href="js/st.js">
-    <link rel="preload" href="media/Dice-2r1-Icon.svg" as="image" type="image/svg+xml">
+    <!--<link rel="preload" href="media/Dice-2r1-Icon.svg" as="image" type="image/svg+xml">-->
     <link rel="preload" href="media/mjs/dragonred.svg" as="image" type="image/svg+xml">
     <link rel="preload" href="media/mjs/flower1.svg" as="image" type="image/svg+xml">
     <link rel="preload" href="media/mjs/flower2.svg" as="image" type="image/svg+xml">
@@ -154,6 +154,16 @@
         <div class="modal-footer">
             <a class="modal-close btn-score btn-r">Close</a>
         </div>
+    </div>
+
+    <!-- Modal game shutdown notification -->
+    <div id="duplicate_login" class="modal eviction">
+        <p><i class="material-icons red-text">warning</i>
+            Player <span id="dl_username" class="red-text"></span>
+            has connected to the game server from another browser window
+            <i class="material-icons red-text">warning</i>
+        </p>
+        <a class="btn-small" href="./" >Back to Lobby</a>
     </div>
 
     <!--JavaScript at end of body for optimized loading-->

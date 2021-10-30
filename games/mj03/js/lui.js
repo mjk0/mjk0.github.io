@@ -226,6 +226,13 @@ function lobbyGameStatus(started, gk) {
     return status;
 }
 
+// Show player eviction modal, after duplicate login detected
+function playerEviction(username) {
+    document.getElementById("dl_username").textContent = username;
+    M.Modal.getInstance(document.getElementById("duplicate_login")).open();
+    //window.location.replace("./"); // back to lobby
+}
+
 // Set or clear visible error indicators for this input field
 function sign_in_err_state_email() {
     const email = email_dom();
@@ -249,11 +256,13 @@ function init() {
 
     // Initialize modal dialogs
     M.Modal.init(document.querySelectorAll('.modal')); // materialize init
+    M.Modal.init(document.querySelectorAll('.eviction'), {'dismissible': false});
 }
 
 export {
     init, set_sign_in_state, uname_dom, email_dom, welcome_username,
     sign_in_err_state_clear, sign_in_err_state_username, sign_in_err_state_email,
+    playerEviction,
     update_games_display, update_users_display,
     update_invites_display, get_priv_invite_selection,
 }

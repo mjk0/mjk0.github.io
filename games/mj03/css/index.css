@@ -152,6 +152,9 @@ button.btn-small {
     font-size: 0.9em; padding: 0 1em;
 }
 button.btn-floating.btn-small { padding: 0; }
+.eviction { background-color: gold; text-align: center; border: 1vw solid red; }
+.eviction p { font-size: 3vw; }
+.eviction i { vertical-align: text-bottom; font-size: 4vw; }
 .clearr { clear: right; }
 figure { text-align: center;}
 .min-content { width: min-content;}
