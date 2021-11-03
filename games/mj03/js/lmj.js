@@ -26,10 +26,11 @@ var seriesHistorySeriesID = 0; // for use by reqScoreHist()
 
 function rcvUuid(data) {
     // if UUID is valid, also set username & email with login value
+    let email = LUI.email_dom().value || "";
     St.rcvUuid(
         data,
-        LUI.uname_dom().value || COpts.get("mj_username"),
-        LUI.email_dom().value || COpts.get("mj_email") || ""
+        LUI.uname_dom().value.trim() || COpts.get("mj_username"),
+        email.trim() || COpts.get("mj_email") || ""
     );
     LUI.welcome_username();
     LUI.set_sign_in_state(St.uuid); // truthy values enable post-sign-in UI
@@ -182,7 +183,9 @@ function submit(e) {
     } else {
         // Try to get UUID from server
         let email = emailDom.value || "";
-        Ws.sendMsg({"action":"login", "username":unameDom.value, "email":email});
+        Ws.sendMsg({"action":"login",
+            "username":unameDom.value.trim(), "email":email.trim()
+        });
     }
     return false;
 }

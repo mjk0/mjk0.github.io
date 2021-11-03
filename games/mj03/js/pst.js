@@ -16,6 +16,7 @@ var recentDiscards = Array(4).fill("backwhite"); // last 4 discards
 var allDiscards = {latest:null, viewing:null}; // {v:"...", deck:"..."}
 var allScores = null; // 
 var scoring = null; // save scoring info for UI, in case of player name change at game end
+var scoring_umap = null; // scoring name map, from ukey (lc) to name
 var diffFlags = {addedFlower:false, addedSet:false};
 
 // Tile sort order that is used by the server
@@ -103,6 +104,11 @@ function rcvScoring(data) {
     scoring = data; // save data for UI
     allScores = null; // clear cached series score results
     allDiscards.latest = null; // Allow viewing deck after win
+
+    scoring_umap = {}; // generate new ukey mapping for player names
+    for (let pl of Object.keys(scoring.score)) {
+        scoring_umap[COpts.ukey(pl)] = pl;
+    }
 }
 
 // {"action":"hands","ibase":0,"h":[
@@ -267,7 +273,7 @@ function init() {
 
 export {
     players, ourGame, ourSeat, username, uuid, email,
-    hands, unplayed, curr, plays, scoring,
+    hands, unplayed, curr, plays, scoring, scoring_umap,
     recentDiscards, allDiscards, allScores,
     init, getSessionInfo,
     setHand, setUnplayed, isSameSuitConsecutive, tileSuit,

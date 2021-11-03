@@ -4,33 +4,29 @@
 function posGame2Dir(seat) { return "ESWN".charAt(seat); }
 
 // Score history.  Only handled in the UI
-// {"action":"scorehist","h":[
-//    {"wind":1,"dealer_pos":2,"win_pos":2,"date":"2021-07-15T02:01:08Z",
-//      "scores":{"R-Happy":-26,"Marcel":164,"R-Sneezy":-50,"R-Bashful":-88}},
-//    {"wind":1,"dealer_pos":1,"win_pos":0,"date":"2021-07-15T01:58:34Z",
-//      "scores":{"R-Happy":-42,"Marcel":168,"R-Sneezy":-42,"R-Bashful":-84}}]}
+// {"action":"scorehist","date":"2021-10-24T00:51:40Z",
+//  "players":["Marcel","r-Sudly","r-Westen","r-Norwin","r-Easton"],
+//  "res":[[1053,-702,303,-641,-13,0,0,0,1],[-12,30,-12,-6,0,1,0,1,1], ...
 function rcvScoreHist(data, players) {
-    // Iterate through all entries to find complete set of named players
-    let nmap = {}; // collect all found names
-    for (const gr of data.h) { Object.assign(nmap, gr.scores) }
-
     // Create table header with complete set of names
-    const names = Object.keys(nmap);
-    for (const n of names) { nmap[n] = 0; }
-    let name_order = [...players]; // copy players array
-    for (const n of players) { nmap[n] = 1; } // mark those already listed
-    for (const n of names) { if (nmap[n] == 0) name_order.push(n); }
+    const name_order = data.players.length > 0 ? data.players : players;
     let hdr = "<th>💨</th>";
     for (const n of name_order) { hdr += "<th>"+n+"</th>" }
     document.getElementById("scoreHhead").innerHTML = hdr;
 
     // Create results table
+    let date = new Date(data.date); // date of first entry
     let last_ds = "";
     let html = "";
     const cols = name_order.length + 1;
-    for (const gr of data.h) {
+    const i_dif_date = name_order.length; // date diff in minutes
+    const i_dealer_pos = name_order.length + 1;
+    const i_win_pos = name_order.length + 2;
+    const i_wind = name_order.length + 3;
+    let scores = new Array(name_order.length).fill(0); // running scores
+    for (const gr of data.res) {
         // get date of the game result
-        const date = new Date(gr.date);
+        date.setMinutes(date.getMinutes() + gr[i_dif_date]);
         const ds = date.toLocaleDateString('en-CA'); // 2020-08-19 (year-month-day)
         if (ds != last_ds) {
             // Add line for game result date
@@ -38,20 +34,22 @@ function rcvScoreHist(data, players) {
             last_ds = ds;
         }
         // Result row starts with wind
-        const windchar = posGame2Dir(gr.wind);
+        const windchar = posGame2Dir(gr[i_wind]);
         html += `<tr><td>${windchar}</td>`;
-        name_order.forEach((n,i) => {
-            let pts = gr.scores.hasOwnProperty(n) ? gr.scores[n] : "--";
-            if (i == gr.dealer_pos) pts = `* ${pts} *`;
-            const style = (i == gr.win_pos)? ' class="shWin"' : '';
+        for (let i=0; i < name_order.length; ++i) {
+            scores[i] += gr[i]; // add pts to total score so far
+            let pts = gr[i] == 0 ? "--" : scores[i];
+            if (i == gr[i_dealer_pos]) pts = `* ${pts} *`;
+            const style = (i == gr[i_win_pos])? ' class="shWin"' : '';
             html += `<td${style}>${pts}</td>`;
-        });
+        }
         html += "</tr>";
     }
-    if (data.h.length == 0) {
+    if (data.res.length == 0) {
         html += `<tr><td colspan="${cols}"><i>no score history yet</i></td></tr>`;
     }
     document.getElementById("scoreHbody").innerHTML = html;
+    document.getElementById("game_cnt").textContent = data.res.length;
     const eSh = document.getElementById("scoreHistory");
     // open modal dialog
     M.Modal.getInstance(eSh).open();

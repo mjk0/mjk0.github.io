@@ -217,7 +217,7 @@ function reqUndo(offset) {
 }
 function reqScoreHist() {
     if (PSt.allScores == null) {
-        Ws.sendMsg({"action":"scorehist", "h":[]});
+        Ws.sendMsg({"action":"scorehist"});
     } else {
         PUI.showScoreHist();
     }
@@ -232,11 +232,13 @@ function reqDiscardHist() {
 
 /// UI callbacks
 function uicbDiscard(tile) {
-    console.log("Discard %s", tile);
-    wsSendTilePlay("discard", tile);
-    PSt.markDiscardInProgress();
-    PUI.setViewTilePlay(); // remove discard and optional play choices
-    PUnpl.rmPlayedAndUnplayedAnims();
+    if (PSt.plays.allowDiscard) {
+        console.log("Discard %s", tile);
+        wsSendTilePlay("discard", tile);
+        PSt.markDiscardInProgress();
+        PUI.setViewTilePlay(); // remove discard and optional play choices
+        PUnpl.rmPlayedAndUnplayedAnims();
+    }
 }
 
 // Function that executes after DOM construction is complete

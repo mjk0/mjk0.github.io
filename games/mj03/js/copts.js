@@ -30,6 +30,8 @@ function lget(k,def) { return localStorage.getItem(k) || def }
 function lset(k,v) { return localStorage.setItem(k,v) }
 function lrm(k) { return localStorage.removeItem(k) }
 
+function ukey(k) { return k.toLowerCase() }
+
 function init(WsOptions) {
     // Initialize from optional URL parameters
     urlPkeys.forEach(k => initFromUrlParam(k));
@@ -49,4 +51,5 @@ function init(WsOptions) {
 export {
     isDev, isTester,
     init, get, set, clrPastUrlParams, rm, lget, lset, lrm, uget,
+    ukey,
 };

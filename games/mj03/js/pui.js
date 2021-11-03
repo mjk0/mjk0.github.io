@@ -701,7 +701,8 @@ function clearGameEndScoring() {
 }
 function seatToTotPts(i) {
     const name = seatPlayerName(i);
-    return (name in PSt.scoring.score? PSt.scoring.score[name].toString() : "--");
+    const scname = PSt.scoring_umap[COpts.ukey(name)] || name;
+    return (scname in PSt.scoring.score? PSt.scoring.score[scname].toString() : "--");
 }
 function refreshWooTileSrc(src, html) {
     if (src > woo_src) {
