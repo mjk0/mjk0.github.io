@@ -29,6 +29,7 @@ const WsOptions = {
         'discards': PUI.rcvDiscards,
         'waiton'  : rcvWaitOn,
         'shutdown': rcvShutdown, // game forcibly ended
+        'redovote': PUI.rcvRedoVote, // all humans must respond
     },
 };
 
@@ -215,6 +216,9 @@ function askRobotPlay(pos) { // ask robot to take over for a missing human
 function reqUndo(offset) {
     Ws.sendMsg({"action":"redo", offset, "v":[]});
 }
+function undoVote(v) {
+    Ws.sendMsg({"action":"redovote", v, "seat":PSt.ourSeat, "resp":[]});
+}
 function reqScoreHist() {
     if (PSt.allScores == null) {
         Ws.sendMsg({"action":"scorehist"});
@@ -272,5 +276,5 @@ document.addEventListener('DOMContentLoaded', function(){
 
 export {
     loginAndSit, chatsubmit, playNt, playWt, playAgain,
-    askRobotPlay, reqUndo, reqScoreHist, reqDiscardHist,
+    askRobotPlay, reqUndo, undoVote, reqScoreHist, reqDiscardHist,
 };

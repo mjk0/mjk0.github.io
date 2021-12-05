@@ -1,5 +1,6 @@
 "use strict";
 import * as COpts from './copts.js';
+import * as CUI from './cui.js';
 import * as PSt from './pst.js';
 import * as PUnpl from './punpl.js';
 
@@ -13,13 +14,13 @@ var unpResizeObserver; // init after DOM ready
 
 // Refresh our unplayed tiles
 function refreshUnplayed() {
-    if (!is_visible("unplayed")) {
-        set_id_visibility("unplayed", 1);
+    if (!CUI.is_visible("unplayed")) {
+        CUI.show_id("unplayed", 1);
     }
     PUnpl.refreshUnplayed();
 }
 function onResizeUnplayed() { // called once unplayed DOM ready
-    if (is_visible("unplayed")) {
+    if (CUI.is_visible("unplayed")) {
         let bb = document.getElementById("unplayed").getBoundingClientRect();
         //console.log('unplayed rect: ', bb, unpBB);
         if (bb.width != unpBB.width || bb.height != unpBB.height) {
@@ -28,23 +29,6 @@ function onResizeUnplayed() { // called once unplayed DOM ready
             PUnpl.refreshGrid();
         }
     }
-}
-
-// Set(1) or clear(0), or toggle(-1) "hide-me" class on element
-function set_elem_visibility(elem, boolish) {
-    if (boolish < 0) {
-        elem.classList.toggle("hide-me");
-    } else if (boolish) {
-        elem.classList.remove("hide-me");
-    } else {
-        elem.classList.add("hide-me");
-    }
-}
-function set_id_visibility(id, boolish) {
-    set_elem_visibility(document.getElementById(id), boolish);
-}
-function is_visible(id) {
-    return !document.getElementById(id).classList.contains("hide-me");
 }
 
 // Update visual status for WebSocket connection state
@@ -57,15 +41,15 @@ function showWsOn(bool) {
 // Show the chat window for large screens, and clear any chat msg animation
 function chatShow(boolish) {
     chatShush();
-    set_id_visibility('chatWindow', boolish); // large screen panel
-    if (is_visible('chatWindow')) {
+    CUI.show_id('chatWindow', boolish); // large screen panel
+    if (CUI.is_visible('chatWindow')) {
         document.getElementById("cptext").focus();
     }
 }
 function chatShush() { allOfClass("chat-icon", e => e.classList.remove("chatMsg"));}
 function chatSliderDiv() { return document.getElementById('sidenav-c');}
 function isChatVisible() {
-    return M.Sidenav.getInstance(chatSliderDiv()).isOpen || is_visible('chatWindow');
+    return M.Sidenav.getInstance(chatSliderDiv()).isOpen || CUI.is_visible('chatWindow');
 }
 function chatSliderOnOpen() {
     chatShush();
@@ -170,7 +154,7 @@ function discardsSummary() {
     for (let ri = 0; ri < 4; ++ri) {
         const fid = 'discards'+ri;
         document.getElementById(fid).innerHTML = r[ri];
-        set_id_visibility(fid, ri==0 || sep);
+        CUI.show_id(fid, ri==0 || sep);
     }
     // Deck remaining, if given (at end of game only)
     r = '';
@@ -184,7 +168,7 @@ function discardsSummary() {
         if (!cs) r += mkTileSvg(PSt.allDiscards.viewing.deck, 1, 'tile-m');
     }
     document.getElementById('deck').innerHTML = r;
-    set_id_visibility('deck', isDeckVisible);
+    CUI.show_id('deck', isDeckVisible);
 }
 function discardsAsSeparate() {
     const v = document.querySelector('input[name="disradio"]:checked').value;
@@ -200,8 +184,7 @@ function refreshCurrWind() {
 function refreshCurrDealer() {
     for (let seat=0; seat < 4; ++seat) { // game positions (0=East)
         let iv = posGame2View(seat); // view positions (0=bottom)
-        let elem = document.querySelector('#seatname'+iv+' + img');
-        set_elem_visibility(elem, seat == PSt.curr.dealer);
+        CUI.show_qs('#seatname'+iv+' + img', seat == PSt.curr.dealer);
     }
 }
 
@@ -221,7 +204,7 @@ function refreshRdyFlags() {
     for (let ig=0; ig < 4; ++ig) {
         let iv = posGame2View(ig); // view positions (0=bottom)
         // update ready flag
-        set_id_visibility("rdy"+iv, vrdyok && PSt.hands[ig].r);
+        CUI.show_id("rdy"+iv, vrdyok && PSt.hands[ig].r);
     }
 }
 function doesViewChangeNeedRefreshOfRdyFlags(oldv, newv) {
@@ -286,7 +269,7 @@ function refreshPlayed(ibase, num) {
         }
         elem.innerHTML = '<span>'+html+'</span>'; // clear old contents
         // update ready flag
-        set_id_visibility("rdy"+iv, vrdyok && PSt.hands[ig].r);
+        CUI.show_id("rdy"+iv, vrdyok && PSt.hands[ig].r);
     }
 }
 // Break a comma-separated list of unplayed tiles into groupings by suit
@@ -368,14 +351,14 @@ function setThinking(vpos, val, doFlash) {
     let tt = document.getElementsByClassName('thinking'+vpos);
     if (tt.length > 0) {
         if (!tk2hide.hasOwnProperty(val)) {
-            set_elem_visibility(tt[0], 1);
+            CUI.show_elem(tt[0], 1);
             let txt = tk2text[val] || val;
             let fc = (doFlash && txt.slice(-1) == "!" ? " think-f" : "");
             let spans = tt[0].getElementsByTagName('span');
             spans[0].className = "think-"+(tk2css[val] || val) + fc;
             spans[0].textContent = txt;
         } else {
-            set_elem_visibility(tt[0], 0); // hide responses in tk2hide
+            CUI.show_elem(tt[0], 0); // hide responses in tk2hide
         }
     } else {
         console.error("Couldn't find thinking"+vpos);
@@ -442,11 +425,11 @@ const pcButtons = [
 let pcBtnCnt = 0; // allow counting of visible buttons
 function cnt_btn_visibility(id, flag) {
     if (flag) ++pcBtnCnt;
-    set_id_visibility(id, flag);
+    CUI.show_id(id, flag);
 }
 function setViewTilePlay() {
     pcBtnCnt = 0;
-    set_id_visibility("discard-line", PSt.plays.allowDiscard);
+    CUI.show_id("discard-line", PSt.plays.allowDiscard);
     cnt_btn_visibility("fs-discard", PSt.plays.allowDiscard);
     for (const pcid of pcButtons) {
         const id = "fs-"+pcid;
@@ -484,8 +467,8 @@ function setViewTilePlay() {
 
     // If more than one button/not-a-btn is visible, put gap to prevent click
     // If more than 2 buttons, enable line break
-    set_id_visibility("fs-gap", pcBtnCnt > 1);
-    set_id_visibility("fs-br", pcBtnCnt > 2);
+    CUI.show_id("fs-gap", pcBtnCnt > 1);
+    CUI.show_id("fs-br", pcBtnCnt > 2);
 
     PUnpl.rmClass(document.getElementById("playfs"), "PlayGone");
     setPlayView("tileplay"); // show the buttons
@@ -495,14 +478,14 @@ function checkPlayRestrictions() {
     if (UI.view == "tileplay" && PSt.isOtherDiscard()) {
         const mrank = PSt.maxDiscardPlayRank();
         if (mrank > 0) {
-            if (is_visible("fs-draw")) {
+            if (CUI.is_visible("fs-draw")) {
                 console.log('Replacing Draw btn with Pass', mrank);
                 // Swap Draw and Pass-only visibility
-                set_id_visibility("fs-draw", false);
-                set_id_visibility("fs-pass-only", true);
+                CUI.show_id("fs-draw", false);
+                CUI.show_id("fs-pass-only", true);
             }
             for (const [p,r] of Object.entries(pcBtnRank)) {
-                if (r < mrank && is_visible(p)) {
+                if (r < mrank && CUI.is_visible(p)) {
                     document.getElementById(p).classList.add('PlayGone');
                 }
             }
@@ -554,8 +537,8 @@ function gameEndWaitOn() {
     }
     document.getElementById("ge-wo").innerHTML = html; // gameend waiting on who
     // If we have responded, hide our buttons
-    set_id_visibility("b0-pa", !weResponded);
-    set_id_visibility("b1-pa", weResponded);
+    CUI.show_id("b0-pa", !weResponded);
+    CUI.show_id("b1-pa", weResponded);
     setPlayView('gameend');
 }
 // If in the "waiton" view, refresh display after player name list update
@@ -577,8 +560,7 @@ function rcvReDo(data) {
         // Create an undo button for each option
         v.forEach((a,i) => {
             // a[0] is the player pos, a[1] is the play
-            let pname = seatPlayerName(a[0]);
-            let play = undoPlayStr(a[1]);
+            let play = playerNameAndPlay(a);
             let div = i==0 ? "fieldset" : "div";
             let lg = i==0 ? "<legend>Last Play:</legend>" : "";
             if (i==1) {
@@ -586,7 +568,7 @@ function rcvReDo(data) {
             }
             html += `<${div}>${lg}<button class="btn-r btn-undo modal-close"`;
             html += ` onclick="PMj.reqUndo(${i})" type="button">`;
-            html += `Undo ${pname} ${play}</button></${div}>`;
+            html += `Undo ${play}</button></${div}>`;
         });
         if (v.length > 1) {
             html += '</fieldset>';
@@ -601,7 +583,47 @@ function undoPlayStr(play) {
         let pstr = Object.keys(play)[0];
         return undoPlay2Str[pstr] || "in-hand play";
     }
+    if (play in tk2css) return tk2css[play];
     return play;
+}
+function playerNameAndPlay(arr) {
+    return seatPlayerName(arr[0]) + " " + undoPlayStr(arr[1]);
+}
+
+// {"action":"redovote","seat":1,"v":0,"play":[1,"discard"],"resp":[0,1,1,1]}
+// meaning of [-1,0,1] => [no,pending,yes]
+const vote2resp = ['<span class="bRR">✘</span>',
+    '<b>?</b>','<span class="bGG">✔</span>'
+];
+const vote2st = ['denied','pending unanimous approval','unanimously approved'];
+function rcvRedoVote(data) {
+    document.getElementById("diaUndoSrc").textContent = seatPlayerName(data.seat);
+    document.getElementById("diaUndoTgt").textContent = playerNameAndPlay(data.play);
+    let resp = data.resp || [];
+    let v = parseInt(data.v || 0); // overall status
+    let have_voted = resp[PSt.ourSeat] || 0;
+    let show_ask_agree = (v == 0) && (have_voted == 0);
+    CUI.show_id("diaUndoVoteQ", show_ask_agree);
+    CUI.show_id("diaUndoVoteSt", !show_ask_agree);
+    document.getElementById("diaUndoVoteSt1").textContent = vote2st[v+1];
+
+    let html = "";
+    resp.forEach((v,i) => {
+        let rs = vote2resp[v+1] || vote2resp[1];
+        let pn = seatPlayerName(i);
+        html += `<tr><td>${pn}</td><td>${rs}</td></tr>`;
+    });
+    document.getElementById("diaUndoTBody").innerHTML = html;
+
+    // Possible buttons are Yes, No, and Dismiss
+    CUI.show_id("duvYes", show_ask_agree);
+    CUI.show_id("duvNo", show_ask_agree);
+    CUI.show_id("duvDis", !show_ask_agree);
+    if (data.seat >= 4) {
+        M.Modal.getInstance(document.getElementById("diaUndoVote")).close();
+    } else {
+        M.Modal.getInstance(document.getElementById("diaUndoVote")).open();
+    }
 }
 
 // Find word sets of the given minimum length, return as SVGs
@@ -758,7 +780,7 @@ const playViewIds = [
 ];
 function enaPlayViewPieces(opts) {
     for (const pvid of playViewIds) {
-        set_id_visibility(pvid, opts[pvid] || 0);
+        CUI.show_id(pvid, opts[pvid] || 0);
     }
 }
 function setPlayView(vname) {
@@ -767,7 +789,7 @@ function setPlayView(vname) {
     switch (vname) {
     case "init":
         enaPlayViewPieces({"viewinit":1, "unplayed":1});
-        set_id_visibility("other-discard", 0);
+        CUI.show_id("other-discard", 0);
         break;
     case "tileplay": // both in-hand and on-discard
         enaPlayViewPieces({"playfs":1, "unplayed":1, "undo":1,
@@ -791,7 +813,7 @@ function init(opts) {
     UiOptions = opts || {};
     // Initialize modal dialogs
     M.Modal.init(document.querySelectorAll('.modal')); // materialize init
-    M.Modal.init(document.querySelectorAll('.eviction'), {'dismissible': false});
+    M.Modal.init(document.querySelectorAll('.no-dis'), {'dismissible': false});
 
     // Initialize drop-down menus
     let snavs = document.querySelectorAll('.sidenav');
@@ -829,7 +851,7 @@ export {
     refreshPlayed, refreshUnplayed, refreshDiscardHistBtn,
     showWsOn, chatShow, chatIncoming, getSvgTileString,
     setPlayView, setViewTilePlay, checkPlayRestrictions,
-    rcvWaitOn, rcvReDo, rcvScoreHist, rcvDiscards,
+    rcvWaitOn, rcvReDo, rcvRedoVote, rcvScoreHist, rcvDiscards,
     showDiscards, discardsSummary,
     refreshDiscard, refreshThinking, refreshDiscardTile,
     refreshWaitOn, gameShutdown, clearGameEndScoring,
