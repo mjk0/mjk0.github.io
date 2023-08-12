@@ -2,6 +2,7 @@
 pics/**
 old/**
 web_dev/**
+tux/**
 
 #ignore these files:
 .DS_Store
