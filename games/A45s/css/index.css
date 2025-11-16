@@ -49,3 +49,14 @@ span.inviteBtn {
     margin: 0px 5px 0px 0px; padding: 0px 1em;
 }
 .newi {vertical-align: bottom; color: yellow;}
+.outlined-warning {
+    /* Main yellow fill */
+    color: yellow; 
+    /* Black outline using text-shadow */
+    text-shadow:
+        -1px -1px 0 black,
+        1px -1px 0 black,
+        -1px 1px 0 black,
+        1px 1px 0 black;
+    /*font-size: 48px; /* Make it larger to see the effect clearly */
+}
