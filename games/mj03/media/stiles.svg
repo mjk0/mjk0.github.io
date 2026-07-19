@@ -191,31 +191,31 @@
 
 <!-- Suit 'man' -->
 <symbol id="M1" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/man1.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/man1.svg" />
 </symbol>
 <symbol id="M2" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/man2.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/man2.svg" />
 </symbol>
 <symbol id="M3" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/man3.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/man3.svg" />
 </symbol>
 <symbol id="M4" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/man4.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/man4.svg" />
 </symbol>
 <symbol id="M5" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/man5.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/man5.svg" />
 </symbol>
 <symbol id="M6" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/man6.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/man6.svg" />
 </symbol>
 <symbol id="M7" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/man7.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/man7.svg" />
 </symbol>
 <symbol id="M8" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/man8.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/man8.svg" />
 </symbol>
 <symbol id="M9" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/man9.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/man9.svg" />
 </symbol>
 
 <!-- Suit 'bamboo', a.k.a. 'sticks' -->
@@ -315,74 +315,74 @@
     </symbol>
 </defs>
 <symbol id="B1" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/bamb1.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/bamb1.svg" />
 </symbol>
 
 <!-- Suit 'words', includes 3 dragons (middle, FA, Babei), winds, flowers -->
 <symbol id="F1" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/flower1.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/flower1.svg" />
 </symbol>
 <symbol id="F2" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/flower2.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/flower2.svg" />
 </symbol>
 <symbol id="F3" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/flower3.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/flower3.svg" />
 </symbol>
 <symbol id="F4" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/flower4.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/flower4.svg" />
 </symbol>
 <symbol id="F5" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/flower1.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/flower1.svg" />
 </symbol>
 <symbol id="F6" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/flower2.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/flower2.svg" />
 </symbol>
 <symbol id="F7" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/flower3.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/flower3.svg" />
 </symbol>
 <symbol id="F8" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/flower4.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/flower4.svg" />
 </symbol>
 <symbol id="CN" viewBox="0 0 65 84">
-  <image x="0" y="0" width="65" height="84"  href="media/mjs/dragonred.svg" />
+  <image x="0" y="0" width="65" height="84"  href="mjs/dragonred.svg" />
 </symbol>
 <symbol id="FA" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/dragongreen.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/dragongreen.svg" />
 </symbol>
 <symbol id="BB" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/dragonwhite.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/dragonwhite.svg" />
 </symbol>
 <symbol id="WE" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/windeast.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/windeast.svg" />
 </symbol>
 <symbol id="WS" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/windsouth.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/windsouth.svg" />
 </symbol>
 <symbol id="WW" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/windwest.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/windwest.svg" />
 </symbol>
 <symbol id="WN" viewBox="0 0 65 84">
-  <image x="0" y="0" height="100%" width="100%"  href="media/mjs/windnorth.svg" />
+  <image x="0" y="0" height="100%" width="100%"  href="mjs/windnorth.svg" />
 </symbol>
 
 <!-- Overlays for Woo, Gng, Po, Cha -->
 <symbol id="ovwoo" viewBox="0 0 65 84">
-  <image x="3" y="50" height="28" width="58"  href="media/mjs/awoo.svg" />
+  <image x="3" y="50" height="28" width="58"  href="mjs/awoo.svg" />
 </symbol>
 <symbol id="ovgng" viewBox="0 0 65 84">
-  <image x="6" y="49" height="30" width="52"  href="media/mjs/agng.svg" />
+  <image x="6" y="49" height="30" width="52"  href="mjs/agng.svg" />
 </symbol>
 <symbol id="ovpo" viewBox="0 0 65 84">
-  <image x="16" y="49" height="30" width="36"  href="media/mjs/apo.svg" />
+  <image x="16" y="49" height="30" width="36"  href="mjs/apo.svg" />
 </symbol>
 <symbol id="ovcha" viewBox="0 0 65 84">
-  <image x="6" y="49" height="30" width="52"  href="media/mjs/acha.svg" />
+  <image x="6" y="49" height="30" width="52"  href="mjs/acha.svg" />
 </symbol>
 
 <!-- Logo -->
 <symbol id="CNx3" viewBox="0 0 195 84">
-  <image x="0" y="0" width="65" height="84"  href="media/mjs/dragonred.svg" />
-  <image x="65" y="0" width="65" height="84"  href="media/mjs/dragonred.svg" />
+  <image x="0" y="0" width="65" height="84"  href="mjs/dragonred.svg" />
+  <image x="65" y="0" width="65" height="84"  href="mjs/dragonred.svg" />
   <use x="130" y="0" width="65" height="84" href="#CN" />
 </symbol>
 
