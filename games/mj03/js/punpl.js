@@ -537,11 +537,11 @@ function refreshUnpFull() {
     PSt.unplayed.sub.length = 0;
 }
 function addTile(parent, tile, coords, classes) {
-    // <svg class="tile-lg tile-mv"><use href="media/stiles.svg#CN"/></svg>
+    // <svg class="tile-lg tile-mv"><use href="media/utiles_min.svg#CN"/></svg>
     let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.classList.add(...classes);
     let use = document.createElementNS("http://www.w3.org/2000/svg", "use");
-    use.setAttribute("href", "media/stiles.svg#" + tile);
+    use.setAttribute("href", "media/utiles_min.svg#" + tile);
     svg.appendChild(use);
     parent.appendChild(svg);
     toGridXY(svg, coords);
@@ -552,7 +552,7 @@ function svgSetTileString(elem, tile, pos) {
     let uses = elem.getElementsByTagName('use');
     let i = pos || 0;
     if (uses.length > i) {
-        uses[i].setAttribute("href", "media/stiles.svg#" + tile);
+        uses[i].setAttribute("href", "media/utiles_min.svg#" + tile);
     } else {
         console.error("SVG/use not found in ", elem);
     }

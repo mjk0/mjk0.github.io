@@ -111,7 +111,7 @@ function mkTileSvg(tiles, repeatCnt, tileclass) {
     let syms = tiles.split(',');
     for (let i=0; i < repeatCnt; ++i) {
         for (const sym of syms) {
-            r += `<svg${cl}><use href="media/stiles.svg#${sym}"/></svg>`;
+            r += `<svg${cl}><use href="media/utiles_min.svg#${sym}"/></svg>`;
         }
     }
     return r;
@@ -142,12 +142,12 @@ function discardsSummary() {
             r[ri] += '<div>';
             cl += ' dh-at';
         }
-        r[ri] += '<svg class="'+cl+'"><use href="media/stiles.svg#'
+        r[ri] += '<svg class="'+cl+'"><use href="media/utiles_min.svg#'
             +v.substr(0,2)+'"/></svg>';
 
         // If there was a play action, include action overlay tile
         if (action) {
-            r[ri] += '<svg class="dh-ov"><use href="media/stiles.svg#ov'
+            r[ri] += '<svg class="dh-ov"><use href="media/utiles_min.svg#ov'
             +action+'"/></svg></div>';
         }
     });
