@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Yoyo — Lobby</title>
+  <link rel="stylesheet" href="css/yoyo.css" />
+</head>
+<body class="lobby-page">
+  <header class="app-header">
+    <h1>
+      <svg class="brand-mark" viewBox="0 0 60 80" aria-hidden="true">
+        <use href="/games/A45s/cards0.svg#cbcatsil" xlink:href="/games/A45s/cards0.svg#cbcatsil" />
+      </svg>
+      Yoyo
+    </h1>
+    <span class="conn-status" id="conn-status">offline</span>
+    <span class="spacer"></span>
+    <div class="profile-wrap" id="profile-wrap">
+      <button
+        type="button"
+        class="profile-btn"
+        id="btn-profile"
+        aria-haspopup="menu"
+        aria-expanded="false"
+        aria-controls="profile-menu"
+      >
+        <span class="you" id="hdr-you">not signed in</span>
+        <span class="caret" id="profile-caret" hidden>▾</span>
+      </button>
+      <div class="profile-menu" id="profile-menu" role="menu" hidden></div>
+    </div>
+  </header>
+
+  <main class="lobby">
+    <!-- First visit / Create new profile (§7.8) -->
+    <div class="login-bar" id="login-bar" hidden>
+      <div class="login-bar-head">
+        <h2 class="login-title" id="login-title">Join the lobby</h2>
+        <p class="hint" id="login-hint">Choose a display name. Optional email locks the name to you.</p>
+      </div>
+      <div class="login-fields">
+        <label>Name
+          <input id="in-user" type="text" autocomplete="username" maxlength="24" placeholder="display name" />
+        </label>
+        <label>Email <span class="opt-label">(optional)</span>
+          <input id="in-email" type="email" autocomplete="email" placeholder="you@example.com" />
+        </label>
+        <div class="login-actions">
+          <button type="button" class="primary" id="btn-login">Enter lobby</button>
+          <button type="button" id="btn-login-cancel" hidden>Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- After explicit Sign out: Continue as… (§7.8) -->
+    <div class="continue-gate" id="continue-gate" hidden>
+      <p class="continue-label">Continue as</p>
+      <div class="continue-chips" id="continue-chips"></div>
+      <div class="continue-actions">
+        <button type="button" id="btn-another-name">Create new profile…</button>
+        <button type="button" id="btn-gate-manage">Manage profiles…</button>
+      </div>
+    </div>
+
+    <!-- Manage profiles panel -->
+    <div class="manage-panel" id="manage-panel" hidden>
+      <div class="manage-panel-head">
+        <h2>Manage profiles</h2>
+        <button type="button" id="btn-manage-close" aria-label="Close">✕</button>
+      </div>
+      <p class="hint">Saved on this browser only. Forget removes the name shortcut (not server history).</p>
+      <ul class="manage-list" id="manage-list"></ul>
+    </div>
+
+    <!-- Display prefs (server UserData.prefs) -->
+    <div class="manage-panel display-panel" id="display-panel" hidden>
+      <div class="manage-panel-head">
+        <h2>Display</h2>
+        <button type="button" id="btn-display-close" aria-label="Close">✕</button>
+      </div>
+      <p class="hint">Saved with your account. Card sort is display-only (server still deals high→low).</p>
+      <fieldset class="pref-fieldset">
+        <legend>Card sort</legend>
+        <label class="pref-radio">
+          <input type="radio" name="hand-sort" id="pref-hand-desc" value="desc" />
+          High → Low
+        </label>
+        <label class="pref-radio">
+          <input type="radio" name="hand-sort" id="pref-hand-asc" value="asc" />
+          Low → High
+        </label>
+      </fieldset>
+    </div>
+
+    <section class="panel tables" aria-label="Tables">
+      <div class="demo-banner" id="demo-banner"></div>
+      <h2>Tables</h2>
+      <div id="tables-root"></div>
+      <div class="table-actions" style="margin-top:0.75rem">
+        <button type="button" id="btn-create" disabled>Create private</button>
+      </div>
+    </section>
+
+    <div class="side-col">
+      <section class="panel" style="flex:0 0 auto; max-height:40%">
+        <h2>Online</h2>
+        <ul class="online-list" id="online-list"></ul>
+      </section>
+      <section class="panel" style="flex:1">
+        <h2>Chat</h2>
+        <ul class="chat-log" id="chat-log"></ul>
+        <form class="chat-form" id="chat-form">
+          <input id="chat-text" type="text" maxlength="200" placeholder="lobby chat…" disabled />
+          <button type="submit" disabled>Send</button>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <p class="footer-note">Lobby WS <code>/games/yoyo/lobby/ws</code> · cards <code>/games/A45s/cards0.svg</code></p>
+  <script type="module" src="js/lobby.js"></script>
+</body>
+</html>

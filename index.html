@@ -1,78 +1,128 @@
 <!DOCTYPE html>
-<html style="height: 100%;">
-<title>Marcel and Jane's Page</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="//www.w3schools.com/lib/w3.css">
-<style>
-    .ends    { background-color: #aad; }
-    .topnav { background-color: #606060; color: white; width: 100%;
-              border-right: 1px solid #bbb;
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Marcel and Jane's Page</title>
+  <style>
+    :root {
+      --bg: #a8b4d4;
+      --nav: #606060;
+      --nav-text: #f4f4f4;
+      --nav-sep: #aaa;
+      --row: #ddd;
+      --link: #0b3d91;
+      --link-hover: #062456;
+      --sep: #667;
     }
-    .topnav ul { list-style-type: none; margin: 0px; padding: 0px; }
-    .topnav li { border-right: 1px solid #bbb; display: inline-block; }
-    .topnav li a { display: block; padding: 8px 16px; }
-    .grpStyle { padding: 5px; background-color: #ddd; }
-    .grpLabel { font-size: 110%; font-weight: bold;
-               padding-left: 2px; padding-right: 10px;
+    * { box-sizing: border-box; }
+    html { height: 100%; }
+    body {
+      margin: 0;
+      min-height: 100%;
+      font: 16px/1.45 system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #1a1a1a;
+      background: var(--bg);
+      text-align: left;
     }
-</style>
-<body class="ends" style="min-height: 100%; top: 0px;">
+    a { color: var(--link); text-decoration: none; }
+    a:hover { color: var(--link-hover); text-decoration: underline; }
 
-<!-- Header -->
-<div class="w3-container"><h2>Marcel and Jane's Page</h2></div>
-<div class="w3-card-2 w3-slim topnav"><ul>
-    <li><a href="/accounts.html" title='Accounts'>Accounts</a></li>
-    <li><a href="/misclinks.html">Misc.</a></li>
-    <li><a href="http://www.pizzamonster.org/pics/index.html">Pictures</a></li>
-    <li><a href="http://www.pizzamonster.org/web_dev/Mahjong.html">Mahjong</a></li>
-    <li><a href="/games/A45s/">Auction 45s</a></li>
-    <li><a href="/games/jigsaw/">Jigsaw Puzzle</a></li>
-</ul>
-</div><div class="w3-container w3-light-grey w3-padding-0">
-    <div class="w3-card grpStyle"><span class="grpLabel">Science/Tech:</span>
-        <a href="http://www.sciencedaily.com/">ScienceDaily</a> /
-        <a href="http://arstechnica.com/science/">Ars Science</a> /
-        <a href="https://physicstoday.scitation.org/">Physics Today</a> /
-        <a href="http://www.physlink.com/">Physlink</a>
-    </div>
-    <div class="w3-card grpStyle"><span class="grpLabel">Green Tech:</span>
-        <a href="http://www.teslarati.com/">Teslarati</a> /
-        <a href="http://insideevs.com/">Inside EVs</a> /
-        <a href="https://cleantechnica.com/">Cleantech</a> /
-        <a href="http://www.teslamotorsclub.com/forum.php">Tesla Forums</a>
-    </div>
-    <div class="w3-card grpStyle"><span class="grpLabel">Stocks &amp; Markets:</span>
-        <a href="http://finance.yahoo.com">Yahoo Finance</a>:
-        <a href="http://finance.yahoo.com/world-indices">World Indices</a>,
-        <a href="http://finance.yahoo.com/q?s=TSLA">TSLA</a>,
-        <a href="http://finance.yahoo.com/q?s=MDY">MDY</a>,
-        <a href="http://finance.yahoo.com/q?s=VBK">VBK</a>,
-        <a href="http://finance.yahoo.com/q?s=VCIT">VCIT</a>
-        / <a href="https://www.dividendchannel.com/drip-returns-calculator/">DRIP Calc</a>
-        / <a href="http://www.pizzamonster.org/old/markets.htm">More...</a>
-    </div>
-    <div class="w3-card grpStyle"><span class="grpLabel">Weather:</span>
-        <a href="https://www.accuweather.com/en/us/sunnyvale-ca/94087/weather-forecast/39369_pc?unit=c">Sunnyvale</a>,
-        <a href="https://weather.gc.ca/city/pages/on-77_metric_e.html">Hamilton</a>,
-        <a href="http://weather.gc.ca/city/pages/nb-36_metric_e.html">Moncton</a>
-    </div>
-    <div class="w3-card grpStyle"><span class="grpLabel">Space:</span>
-        SpaceX <a href="http://forum.nasaspaceflight.com/index.php?board=45.0">forum</a> 
-        (<a href="http://forum.nasaspaceflight.com/index.php?board=55.0">missions</a>) 
-        / <a href="http://spaceflightnow.com/">SFN</a> /
-        <a href="http://www.space.com/">Space News</a> /
-        <a href="http://www.spaceref.com/">SpaceRef</a> /
-        <a href="http://www.nasawatch.com">NasaWatch</a>
-    </div>
-    <div class="w3-card grpStyle"><span class="grpLabel">News:</span>
-        <a href="https://news.google.com">Google News</a> /
-        <a href="http://www.abcnews.com">ABCnews</a>
-    </div>
-</div>
-<footer><div class="">
-        <p><i></i></p>
-    </div>
-</footer>
+    .wrap {
+      max-width: none;
+      margin: 0;
+      padding: 0.85rem 0 2rem;
+    }
 
+    header h1 {
+      margin: 0 0 0.65rem;
+      padding: 0 1rem;
+      font-size: 1.4rem;
+      font-weight: 650;
+      letter-spacing: -0.02em;
+    }
+
+    .rows {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.25rem 0.4rem;
+      padding: 0.5rem 1rem;
+    }
+    .row .label {
+      font-weight: 700;
+      margin-right: 0.2rem;
+    }
+    .row .sep {
+      color: var(--sep);
+      user-select: none;
+      margin: 0 0.1rem;
+    }
+    .row a { white-space: nowrap; }
+
+    /* Games — original topnav grey */
+    .row-games {
+      background: var(--nav);
+      color: var(--nav-text);
+    }
+    .row-games a {
+      color: var(--nav-text);
+    }
+    .row-games a:hover {
+      color: #fff;
+      text-decoration: underline;
+    }
+    .row-games .sep { color: var(--nav-sep); }
+    .row-games .label { color: #fff; }
+
+    /* Markets / Misc — original grpStyle light grey */
+    .row-soft {
+      background: var(--row);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Marcel and Jane's Page</h1>
+    </header>
+
+    <main class="rows">
+      <div class="row row-games">
+        <a class="label" href="/games/">Games</a><span class="sep">:</span>
+        <a href="/games/mj03/">Mahjong</a>
+        <span class="sep">|</span>
+        <a href="/games/A45s/">Auction 45s</a>
+        <span class="sep">|</span>
+        <a href="/games/yoyo/">Yoyo</a>
+        <span class="sep">|</span>
+        <a href="/games/jigsaw/">Jigsaw</a>
+      </div>
+
+      <div class="row row-soft">
+        <span class="label">Markets:</span>
+        <a href="https://finance.yahoo.com/">Yahoo Finance</a>
+        <span class="sep">·</span>
+        <a href="https://finance.yahoo.com/world-indices">World Indices</a>
+        <span class="sep">·</span>
+        <a href="https://www.dividendchannel.com/drip-returns-calculator/">DRIP Calc</a>
+        <span class="sep">·</span>
+        <a href="/old/markets.htm">More…</a>
+      </div>
+
+      <div class="row row-soft">
+        <a class="label" href="/misclinks.html">Misc</a><span class="sep">:</span>
+        <a href="https://www.teslamotorsclub.com/forum.php">Tesla Forums</a>
+        <span class="sep">·</span>
+        <a href="http://www.pizzamonster.org/pics/index.html">Pictures</a>
+      </div>
+    </main>
+  </div>
 </body>
 </html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Yoyo — Table</title>
+  <link rel="stylesheet" href="css/yoyo.css" />
+</head>
+<body class="play-page">
+  <header class="play-strip">
+    <span class="strip-brand"><strong>Yoyo</strong><span id="table-label" class="muted"> / ?:</span></span>
+    <div class="opt-pills" id="opt-pills" aria-label="Table options"></div>
+    <div class="standings-wrap">
+      <button type="button" id="btn-scores" aria-haspopup="dialog" aria-expanded="false" aria-controls="standings-pop" title="Session standings">Score</button>
+      <div id="standings-pop" class="last-trick-pop standings-pop" hidden role="dialog" aria-labelledby="standings-title">
+        <div class="last-trick-head">
+          <strong id="standings-title">Standings</strong>
+          <button type="button" class="last-trick-close" id="btn-scores-close" aria-label="Close">×</button>
+        </div>
+        <ol class="finish-board live-mode" id="standings-board" aria-label="Rank, role, and session score"></ol>
+      </div>
+    </div>
+    <div class="last-trick-wrap history-wrap">
+      <button type="button" id="btn-history" disabled title="Trick history this hand">History</button>
+      <div id="history-pop" class="last-trick-pop" hidden role="dialog" aria-labelledby="history-title">
+        <div class="last-trick-head history-head">
+          <button type="button" class="hist-nav" id="btn-hist-prev" aria-label="Previous trick" disabled>‹</button>
+          <strong id="history-title">Last trick</strong>
+          <button type="button" class="hist-nav" id="btn-hist-next" aria-label="Next trick" disabled>›</button>
+          <button type="button" class="last-trick-close" id="btn-history-close" aria-label="Close">×</button>
+        </div>
+        <div class="last-trick-body" id="history-body"></div>
+      </div>
+    </div>
+    <div class="gear-wrap" id="gear-wrap">
+      <button type="button" id="btn-gear" aria-haspopup="true" aria-expanded="false" aria-controls="gear-menu" title="Display settings">⚙</button>
+      <div class="gear-menu" id="gear-menu" hidden role="menu">
+        <div class="menu-label">Card sort</div>
+        <label class="gear-radio">
+          <input type="radio" name="gear-hand-sort" id="gear-hand-desc" value="desc" />
+          High → Low
+        </label>
+        <label class="gear-radio">
+          <input type="radio" name="gear-hand-sort" id="gear-hand-asc" value="asc" />
+          Low → High
+        </label>
+      </div>
+    </div>
+    <button type="button" class="danger" id="btn-leave">Leave game</button>
+  </header>
+
+  <div class="table-area" id="table-area">
+    <div class="seats-layer" id="seats-layer"></div>
+    <!-- Current trick: per-seat offset stacks (positioned over felt) -->
+    <div class="trick-layer" id="trick-layer" aria-label="Current trick"></div>
+
+    <!-- Overlays (seat-reveal, etc.); turn/pass/out live on felt, not a center caption -->
+    <div class="center-table" id="center-table"></div>
+    <!-- Screen-reader / rare alerts only (not a center status banner) -->
+    <div id="status-line" class="sr-only" role="status" aria-live="polite"></div>
+    <!-- Visible illegal-play cue (fade in/out; retriggerable) -->
+    <div id="illegal-toast" class="illegal-toast" hidden aria-hidden="true"></div>
+
+    <!-- Pass / Play: flanking local seat above hand bar (E4b) -->
+    <div class="play-actions" id="play-actions" aria-label="Play actions">
+      <button type="button" id="btn-pass" disabled>Pass</button>
+      <button type="button" class="primary" id="btn-play" disabled>Play</button>
+    </div>
+
+    <!-- Exchange floats: high/low on opposite sides of you-seat (card sort), outside hand bar -->
+    <div class="ex-seat-float ex-high-float" id="ex-high-transit" hidden>
+      <div class="ex-zone" id="ex-high-zone">
+        <div class="ex-label" id="ex-high-label">From Yoyo (high)</div>
+        <div class="ex-cards" id="ex-high-cards"></div>
+      </div>
+    </div>
+    <div class="ex-seat-float ex-low-float" id="ex-low-rail" hidden>
+      <div class="ex-zone drop-target" id="ex-right">
+        <div class="ex-label" id="ex-right-label">From CEO (low)</div>
+        <div class="ex-cards" id="ex-right-cards"></div>
+      </div>
+      <button type="button" class="primary" id="btn-exchange-ack" hidden>Acknowledge</button>
+    </div>
+
+    <!-- Seat-draw ceremony (E2b): office reels + Spin + fanfare -->
+    <div class="overlay-panel seat-draw-panel" id="panel-seat-draw" role="dialog" aria-labelledby="seat-draw-title">
+      <h3 id="seat-draw-title">Seat draw</h3>
+      <p class="hint seat-draw-hint" id="seat-draw-hint">Offices drawn at random. Click Spin when ready.</p>
+      <div class="seat-reels" id="seat-reels" aria-hidden="true"></div>
+      <div class="seat-fanfare" id="seat-fanfare" hidden>
+        <div class="seat-fanfare-kicker">You are</div>
+        <div class="seat-fanfare-role" id="seat-fanfare-role">—</div>
+      </div>
+      <ul class="tally" id="seat-draw-tally"></ul>
+      <div class="actions">
+        <button type="button" class="primary" id="btn-seat-ready">Spin</button>
+      </div>
+    </div>
+
+    <!-- Local last-trick hold before summary (client-only countdown) -->
+    <div class="game-over-hold" id="game-over-hold" hidden>
+      <div class="game-over-hold-inner">
+        <span class="game-over-hold-title">Game over</span>
+        <button type="button" class="primary" id="btn-game-summary">Game summary · 3</button>
+      </div>
+    </div>
+
+    <!-- Game summary + play-again votes in one list (E4.1) -->
+    <div class="overlay-panel" id="panel-play-again" role="dialog" aria-labelledby="play-again-title">
+      <div class="summary-title-row">
+        <h3 id="play-again-title">Game summary</h3>
+        <span class="summary-games" id="summary-games" hidden></span>
+      </div>
+      <ol class="finish-board" id="finish-board" aria-label="Finish order, session score, and play-again status"></ol>
+      <div class="actions" id="play-again-actions">
+        <button type="button" class="primary" id="btn-play-again">Play again</button>
+        <button type="button" class="danger" id="btn-leave-end">Leave</button>
+      </div>
+      <p class="play-again-waiting" id="play-again-waiting" hidden>Waiting for others…</p>
+    </div>
+  </div>
+
+  <div class="hand-bar" id="hand-bar">
+    <div class="hand-wrap" id="hand-wrap">
+      <div class="set-chip-layer" id="set-chip-layer" aria-label="Set chips"></div>
+      <div class="hand-clusters" id="hand-clusters">
+        <div class="park-zone" id="park-zone-left" data-park="left" hidden title="Drop sequence chip anywhere on this side to park left" aria-label="Park sequence left">
+          <span class="park-zone-label">Park</span>
+        </div>
+        <div class="hand-main" id="hand-main">
+          <div class="hand-bays hand-bays-left" id="hand-bays-left" aria-label="Parked sequences left"></div>
+          <div class="hand hand-free" id="hand" aria-label="Your hand"></div>
+          <div class="hand-bays hand-bays-right" id="hand-bays-right" aria-label="Parked sequences right"></div>
+        </div>
+        <div class="park-zone" id="park-zone-right" data-park="right" hidden title="Drop sequence chip anywhere on this side to park right" aria-label="Park sequence right">
+          <span class="park-zone-label">Park</span>
+        </div>
+      </div>
+    </div>
+    <p class="hand-hint" id="hand-hint">Click cards to select · drag to table or Play</p>
+  </div>
+
+  <p class="footer-note">Drag to table · set chips · exchange · <a href="index.html">Lobby</a></p>
+  <script type="module" src="js/play.js"></script>
+</body>
+</html>
