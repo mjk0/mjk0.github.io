@@ -10,6 +10,7 @@ import {
   handSort,
   displayHandTokens,
   displayPlayTokens,
+  displayTableName,
 } from './config.js';
 import { cardEl, parseHand, backFan, faceFan, setFaceModeFromOpts } from './cards.js';
 import {
@@ -810,7 +811,11 @@ function visualIndex(absSeat, n, youSeat) {
 // Brand label + option pills; refresh open standings if needed.
 function renderStrip() {
   const lab = $('table-label');
-  if (lab) lab.textContent = ` / ${tableId || '?'}:`;
+  if (lab) {
+    const shown = tableId ? displayTableName(tableId) : '?';
+    lab.textContent = ` / ${shown}:`;
+    lab.title = tableId || '';
+  }
   const host = $('opt-pills');
   if (host) {
     host.replaceChildren();
@@ -1191,24 +1196,96 @@ function lastTrickPlaySeat(historyStr) {
   return entries[entries.length - 1]?.seat || 0;
 }
 
-// Mid-hand park: slight pure radial toward winner; you-win just right of midline.
-function applyWinnerParkOffset(piles, winSeat, youSeat, n) {
-  let x = 0;
-  let y = -12;
-  if (winSeat >= 1 && n >= 2) {
-    const vi = visualIndex(winSeat, n, youSeat || 1);
-    if (vi === 0) {
-      x = 5;
-      y = 6;
-    } else {
-      const a = seatArcAngle(vi, n);
-      const k = 10; // % of felt — slight, not into their hand
-      x = Math.cos(a) * k;
-      y = Math.sin(a) * k;
-    }
+// Must match .trick-piles.parked scale in yoyo.css (.summary-dock uses 0.5)
+const TRICK_PARK_SCALE = 0.58;
+
+// Bounding box of parkable children, in piles-local px (no park transform).
+function trickPilesContentBox(piles) {
+  const pr = piles.getBoundingClientRect();
+  let minL = Infinity;
+  let minT = Infinity;
+  let maxR = -Infinity;
+  let maxB = -Infinity;
+  for (const el of piles.querySelectorAll('.play-stack, .felt-pill')) {
+    const r = el.getBoundingClientRect();
+    if (r.width < 1 && r.height < 1) continue;
+    minL = Math.min(minL, r.left);
+    minT = Math.min(minT, r.top);
+    maxR = Math.max(maxR, r.right);
+    maxB = Math.max(maxB, r.bottom);
   }
-  piles.style.setProperty('--park-x', `${x.toFixed(1)}%`);
-  piles.style.setProperty('--park-y', `${y.toFixed(1)}%`);
+  if (!Number.isFinite(minL)) return null;
+  return {
+    left: minL - pr.left,
+    top: minT - pr.top,
+    width: maxR - minL,
+    height: maxB - minT,
+    cx: (minL + maxR) / 2 - pr.left,
+    cy: (minT + maxB) / 2 - pr.top,
+  };
+}
+
+/**
+ * Mid-hand park: put last-trick cluster under the winner seat token.
+ * Uses measured content bbox (after converge) + CSS scale math so the
+ * *top* of the scaled piles sits just below the token bottom (not overlapping).
+ */
+function applyWinnerParkOffset(piles, winSeat, youSeat, n, scale = TRICK_PARK_SCALE) {
+  const fallback = () => {
+    piles.style.setProperty('--park-x', '0%');
+    piles.style.setProperty('--park-y', '-8%');
+  };
+  if (!piles || winSeat < 1) {
+    fallback();
+    return;
+  }
+  // Measure unscaled layout — clear parked transform if present
+  const wasParked = piles.classList.contains('parked');
+  if (wasParked) piles.classList.remove('parked');
+  const pr = piles.getBoundingClientRect();
+  const token = document.querySelector(
+    `#seats-layer .seat-token[data-seat="${winSeat}"]`,
+  );
+  const bb = trickPilesContentBox(piles);
+  if (wasParked) piles.classList.add('parked');
+  if (!token || !bb || pr.width < 8 || pr.height < 8) {
+    fallback();
+    return;
+  }
+
+  const tr = token.getBoundingClientRect();
+  // Token edges in piles-local px
+  const tokenCX = tr.left + tr.width * 0.5 - pr.left;
+  const tokenTop = tr.top - pr.top;
+  const tokenBottom = tr.bottom - pr.top;
+  const vi = visualIndex(winSeat, n, youSeat || 1);
+  const gap = 10;
+
+  // Where the TOP-CENTER of the *scaled* content should land
+  let targetTopX = tokenCX;
+  let targetTopY;
+  if (vi === 0) {
+    // You: hang park above your token (toward felt)
+    const scaledH = bb.height * scale;
+    targetTopX = tokenCX + 8;
+    targetTopY = tokenTop - gap - scaledH;
+  } else {
+    // Everyone else: top of park just under token bottom
+    targetTopX = tokenCX;
+    targetTopY = tokenBottom + gap;
+  }
+
+  // CSS: transform-origin 50% 40%; transform: translate(T) scale(s)
+  // final = s*p + (1-s)*O + T
+  const ox = 0.5 * pr.width;
+  const oy = 0.4 * pr.height;
+  const cTopX = bb.cx;
+  const cTopY = bb.top;
+  const tx = targetTopX - (scale * cTopX + (1 - scale) * ox);
+  const ty = targetTopY - (scale * cTopY + (1 - scale) * oy);
+
+  piles.style.setProperty('--park-x', `${((tx / pr.width) * 100).toFixed(1)}%`);
+  piles.style.setProperty('--park-y', `${((ty / pr.height) * 100).toFixed(1)}%`);
 }
 
 // Temporarily layout summary panel (invisible) so dock can measure it before open.
@@ -1230,53 +1307,93 @@ function withSummaryPanelMeasure(fn) {
   }
 }
 
-// Summary dock: left of Game summary, aligned with header row (Score / Δ / Ready).
+/**
+ * Summary last-trick dock: left of Game summary (not winner seat).
+ * Uses a stable footprint estimate (no unpark/remeasure thrash) + simple
+ * % translate vs felt center — matches the pre-scale-math placement that
+ * looked correct on first paint. Y drops below upper seat tokens when needed.
+ */
 function applySummaryDockOffset(piles) {
   const layer = piles.parentElement;
-  const fallback = () => {
-    piles.style.setProperty('--park-x', '-32%');
-    piles.style.setProperty('--park-y', '-8%');
-  };
-  if (!layer) {
-    fallback();
-    return;
-  }
-  withSummaryPanelMeasure((panel) => {
-    if (!panel) {
-      fallback();
-      return;
-    }
-    const pr = panel.getBoundingClientRect();
+  const panel = $('panel-play-again');
+  if (!layer || !piles || !panel) return;
+
+  const place = (panelEl) => {
+    const pr = panelEl.getBoundingClientRect();
     const lr = layer.getBoundingClientRect();
-    if (lr.width < 8 || lr.height < 8 || pr.width < 8) {
-      fallback();
-      return;
-    }
-    // Converged cluster sits near felt center; translate moves that mass into the dock.
-    const contentX = lr.width * 0.5;
-    const contentY = lr.height * 0.48;
-    const gap = 14; // px between dock right edge and panel left
-    const dockHalfW = 72; // ~half of scaled last-trick footprint
-    const dockCX = pr.left - lr.left - gap - dockHalfW;
-    // Align with finish-board header row (Score · Δ · Ready), not panel top title
-    const head = panel.querySelector('.fin-head');
+    if (lr.width < 8 || lr.height < 8 || pr.width < 8) return false;
+
+    // Fixed docked footprint (scaled last-trick ≈ this size) — do not unpark to measure
+    const halfW = 72;
+    const halfH = 52;
+    const gapPanel = 18;
+    const gapSeat = 12;
+
+    // Horizontal: keep entire dock left of panel
+    let targetCX = pr.left - lr.left - gapPanel - halfW;
+    const maxRight = pr.left - lr.left - gapPanel;
+    if (targetCX + halfW > maxRight) targetCX = maxRight - halfW;
+    if (targetCX < halfW + 4) targetCX = halfW + 4;
+
+    // Vertical: fin-head row, else upper third of panel
+    const head = panelEl.querySelector('.fin-head');
     const hr = head?.getBoundingClientRect();
-    const dockCY = hr && hr.height > 0
-      ? hr.top - lr.top + hr.height * 0.5
-      : pr.top - lr.top + 70;
-    const xPct = ((dockCX - contentX) / lr.width) * 100;
-    const yPct = ((dockCY - contentY) / lr.height) * 100;
+    let targetCY =
+      hr && hr.height > 0
+        ? hr.top - lr.top + hr.height * 0.5
+        : pr.top - lr.top + Math.min(80, pr.height * 0.22);
+
+    // Drop below any upper seat token that intersects the dock column
+    const dockLeft = targetCX - halfW - 10;
+    const dockRight = targetCX + halfW + 10;
+    let seatClearY = 0;
+    for (const seat of document.querySelectorAll('#seats-layer .seat-token')) {
+      const tr = seat.getBoundingClientRect();
+      const sl = tr.left - lr.left;
+      const sr = tr.right - lr.left;
+      const st = tr.top - lr.top;
+      if (sr < dockLeft || sl > dockRight) continue;
+      if (st > lr.height * 0.58) continue;
+      seatClearY = Math.max(seatClearY, tr.bottom - lr.top);
+    }
+    if (seatClearY > 0) {
+      targetCY = Math.max(targetCY, seatClearY + gapSeat + halfH);
+    }
+
+    // Simple translate vs felt center (same model as original dock; stable with scale)
+    const xPct = ((targetCX - lr.width * 0.5) / lr.width) * 100;
+    const yPct = ((targetCY - lr.height * 0.48) / lr.height) * 100;
     piles.style.setProperty('--park-x', `${xPct.toFixed(1)}%`);
     piles.style.setProperty('--park-y', `${yPct.toFixed(1)}%`);
+    piles.classList.add('summary-dock', 'parked');
+    return true;
+  };
+
+  // Prefer real visible panel; ghost only for pre-reveal slide
+  if (panel.classList.contains('visible') && !panel.classList.contains('dock-measure')) {
+    place(panel);
+    return;
+  }
+  withSummaryPanelMeasure((p) => {
+    if (p) place(p);
   });
 }
 
 // Park offset: mid-hand winner shelf, or summary left dock.
+// Call *after* converge so content bbox is correct.
 function applyTrickParkOffset(piles, winSeat, youSeat, n, { summaryDock = false } = {}) {
   if (!piles) return;
   piles.classList.toggle('summary-dock', !!summaryDock);
   if (summaryDock) applySummaryDockOffset(piles);
-  else applyWinnerParkOffset(piles, winSeat, youSeat, n);
+  else {
+    applyWinnerParkOffset(
+      piles,
+      winSeat,
+      youSeat,
+      n,
+      TRICK_PARK_SCALE,
+    );
+  }
 }
 
 // Pull stacks + PASS/OUT pills toward felt center (live spacing × factor).
@@ -1303,12 +1420,35 @@ function clearTrickParkOffset(piles) {
   piles.style.removeProperty('--park-y');
 }
 
-// After panel layout, re-measure left dock (fonts/width can settle late).
+// Re-measure left dock against the *visible* summary panel only.
 function refreshSummaryDockIfNeeded() {
   if (!gameOverSummaryOpen) return;
-  const piles = $('trick-layer')?.querySelector('.trick-piles.parked.summary-dock');
+  const panel = $('panel-play-again');
+  // Skip ghost / hidden — those measures put the dock under the real panel later
+  if (!panel?.classList.contains('visible') || panel.classList.contains('dock-measure')) {
+    return;
+  }
+  const piles =
+    $('trick-layer')?.querySelector('.trick-piles.summary-dock') ||
+    $('trick-layer')?.querySelector('.trick-piles');
   if (!piles) return;
+  piles.classList.add('summary-dock');
   applySummaryDockOffset(piles);
+}
+
+// One debounced re-dock after panel + seats have painted (no multi-hit thrash).
+let summaryDockRefreshTimer = null;
+function scheduleSummaryDockRefresh() {
+  if (!gameOverSummaryOpen) return;
+  if (summaryDockRefreshTimer != null) {
+    clearTimeout(summaryDockRefreshTimer);
+  }
+  // Wait for reveal paint + board/votes; single final measure against visible panel
+  summaryDockRefreshTimer = setTimeout(() => {
+    summaryDockRefreshTimer = null;
+    if (!gameOverSummaryOpen) return;
+    refreshSummaryDockIfNeeded();
+  }, 120);
 }
 
 // Shorten long names for "Waiting for …" turn cue.
@@ -1389,41 +1529,54 @@ function buildTurnCues() {
 }
 
 // Apply park shelf + converge to current .trick-piles (stacks + PASS/OUT).
+// Converge first, then measure seat token + content box for --park-x/y.
 function applyParkToPiles(piles, winSeat, you, n, { animate, summaryDock } = {}) {
   if (!piles) return;
   const dock = !!summaryDock;
   const conv = dock ? PARK_SUMMARY_CONVERGE : PARK_STACK_CONVERGE;
-  applyTrickParkOffset(piles, winSeat, you, n, { summaryDock: dock });
   if (animate && !reducedMotion) {
     pendingTrickParkAnim = false;
     const gen = ++trickParkGen;
-    piles.classList.remove('parked', 'win-flash', 'park-motion');
-    // Double rAF: paint full seat spacing, then converge + scale
+    piles.classList.remove('parked', 'win-flash', 'park-motion', 'summary-dock');
+    clearTrickParkOffset(piles);
+    // Double rAF: full seat spacing → converge → measure → park scale
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         if (gen !== trickParkGen || !piles.isConnected) return;
-        applyTrickParkOffset(piles, winSeat, you, n, { summaryDock: dock });
         piles.classList.add('park-motion');
         applyTrickParkConverge(piles, conv);
+        // Layout after converge before measuring for seat-token anchor
+        void piles.offsetWidth;
+        applyTrickParkOffset(piles, winSeat, you, n, { summaryDock: dock });
         piles.classList.add('win-flash', 'parked');
         if (dock) {
-          // Panel may finish layout after first measure
+          // Ghost estimate now; final place when panel is visible (scheduleSummaryDockRefresh)
+          if ($('panel-play-again')?.classList.contains('visible')) {
+            scheduleSummaryDockRefresh();
+          }
+        } else {
           requestAnimationFrame(() => {
             if (gen !== trickParkGen || !piles.isConnected) return;
-            applySummaryDockOffset(piles);
+            applyWinnerParkOffset(piles, winSeat, you, n, TRICK_PARK_SCALE);
           });
         }
       });
     });
   } else {
     pendingTrickParkAnim = false;
-    applyTrickParkConverge(piles, conv);
-    piles.classList.add('parked');
     piles.classList.remove('win-flash', 'park-motion');
+    applyTrickParkConverge(piles, conv);
+    void piles.offsetWidth;
+    applyTrickParkOffset(piles, winSeat, you, n, { summaryDock: dock });
+    piles.classList.add('parked');
     if (dock) {
+      if ($('panel-play-again')?.classList.contains('visible')) {
+        scheduleSummaryDockRefresh();
+      }
+    } else {
       requestAnimationFrame(() => {
-        if (!piles.isConnected || !gameOverSummaryOpen) return;
-        applySummaryDockOffset(piles);
+        if (!piles.isConnected) return;
+        applyWinnerParkOffset(piles, winSeat, you, n, TRICK_PARK_SCALE);
       });
     }
   }
@@ -1535,10 +1688,12 @@ function setGameSummaryBtnLabel(sec) {
 function revealGameSummaryPanel() {
   showPlayAgainPanel(true);
   renderHandOverBoard();
-  refreshSummaryDockIfNeeded();
+  // Seats first (place pills change token size) so dock clear-Y is correct
   if (!animating) renderSeatsFromState();
   updatePlayButtons();
   updateHistoryChrome();
+  // Re-measure after visible panel + seats paint (ghost measure often wrong X)
+  scheduleSummaryDockRefresh();
 }
 
 /**
@@ -3788,8 +3943,13 @@ function onServerEvent(ev) {
     };
     renderHandOverBoard();
     // During hold: board only; after skip/rejoin open summary if needed
-    if (gameOverSummaryOpen) showPlayAgainPanel(true);
-    else if (gameOverSkipHold || !gameOverHoldActive) startGameOverHoldIfNeeded();
+    if (gameOverSummaryOpen) {
+      showPlayAgainPanel(true);
+      // Board height can change with votes — one re-dock against visible panel
+      scheduleSummaryDockRefresh();
+    } else if (gameOverSkipHold || !gameOverHoldActive) {
+      startGameOverHoldIfNeeded();
+    }
     return;
   }
   if (a === 'chat') {

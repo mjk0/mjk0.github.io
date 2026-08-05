@@ -44,6 +44,12 @@ export const LS = {
 
 export const MAX_PROFILES = 12;
 
+// OpenN wire id → "Table #N"; private tables keep owner name.
+export function displayTableName(tableId) {
+  const m = /^Open(\d+)$/i.exec(String(tableId || ''));
+  return m ? `Table #${m[1]}` : String(tableId || '');
+}
+
 function ukey(n) {
   return String(n || '').trim().toLowerCase();
 }

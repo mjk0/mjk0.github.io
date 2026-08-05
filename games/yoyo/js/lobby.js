@@ -15,6 +15,7 @@ import {
   applyHandSortLocal,
   handSort,
   loadPrefsCache,
+  displayTableName,
   SS,
 } from './config.js';
 import { OPT, hasOpt, optsPills, optsToTokens, defaultHandLength } from './opts.js';
@@ -477,9 +478,14 @@ function mySeatAt(tableId) {
   return i >= 0 ? i + 1 : 0;
 }
 
-/** Private tables use owner username as id; open tables are OpenN. */
+/** Private tables use owner username as id; open tables are OpenN (wire). */
 function isPrivateTable(tableId) {
   return !/^Open/i.test(String(tableId || ''));
+}
+
+/** Session robots are labeled B.Name (server bot_names). */
+function isBotSeatName(name) {
+  return /^B\./.test(String(name || ''));
 }
 
 function isPrivateOwner(tableId) {
@@ -492,6 +498,10 @@ function seatSlot(tableId, t, i) {
   const waiting = t.status === STATUS_WAITING;
   const slot = document.createElement('div');
   slot.className = 'seat-slot' + (name ? ' filled' : '');
+  if (name) {
+    if (isBotSeatName(name)) slot.classList.add('bot');
+    else slot.classList.add('human');
+  }
   if (name && me && ukey(name) === ukey(me)) slot.classList.add('mine');
 
   const n = document.createElement('span');
@@ -503,6 +513,7 @@ function seatSlot(tableId, t, i) {
     const nm = document.createElement('span');
     nm.className = 'name';
     nm.textContent = name;
+    if (!isBotSeatName(name)) nm.title = 'Human player';
     slot.appendChild(nm);
     if (waiting && me && ukey(name) === ukey(me)) {
       const leave = document.createElement('button');
@@ -892,14 +903,17 @@ function renderStatusCluster(tableId, t, waiting, mine, privateTable, privateOwn
     if (!authenticated) {
       start.textContent = '▶ Start';
       start.disabled = true;
+      start.classList.add('start-idle');
       start.title = 'Sign in to start';
     } else if (!mine) {
       start.textContent = 'Sit to start';
       start.disabled = true;
-      start.title = 'Sit to start';
+      start.classList.add('start-idle');
+      start.title = 'Sit at a seat first';
     } else {
       start.textContent = '▶ Start';
       start.disabled = false;
+      start.classList.add('start-ready');
       start.title = 'Start session';
       start.addEventListener('click', () => send({ action: 'start' }));
     }
@@ -1211,12 +1225,15 @@ function renderInviteRow(tableId, t, privateOwner) {
 
 function renderTable(tableId, t) {
   const waiting = t.status === STATUS_WAITING;
+  const privateTable = isPrivateTable(tableId);
   const card = document.createElement('article');
-  card.className = 'table-card' + (waiting ? '' : ' playing');
+  card.className =
+    'table-card' +
+    (waiting ? '' : ' playing') +
+    (privateTable ? ' private' : ' open');
   card.dataset.table = tableId;
 
   const mine = mySeatAt(tableId);
-  const privateTable = isPrivateTable(tableId);
   const privateOwner = isPrivateOwner(tableId);
   // Open: anyone signed in may edit options while waiting. Private: owner only.
   const canEditOpts = authenticated && waiting && (!privateTable || privateOwner);
@@ -1226,8 +1243,16 @@ function renderTable(tableId, t) {
 
   const title = document.createElement('span');
   title.className = 'table-name';
-  title.textContent = tableId;
+  title.textContent = displayTableName(tableId);
+  title.title = privateTable ? `Private table (${tableId})` : tableId;
   hdr.appendChild(title);
+  if (privateTable) {
+    const badge = document.createElement('span');
+    badge.className = 'table-kind-badge';
+    badge.textContent = 'Private';
+    badge.title = 'Invite-only private table';
+    hdr.appendChild(badge);
+  }
   hdr.appendChild(renderOptPills(t));
 
   if (canEditOpts) {
@@ -1287,7 +1312,26 @@ function renderTables() {
       : '<p class="hint">Sign in to see live tables.</p>';
     return;
   }
-  root.replaceChildren(...ids.map((id) => renderTable(id, tables.get(id))));
+  const openIds = ids.filter((id) => !isPrivateTable(id));
+  const privIds = ids.filter((id) => isPrivateTable(id));
+  const frag = document.createDocumentFragment();
+  if (openIds.length) {
+    if (privIds.length) {
+      const lab = document.createElement('p');
+      lab.className = 'tables-section-label';
+      lab.textContent = 'Open tables';
+      frag.appendChild(lab);
+    }
+    for (const id of openIds) frag.appendChild(renderTable(id, tables.get(id)));
+  }
+  if (privIds.length) {
+    const lab = document.createElement('p');
+    lab.className = 'tables-section-label private';
+    lab.textContent = 'Private tables';
+    frag.appendChild(lab);
+    for (const id of privIds) frag.appendChild(renderTable(id, tables.get(id)));
+  }
+  root.replaceChildren(frag);
   // Portals escape .panel.tables (overflow + backdrop-filter containing block).
   requestAnimationFrame(mountOpenTablePopovers);
 }

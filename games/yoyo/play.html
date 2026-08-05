@@ -10,16 +10,6 @@
   <header class="play-strip">
     <span class="strip-brand"><strong>Yoyo</strong><span id="table-label" class="muted"> / ?:</span></span>
     <div class="opt-pills" id="opt-pills" aria-label="Table options"></div>
-    <div class="standings-wrap">
-      <button type="button" id="btn-scores" aria-haspopup="dialog" aria-expanded="false" aria-controls="standings-pop" title="Session standings">Score</button>
-      <div id="standings-pop" class="last-trick-pop standings-pop" hidden role="dialog" aria-labelledby="standings-title">
-        <div class="last-trick-head">
-          <strong id="standings-title">Standings</strong>
-          <button type="button" class="last-trick-close" id="btn-scores-close" aria-label="Close">×</button>
-        </div>
-        <ol class="finish-board live-mode" id="standings-board" aria-label="Rank, role, and session score"></ol>
-      </div>
-    </div>
     <div class="last-trick-wrap history-wrap">
       <button type="button" id="btn-history" disabled title="Trick history this hand">History</button>
       <div id="history-pop" class="last-trick-pop" hidden role="dialog" aria-labelledby="history-title">
@@ -30,6 +20,16 @@
           <button type="button" class="last-trick-close" id="btn-history-close" aria-label="Close">×</button>
         </div>
         <div class="last-trick-body" id="history-body"></div>
+      </div>
+    </div>
+    <div class="standings-wrap">
+      <button type="button" id="btn-scores" aria-haspopup="dialog" aria-expanded="false" aria-controls="standings-pop" title="Session standings">Score</button>
+      <div id="standings-pop" class="last-trick-pop standings-pop" hidden role="dialog" aria-labelledby="standings-title">
+        <div class="last-trick-head">
+          <strong id="standings-title">Standings</strong>
+          <button type="button" class="last-trick-close" id="btn-scores-close" aria-label="Close">×</button>
+        </div>
+        <ol class="finish-board live-mode" id="standings-board" aria-label="Rank, role, and session score"></ol>
       </div>
     </div>
     <div class="gear-wrap" id="gear-wrap">

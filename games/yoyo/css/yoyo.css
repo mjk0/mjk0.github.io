@@ -66,7 +66,7 @@ body {
     linear-gradient(
       180deg,
       rgba(40, 88, 133, 0.72),
-      rgba(140, 104, 84, 0.78)
+      rgba(110, 114, 150, 0.78)
     ),
     url("../media/card_bg_grey_tiled.jpg");
   background-size: auto, 420px;
@@ -480,30 +480,86 @@ button:focus-visible {
   color: var(--muted);
 }
 .tables { gap: 0.75rem; overflow: auto; }
+#tables-root {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* clear separation between table cards */
+}
+.tables-sit-cue {
+  margin: 0 0 0.65rem;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  color: #1a1810;
+  background: linear-gradient(90deg, #e8c84a, #d4ae2e);
+  border: 1px solid #1a1810;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+.tables-sit-cue strong {
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+.tables-section-label {
+  margin: 0.15rem 0 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-hi);
+  opacity: 0.95;
+}
+.tables-section-label.private {
+  margin-top: 0.35rem;
+  padding-top: 0.55rem;
+  border-top: 1px dashed rgba(232, 200, 74, 0.35);
+  color: #e8c8a0;
+}
 .table-card {
   background: var(--bg-elev);
   border-radius: 8px;
   padding: 0.65rem 0.75rem;
   border: 1px solid var(--border);
 }
-/* Olive-felt “play islands” — softer green so they sit in the warm tray */
+/* Olive-felt “play islands” — open tables */
 .lobby-page .table-card {
   background:
     linear-gradient(165deg, rgba(72, 108, 72, 0.50), rgba(36, 64, 42, 0.78)),
     #3a5c40;
-  border-color: rgba(160, 140, 100, 0.40);
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.18);
+  border: 2px solid #0a0a0a;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.28);
 }
 .lobby-page .table-card:hover {
-  border-color: rgba(232, 200, 74, 0.55);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  border-color: #111;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.32);
+}
+/* Private: warmer frame + gold edge so they read as a separate group */
+.lobby-page .table-card.private {
+  background:
+    linear-gradient(165deg, rgba(90, 100, 70, 0.45), rgba(48, 56, 40, 0.82)),
+    #3a4838;
+  border-color: #1a1208;
+  box-shadow:
+    0 0 0 1px rgba(212, 174, 46, 0.45),
+    0 3px 14px rgba(0, 0, 0, 0.3);
+}
+.lobby-page .table-card.private:hover {
+  box-shadow:
+    0 0 0 1px rgba(232, 200, 74, 0.65),
+    0 4px 16px rgba(0, 0, 0, 0.34);
 }
 .table-card.playing { border-color: var(--accent); }
 .lobby-page .table-card.playing {
-  border-color: var(--accent-hi);
+  border-color: #0a0a0a;
   box-shadow:
-    0 0 0 1px rgba(232, 200, 74, 0.35),
-    0 4px 16px rgba(0, 0, 0, 0.28);
+    0 0 0 2px rgba(232, 200, 74, 0.55),
+    0 4px 16px rgba(0, 0, 0, 0.3);
+}
+.lobby-page .table-card.private.playing {
+  box-shadow:
+    0 0 0 2px rgba(232, 200, 74, 0.7),
+    0 4px 16px rgba(0, 0, 0, 0.32);
 }
 .table-card header.table-head {
   display: flex;
@@ -515,6 +571,17 @@ button:focus-visible {
 }
 .table-card .table-name {
   flex-shrink: 0;
+}
+.table-kind-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.12em 0.45em;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(232, 200, 74, 0.55);
+  color: #f0d878;
 }
 .table-card .opt-pills {
   display: inline-flex;
@@ -535,6 +602,17 @@ button:focus-visible {
   color: var(--muted);
   white-space: nowrap;
 }
+/* Lobby: uniform chip text (JK·A, Seq-5, etc.) */
+.lobby-page .table-card .opt-pill,
+.lobby-page .table-card .opt-pill-rank,
+.lobby-page .table-card .opt-pill-seq,
+.lobby-page .table-card .opt-pill-exch,
+.lobby-page .table-card .opt-pill-cont,
+.lobby-page .table-card .opt-pill-hl {
+  color: #e8e4d4;
+  border-color: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.28);
+}
 .opt-pill-rank { color: var(--accent-hi); border-color: #4a7a4a; }
 .opt-pill-seq { color: #cfe; }
 .table-card .status-cluster {
@@ -554,6 +632,26 @@ button:focus-visible {
   font-size: 0.78rem;
   padding: 0.2em 0.55em;
   white-space: nowrap;
+}
+/* Start: subdued until seated; bright yellow when ready */
+.lobby-page .table-card .start-btn.start-idle,
+.lobby-page .table-card .start-btn.start-idle:disabled {
+  opacity: 1;
+  background: #4a4538;
+  border-color: #7a7048;
+  color: #c8bc88;
+}
+.lobby-page .table-card .start-btn.start-ready {
+  background: #f2d24a;
+  border-color: #ffe566;
+  color: #1a1810;
+  font-weight: 700;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+.lobby-page .table-card .start-btn.start-ready:hover {
+  background: #ffe066;
+  border-color: #fff0a0;
+  color: #14120c;
 }
 .table-card .status-cluster .stop-btn {
   background: #4a3a28;
@@ -822,6 +920,40 @@ button:focus-visible {
 .seat-slot.filled {
   border-style: solid;
   border-color: #5a8a5a;
+}
+/* Human seats: solid cool panel so people scan easily */
+.lobby-page .seat-slot.human {
+  background: rgba(36, 72, 118, 0.82);
+  border: 1.5px solid #8ec0f0;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 2px 6px rgba(0, 0, 0, 0.25);
+}
+.lobby-page .seat-slot.human .seat-n {
+  color: #b8d4f0;
+}
+.lobby-page .seat-slot.human .name {
+  color: #f4f8ff;
+  font-weight: 700;
+}
+.lobby-page .seat-slot.human.mine {
+  border-color: #f0d878;
+  box-shadow:
+    inset 0 0 0 1px rgba(240, 216, 120, 0.25),
+    0 0 0 1px rgba(240, 216, 120, 0.35),
+    0 2px 8px rgba(0, 0, 0, 0.28);
+}
+/* Bots (in-progress): quieter, not competing with humans */
+.lobby-page .seat-slot.bot {
+  background: rgba(0, 0, 0, 0.2);
+  border-style: solid;
+  border-color: rgba(140, 160, 130, 0.45);
+  opacity: 0.9;
+}
+.lobby-page .seat-slot.bot .name {
+  font-weight: 500;
+  color: #c8d4c0;
+  font-style: italic;
 }
 .seat-slot .seat-n {
   font-size: 0.65rem;
@@ -1480,7 +1612,8 @@ button:focus-visible {
 .trick-piles.parked.summary-dock {
   transform: translate(var(--park-x), var(--park-y)) scale(0.5);
   opacity: 0.95;
-  z-index: 4; /* under panel (z5), above normal felt */
+  /* Above panel (z5) so a slight X error stays visible, not hidden under chrome */
+  z-index: 6;
 }
 .play-stack {
   position: absolute;
