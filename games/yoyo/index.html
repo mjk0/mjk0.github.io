@@ -4,17 +4,33 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Yoyo — Lobby</title>
-  <link rel="stylesheet" href="css/yoyo.css" />
+  <link rel="stylesheet" href="css/yoyo0.css?v=20260805c" />
+  <link rel="stylesheet" href="css/yoyo.css?v=20260805c" />
 </head>
 <body class="lobby-page">
   <header class="app-header">
-    <h1>
-      <svg class="brand-mark" viewBox="0 0 60 80" aria-hidden="true">
-        <use href="/games/A45s/cards0.svg#cbcatsil" xlink:href="/games/A45s/cards0.svg#cbcatsil" />
-      </svg>
-      Yoyo
+    <h1 class="brand-block">
+      <img
+        class="brand-mark"
+        src="media/yoyo_jester_sad_rounded.png"
+        alt=""
+        width="848"
+        height="1264"
+        decoding="async"
+      />
+      <span class="brand-text">
+        <span class="title-word">Yoyo</span>
+        <span class="conn-status" id="conn-status">offline</span>
+      </span>
     </h1>
-    <span class="conn-status" id="conn-status">offline</span>
+    <img
+      class="header-chars"
+      src="media/yoyo_5.png"
+      alt=""
+      width="1362"
+      height="604"
+      decoding="async"
+    />
     <span class="spacer"></span>
     <div class="profile-wrap" id="profile-wrap">
       <button
@@ -96,7 +112,7 @@
     <section class="panel tables" aria-label="Tables">
       <div class="demo-banner" id="demo-banner"></div>
       <h2>Tables</h2>
-      <p class="tables-sit-cue" id="tables-sit-cue">
+      <p class="tables-sit-cue" id="tables-sit-cue" hidden>
         Choose a table and <strong>Sit</strong> at an open seat to join.
       </p>
       <div id="tables-root"></div>

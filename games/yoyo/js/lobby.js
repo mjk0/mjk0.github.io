@@ -463,6 +463,9 @@ function renderAuthUi() {
   const chatOn = authenticated;
   $('chat-text').disabled = !chatOn;
   $('chat-form').querySelector('button').disabled = !chatOn;
+  // Sit cue only after lobby login (both index themes).
+  const sitCue = $('tables-sit-cue');
+  if (sitCue) sitCue.hidden = !authenticated;
 }
 
 function renderHeader() {

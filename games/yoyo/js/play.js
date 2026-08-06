@@ -1196,7 +1196,7 @@ function lastTrickPlaySeat(historyStr) {
   return entries[entries.length - 1]?.seat || 0;
 }
 
-// Must match .trick-piles.parked scale in yoyo.css (.summary-dock uses 0.5)
+// Must match .trick-piles.parked scale in yoyo0.css (.summary-dock uses 0.5)
 const TRICK_PARK_SCALE = 0.58;
 
 // Bounding box of parkable children, in piles-local px (no park transform).
