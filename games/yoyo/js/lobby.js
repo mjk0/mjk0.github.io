@@ -34,10 +34,24 @@ let reconnectTimer = null;
 let authenticated = false;
 /** @type {string} preferred name from server / session */
 let me = '';
+/** Self is YOYO_DEVS (Welcome.is_dev); UX only */
+let meIsDev = false;
 /** @type {Map<string, object>} table id → L1G */
 const tables = new Map();
 /** @type {Map<string, string>} name → last_seen */
 const online = new Map();
+/** @type {Map<string, object>} news id → item (active only) */
+const newsById = new Map();
+/** @type {Map<string, object>} feedback id → item */
+const feedbackById = new Map();
+/** Expanded feedback thread id, or '' */
+let feedbackExpanded = '';
+/** @type {{ rows: object[], you: object|null }} */
+let ranksState = { rows: [], you: null };
+/** Unread counts for Talk tabs (E8g + server talk_read watermarks). */
+const unread = { news: 0, feedback: 0, chat: 0 };
+/** @type {{ from: string, text: string, at: string, is_dev: boolean }[]} */
+let chatMessages = [];
 /** gear popover open per table id */
 const optsOpen = new Set();
 /** invite panel open per private table id */
@@ -96,6 +110,16 @@ function handleTakenOver() {
   );
   tables.clear();
   online.clear();
+  newsById.clear();
+  feedbackById.clear();
+  feedbackExpanded = '';
+  ranksState = { rows: [], you: null };
+  clearAllUnread();
+  meIsDev = false;
+  clearChatLog();
+  renderNews();
+  renderFeedback();
+  renderRanks();
   renderTables();
   renderOnline();
   // Soft gate: keep session/profiles so Continue chip reclaims last-wins.
@@ -463,6 +487,8 @@ function renderAuthUi() {
   const chatOn = authenticated;
   $('chat-text').disabled = !chatOn;
   $('chat-form').querySelector('button').disabled = !chatOn;
+  syncNewsCompose();
+  syncFeedbackChrome();
   // Sit cue only after lobby login (both index themes).
   const sitCue = $('tables-sit-cue');
   if (sitCue) sitCue.hidden = !authenticated;
@@ -1065,8 +1091,9 @@ function renderInvitePanel(tableId, t) {
   // Online
   const onlineHost = document.createElement('div');
   onlineHost.className = 'invite-chips';
-  const onlineNames = [...online.keys()]
-    .filter((n) => ukey(n) !== ukey(me))
+  const onlineNames = [...online.entries()]
+    .filter(([n, p]) => ukey(n) !== ukey(me) && isPresenceOnline(normalizePresence(p)))
+    .map(([n]) => n)
     .filter((n) => !nameInList(inv, n))
     .sort((a, b) => a.localeCompare(b));
   if (!onlineNames.length) {
@@ -1339,29 +1366,737 @@ function renderTables() {
   requestAnimationFrame(mountOpenTablePopovers);
 }
 
+// Normalize presence value (object or legacy string last_seen).
+function normalizePresence(raw) {
+  if (raw == null) return { last_seen: '', where: 'offline', table: null, is_dev: false };
+  if (typeof raw === 'string') {
+    const online = raw === 'now';
+    return {
+      last_seen: raw,
+      where: online ? 'lobby' : 'offline',
+      table: null,
+      is_dev: false,
+    };
+  }
+  const w = String(raw.where || raw.where_ || 'offline').toLowerCase();
+  return {
+    last_seen: raw.last_seen || raw.lastSeen || '',
+    where: w,
+    table: raw.table || null,
+    is_dev: !!(raw.is_dev || raw.isDev),
+  };
+}
+
+function isPresenceOnline(p) {
+  const w = (p && p.where) || '';
+  return w === 'lobby' || w === 'table' || w === 'playing';
+}
+
+// Client status text from presence (E8c).
+function formatPresenceStatus(p) {
+  if (!p) return '';
+  if (p.where === 'lobby') return 'lobby';
+  if (p.where === 'table') {
+    return p.table ? displayTableName(p.table) : 'table';
+  }
+  if (p.where === 'playing') {
+    const t = p.table ? displayTableName(p.table) : 'table';
+    return `${t} · playing`;
+  }
+  return formatOfflineSeen(p.last_seen);
+}
+
+// Coarse offline buckets (no exact disconnect time).
+function formatOfflineSeen(iso) {
+  if (!iso || iso === 'now') return 'offline';
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return 'offline';
+  const now = new Date();
+  const then = new Date(t);
+  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const startThen = new Date(then.getFullYear(), then.getMonth(), then.getDate()).getTime();
+  const dayDiff = Math.round((startToday - startThen) / 86400000);
+  if (dayDiff <= 0) return 'earlier today';
+  if (dayDiff === 1) return 'yesterday';
+  if (dayDiff < 14) return `${dayDiff} days ago`;
+  return 'a while ago';
+}
+
+// Sort band: lobby → table → playing → offline (by last_seen desc within offline).
+function presenceBand(p) {
+  switch (p?.where) {
+    case 'lobby': return 0;
+    case 'table': return 1;
+    case 'playing': return 2;
+    default: return 3;
+  }
+}
+
+// Build a presence list row.
+function playerRow(name, status, { meRow = false, offline = false, dev = false } = {}) {
+  const li = document.createElement('li');
+  li.className = 'player-row' + (offline ? ' offline' : '') + (meRow ? ' me' : '');
+  const nm = document.createElement('span');
+  nm.className = 'player-name';
+  nm.textContent = name;
+  if (dev) {
+    const badge = document.createElement('span');
+    badge.className = 'badge-dev';
+    badge.textContent = 'Dev';
+    nm.append(' ', badge);
+  }
+  const st = document.createElement('span');
+  st.className = 'player-status';
+  st.textContent = status;
+  li.append(nm, st);
+  return li;
+}
+
+// Presence list: bands + offline dim; empty when none.
 function renderOnline() {
   const ul = $('online-list');
-  const names = [...online.keys()].sort((a, b) => a.localeCompare(b));
-  if (!names.length) {
-    ul.innerHTML = '<li class="hint">—</li>';
+  if (!ul) return;
+  const rows = [...online.entries()].map(([name, raw]) => ({
+    name,
+    p: normalizePresence(raw),
+  }));
+  rows.sort((a, b) => {
+    const ba = presenceBand(a.p);
+    const bb = presenceBand(b.p);
+    if (ba !== bb) return ba - bb;
+    if (ba === 3) {
+      // offline: newer last_seen first
+      return String(b.p.last_seen || '').localeCompare(String(a.p.last_seen || ''));
+    }
+    return a.name.localeCompare(b.name);
+  });
+  // Cap offline rows client-side (server already caps; belt + suspenders).
+  let offlineN = 0;
+  const OFFLINE_CAP = 15;
+  const kept = [];
+  for (const r of rows) {
+    if (!isPresenceOnline(r.p)) {
+      offlineN += 1;
+      if (offlineN > OFFLINE_CAP) continue;
+    }
+    kept.push(r);
+  }
+  if (!kept.length) {
+    ul.replaceChildren();
     return;
   }
   ul.replaceChildren(
-    ...names.map((n) => {
-      const li = document.createElement('li');
-      li.textContent = n;
-      if (me && ukey(n) === ukey(me)) li.classList.add('me');
-      return li;
-    }),
+    ...kept.map(({ name, p }) =>
+      playerRow(name, formatPresenceStatus(p), {
+        meRow: !!(me && ukey(name) === ukey(me)),
+        offline: !isPresenceOnline(p),
+        dev: !!p.is_dev,
+      }),
+    ),
   );
 }
 
-function appendChat(from, text) {
+// Apply Ranks event (leaderboard + sticky you).
+function applyRanks(ev) {
+  ranksState = {
+    rows: Array.isArray(ev?.rows) ? ev.rows : [],
+    you: ev?.you || null,
+  };
+  renderRanks();
+}
+
+// Display avg as 0–100 integer.
+function formatAvg100(row) {
+  if (row == null) return '—';
+  if (row.avg100 != null && row.avg100 !== '') return String(row.avg100);
+  const a = Number(row.avg);
+  if (Number.isNaN(a)) return '—';
+  return String(Math.round(a * 100));
+}
+
+// Render lifetime ranks table (0–100 avg).
+function renderRanks() {
+  const body = $('ranks-body');
+  const empty = $('ranks-empty');
+  const youMeta = $('ranks-you-meta');
+  if (!body) return;
+  const rows = ranksState.rows || [];
+  if (empty) empty.hidden = rows.length > 0;
+  const frag = document.createDocumentFragment();
+  for (const r of rows) {
+    const tr = document.createElement('tr');
+    if (me && ukey(r.name) === ukey(me)) tr.classList.add('me');
+    const tdRk = document.createElement('td');
+    tdRk.className = 'rk';
+    tdRk.textContent = r.rank != null ? String(r.rank) : '—';
+    const tdNm = document.createElement('td');
+    tdNm.className = 'nm';
+    tdNm.textContent = r.name || '?';
+    const tdAvg = document.createElement('td');
+    tdAvg.className = 'avg';
+    tdAvg.textContent = formatAvg100(r);
+    const tdN = document.createElement('td');
+    tdN.className = 'n';
+    tdN.textContent = r.games != null ? String(r.games) : '—';
+    tr.append(tdRk, tdNm, tdAvg, tdN);
+    frag.appendChild(tr);
+  }
+  body.replaceChildren(frag);
+
+  if (youMeta) {
+    if (!authenticated || !me) {
+      youMeta.textContent = 'Sign in to see your rank';
+    } else if (ranksState.you) {
+      const y = ranksState.you;
+      const g = y.games || 0;
+      if (y.rank != null) {
+        youMeta.textContent = `#${y.rank} · avg ${formatAvg100(y)} · ${g} games`;
+      } else if (g < 10) {
+        const left = Math.max(0, 10 - g);
+        youMeta.textContent =
+          g === 0
+            ? 'play 10 games to rank'
+            : `${g}/10 games · ${left} more to rank`;
+      } else {
+        youMeta.textContent = `avg ${formatAvg100(y)} · ${g} games`;
+      }
+    } else {
+      youMeta.textContent = 'play 10 games to rank';
+    }
+  }
+}
+
+// True if a side pane is currently visible.
+function isPaneVisible(paneId) {
+  const pane = $(paneId);
+  return !!(pane && !pane.hidden);
+}
+
+function isSelfAuthor(name) {
+  return !!(me && name && ukey(name) === ukey(me));
+}
+
+// Server talk_read watermarks from prefs cache.
+function talkRead() {
+  const tr = loadPrefsCache(me).talk_read || {};
+  return {
+    news_at: tr.news_at || null,
+    feedback_at: tr.feedback_at || null,
+    chat_at: tr.chat_at || null,
+  };
+}
+
+// itemIso is strictly after watermark (missing watermark → all count).
+function isoAfter(watermark, itemIso) {
+  if (!itemIso) return false;
+  if (!watermark) return true;
+  const a = Date.parse(watermark);
+  const b = Date.parse(itemIso);
+  if (Number.isNaN(b)) return false;
+  if (Number.isNaN(a)) return true;
+  return b > a;
+}
+
+// +1 per news post after news_at (not self).
+function countNewsUnread() {
+  const wm = talkRead().news_at;
+  let n = 0;
+  for (const it of newsById.values()) {
+    if (isSelfAuthor(it.author)) continue;
+    if (isoAfter(wm, it.created_at)) n += 1;
+  }
+  return n;
+}
+
+// +1 per new topic + +1 per reply after feedback_at (not self).
+function countFeedbackUnread() {
+  const wm = talkRead().feedback_at;
+  let n = 0;
+  for (const it of feedbackById.values()) {
+    if (!isSelfAuthor(it.author) && isoAfter(wm, it.created_at)) n += 1;
+    for (const r of it.replies || []) {
+      if (!isSelfAuthor(r.author) && isoAfter(wm, r.created_at)) n += 1;
+    }
+  }
+  return n;
+}
+
+// +1 per chat line after chat_at (not self).
+function countChatUnread() {
+  const wm = talkRead().chat_at;
+  let n = 0;
+  for (const m of chatMessages) {
+    if (isSelfAuthor(m.from)) continue;
+    if (isoAfter(wm, m.at)) n += 1;
+  }
+  return n;
+}
+
+// Show/hide Talk tab badge count.
+function setTabBadge(badgeId, n) {
+  const el = $(badgeId);
+  if (!el) return;
+  const v = Math.max(0, n | 0);
+  if (v > 0) {
+    el.hidden = false;
+    el.textContent = v > 99 ? '99+' : String(v);
+  } else {
+    el.hidden = true;
+    el.textContent = '0';
+  }
+}
+
+function setUnreadCount(kind, n) {
+  if (!(kind in unread)) return;
+  unread[kind] = Math.min(99, Math.max(0, n | 0));
+  setTabBadge(`badge-${kind}`, unread[kind]);
+}
+
+function clearAllUnread() {
+  setUnreadCount('news', 0);
+  setUnreadCount('feedback', 0);
+  setUnreadCount('chat', 0);
+}
+
+// Recompute badge from data + talk_read (skip if pane open — treat as reading).
+function recomputeUnread(kind) {
+  const paneId =
+    kind === 'news' ? 'pane-news' : kind === 'feedback' ? 'pane-feedback' : 'pane-chat';
+  if (isPaneVisible(paneId)) {
+    setUnreadCount(kind, 0);
+    return;
+  }
+  let n = 0;
+  if (kind === 'news') n = countNewsUnread();
+  else if (kind === 'feedback') n = countFeedbackUnread();
+  else if (kind === 'chat') n = countChatUnread();
+  setUnreadCount(kind, n);
+}
+
+// Persist talk_read watermark (now) to server prefs; clear local badge.
+function markTalkRead(kind) {
+  if (!authenticated || !me) {
+    setUnreadCount(kind, 0);
+    return;
+  }
+  const field =
+    kind === 'news' ? 'news_at' : kind === 'feedback' ? 'feedback_at' : 'chat_at';
+  const now = new Date().toISOString();
+  const cur = loadPrefsCache(me);
+  const tr = { ...(cur.talk_read || {}), [field]: now };
+  cachePrefs({ ...cur, talk_read: tr }, me);
+  setUnreadCount(kind, 0);
+  send({ action: 'setprefs', prefs: { talk_read: { [field]: now } } });
+}
+
+// Side-panel tab strips (People + Talk).
+function wireSideTabs() {
+  document.querySelectorAll('.side-panel').forEach((panel) => {
+    const tabs = [...panel.querySelectorAll(':scope > .side-tabs [role="tab"]')];
+    if (!tabs.length) return;
+    const select = (tab) => {
+      const id = tab.getAttribute('aria-controls');
+      for (const t of tabs) {
+        const on = t === tab;
+        t.classList.toggle('active', on);
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+      }
+      for (const pane of panel.querySelectorAll(':scope > .side-pane')) {
+        pane.hidden = pane.id !== id;
+      }
+      // Mark read with now + clear badge (server prefs for multi-device).
+      if (id === 'pane-news') markTalkRead('news');
+      else if (id === 'pane-feedback') markTalkRead('feedback');
+      else if (id === 'pane-chat') markTalkRead('chat');
+    };
+    for (const tab of tabs) {
+      tab.addEventListener('click', () => select(tab));
+    }
+  });
+}
+
+// Empty #chat-log (reconnect / account switch).
+function clearChatLog() {
   const ul = $('chat-log');
+  if (ul) ul.replaceChildren();
+  chatMessages = [];
+}
+
+// Coarse relative time for news (client-local).
+function formatNewsWhen(iso) {
+  if (!iso) return '';
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return '';
+  const sec = Math.max(0, Math.floor((Date.now() - t) / 1000));
+  if (sec < 60) return 'just now';
+  if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
+  if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
+  if (sec < 86400 * 7) return `${Math.floor(sec / 86400)}d ago`;
+  try {
+    return new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  } catch {
+    return '';
+  }
+}
+
+// Dev compose chrome: visible only when Welcome.is_dev.
+function syncNewsCompose() {
+  const form = $('news-compose');
+  const ta = $('news-body');
+  const btn = form?.querySelector('button[type="submit"]');
+  if (!form || !ta || !btn) return;
+  const on = authenticated && meIsDev;
+  form.hidden = !on;
+  ta.disabled = !on;
+  btn.disabled = !on;
+}
+
+// Apply News event (full / add / change / sub).
+function applyNews(items, t) {
+  const list = items || [];
+  const kind = String(t || 'full').toLowerCase();
+  if (kind === 'full') {
+    newsById.clear();
+    for (const it of list) {
+      if (it?.id && !it.archived) newsById.set(it.id, it);
+    }
+  } else if (kind === 'add' || kind === 'change') {
+    for (const it of list) {
+      if (!it?.id) continue;
+      if (it.archived) newsById.delete(it.id);
+      else newsById.set(it.id, it);
+    }
+  } else if (kind === 'sub') {
+    for (const it of list) {
+      if (it?.id) newsById.delete(it.id);
+    }
+  }
+  renderNews();
+  // Default Talk tab is News: on full snapshot (join), auto-mark read with now.
+  if (kind === 'full' && isPaneVisible('pane-news')) {
+    markTalkRead('news');
+  } else if (isPaneVisible('pane-news')) {
+    setUnreadCount('news', 0); // live while reading: no badge, watermark on tab open / full
+  } else {
+    recomputeUnread('news');
+  }
+}
+
+// Render active news newest-first; Dev archive control.
+function renderNews() {
+  const ul = $('news-list');
+  const empty = $('news-empty');
+  if (!ul) return;
+  const items = [...newsById.values()].sort((a, b) => {
+    const ta = Date.parse(a.created_at || '') || 0;
+    const tb = Date.parse(b.created_at || '') || 0;
+    return tb - ta;
+  });
+  if (empty) empty.hidden = items.length > 0;
+  const frag = document.createDocumentFragment();
+  for (const it of items) {
+    const li = document.createElement('li');
+    li.className = 'news-item';
+    li.dataset.id = it.id;
+
+    const head = document.createElement('div');
+    head.className = 'news-head';
+
+    const from = document.createElement('span');
+    from.className = 'news-from';
+    const author = document.createElement('span');
+    author.textContent = it.author || 'Dev';
+    from.appendChild(author);
+    const badge = document.createElement('span');
+    badge.className = 'badge-dev';
+    badge.textContent = 'Dev';
+    from.appendChild(badge);
+
+    const meta = document.createElement('span');
+    meta.className = 'news-meta';
+    const when = document.createElement('time');
+    when.className = 'news-when';
+    when.dateTime = it.created_at || '';
+    when.textContent = formatNewsWhen(it.created_at);
+    meta.appendChild(when);
+    if (meIsDev && it.id) {
+      const arch = document.createElement('button');
+      arch.type = 'button';
+      arch.className = 'news-archive';
+      arch.textContent = 'Archive';
+      arch.title = 'Archive this post';
+      arch.addEventListener('click', () => {
+        send({ action: 'newsarchive', id: it.id });
+      });
+      meta.appendChild(arch);
+    }
+    head.append(from, meta);
+
+    const body = document.createElement('p');
+    body.className = 'news-body';
+    body.textContent = it.body || '';
+
+    li.append(head, body);
+    frag.appendChild(li);
+  }
+  ul.replaceChildren(frag);
+  syncNewsCompose();
+}
+
+const FB_STATUSES = ['open', 'planned', 'done', 'wontfix'];
+
+// New… button + form enable when authenticated.
+function syncFeedbackChrome() {
+  const btn = $('btn-feedback-new');
+  if (btn) btn.disabled = !authenticated;
+  const form = $('fb-new-form');
+  if (form && !authenticated) form.hidden = true;
+}
+
+// Apply Feedback event (full / add / change / sub).
+function applyFeedback(items, t) {
+  const list = items || [];
+  const kind = String(t || 'full').toLowerCase();
+  if (kind === 'full') {
+    feedbackById.clear();
+    for (const it of list) {
+      if (it?.id) feedbackById.set(it.id, it);
+    }
+  } else if (kind === 'add' || kind === 'change') {
+    for (const it of list) {
+      if (it?.id) feedbackById.set(it.id, it);
+    }
+  } else if (kind === 'sub') {
+    for (const it of list) {
+      if (it?.id) {
+        feedbackById.delete(it.id);
+        if (feedbackExpanded === it.id) feedbackExpanded = '';
+      }
+    }
+  }
+  renderFeedback();
+  if (isPaneVisible('pane-feedback')) {
+    setUnreadCount('feedback', 0);
+  } else {
+    recomputeUnread('feedback');
+  }
+}
+
+// Build author label with optional Dev badge.
+function appendAuthor(el, name, isDev) {
+  const b = document.createElement('b');
+  b.appendChild(document.createTextNode(name || '?'));
+  if (isDev) {
+    b.appendChild(document.createTextNode(' '));
+    const badge = document.createElement('span');
+    badge.className = 'badge-dev';
+    badge.textContent = 'Dev';
+    b.appendChild(badge);
+  }
+  el.appendChild(b);
+}
+
+// Render feedback list; expand one thread at a time.
+function renderFeedback() {
+  const ul = $('feedback-list');
+  const empty = $('feedback-empty');
+  if (!ul) return;
+  const items = [...feedbackById.values()].sort((a, b) => {
+    const ta = Date.parse(a.updated_at || a.created_at || '') || 0;
+    const tb = Date.parse(b.updated_at || b.created_at || '') || 0;
+    return tb - ta;
+  });
+  if (empty) empty.hidden = items.length > 0;
+  const frag = document.createDocumentFragment();
+  for (const it of items) {
+    const status = String(it.status || 'open').toLowerCase();
+    const kind = String(it.kind || 'other').toLowerCase();
+    const expanded = feedbackExpanded === it.id;
+    const li = document.createElement('li');
+    li.className = `fb-item ${status}${kind === 'idea' ? ' idea' : ''}${expanded ? ' expanded' : ''}`;
+    li.dataset.id = it.id;
+
+    const summary = document.createElement('div');
+    summary.className = 'fb-summary';
+    summary.addEventListener('click', () => {
+      feedbackExpanded = expanded ? '' : it.id;
+      renderFeedback();
+    });
+
+    const head = document.createElement('div');
+    head.className = 'fb-head';
+    const st = document.createElement('span');
+    st.className = 'fb-status';
+    st.textContent = status;
+    const ty = document.createElement('span');
+    ty.className = 'fb-type';
+    ty.textContent = kind;
+    const when = document.createElement('time');
+    when.className = 'fb-when';
+    when.dateTime = it.updated_at || it.created_at || '';
+    when.textContent = formatNewsWhen(it.updated_at || it.created_at);
+    head.append(st, ty, when);
+
+    const title = document.createElement('p');
+    title.className = 'fb-title';
+    title.textContent = it.title || (it.body || '').slice(0, 80) || '(no title)';
+
+    const replies = Array.isArray(it.replies) ? it.replies : [];
+    const devReplied = replies.some((r) => r && r.dev);
+    const meta = document.createElement('p');
+    meta.className = 'fb-meta';
+    let metaText = `${it.author || '?'} · ${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}`;
+    if (devReplied) metaText += ' · ';
+    meta.appendChild(document.createTextNode(metaText));
+    if (devReplied) {
+      const badge = document.createElement('span');
+      badge.className = 'badge-dev';
+      badge.textContent = 'Dev';
+      meta.appendChild(badge);
+      meta.appendChild(document.createTextNode(' replied'));
+    }
+
+    summary.append(head, title, meta);
+    li.appendChild(summary);
+
+    if (expanded) {
+      const thread = document.createElement('div');
+      thread.className = 'fb-thread';
+      thread.addEventListener('click', (e) => e.stopPropagation());
+
+      const original = document.createElement('div');
+      original.className = 'fb-post';
+      appendAuthor(original, it.author, false);
+      const body = document.createElement('p');
+      body.className = 'fb-body';
+      body.textContent = it.body || '';
+      original.appendChild(body);
+      thread.appendChild(original);
+
+      for (const r of replies) {
+        const post = document.createElement('div');
+        post.className = 'fb-post' + (r.dev ? ' dev' : '');
+        appendAuthor(post, r.author, !!r.dev);
+        const p = document.createElement('p');
+        p.textContent = r.body || '';
+        post.appendChild(p);
+        thread.appendChild(post);
+      }
+
+      if (authenticated) {
+        const replyForm = document.createElement('form');
+        replyForm.className = 'fb-reply-form';
+        const ta = document.createElement('textarea');
+        ta.maxLength = 1000;
+        ta.rows = 2;
+        ta.placeholder = 'Reply…';
+        const submit = document.createElement('button');
+        submit.type = 'submit';
+        submit.textContent = 'Reply';
+        replyForm.append(ta, submit);
+        replyForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const text = ta.value.trim();
+          if (!text) return;
+          send({ action: 'feedbackreply', id: it.id, body: text });
+          ta.value = '';
+        });
+        thread.appendChild(replyForm);
+      }
+
+      if (meIsDev) {
+        const row = document.createElement('div');
+        row.className = 'fb-dev-row';
+        const lab = document.createElement('span');
+        lab.textContent = 'Status';
+        const sel = document.createElement('select');
+        sel.className = 'fb-status-select';
+        for (const s of FB_STATUSES) {
+          const opt = document.createElement('option');
+          opt.value = s;
+          opt.textContent = s;
+          if (s === status) opt.selected = true;
+          sel.appendChild(opt);
+        }
+        sel.addEventListener('change', () => {
+          send({ action: 'feedbacksetstatus', id: it.id, status: sel.value });
+        });
+        row.append(lab, sel);
+        thread.appendChild(row);
+      }
+
+      li.appendChild(thread);
+    }
+
+    frag.appendChild(li);
+  }
+  ul.replaceChildren(frag);
+  syncFeedbackChrome();
+}
+
+// Dev badge for chat line: wire is_dev, else self if Welcome said is_dev.
+function chatSenderIsDev(from, isDev) {
+  if (isDev) return true;
+  return !!(meIsDev && me && ukey(from) === ukey(me));
+}
+
+// Append one lobby chat line; Dev badge when is_dev (E8b).
+function appendChat(from, text, isDev = false) {
+  const ul = $('chat-log');
+  if (!ul) return;
   const li = document.createElement('li');
-  li.innerHTML = `<b>${escapeHtml(from)}</b>: ${escapeHtml(text)}`;
+  const name = document.createElement('b');
+  name.textContent = from;
+  li.appendChild(name);
+  if (chatSenderIsDev(from, isDev)) {
+    li.appendChild(document.createTextNode(' '));
+    const badge = document.createElement('span');
+    badge.className = 'badge-dev';
+    badge.textContent = 'Dev';
+    badge.title = 'Developer';
+    li.appendChild(badge);
+  }
+  li.appendChild(document.createTextNode(`: ${text}`));
   ul.appendChild(li);
   ul.scrollTop = ul.scrollHeight;
+}
+
+// Replace chat log with server history (ChatHistory on auth — E8g).
+function applyChatHistory(messages) {
+  chatMessages = [];
+  clearChatLog();
+  for (const m of messages || []) {
+    if (m && m.from != null && m.text != null) {
+      chatMessages.push({
+        from: m.from,
+        text: m.text,
+        at: m.at || '',
+        is_dev: !!(m.is_dev || m.isDev),
+      });
+      appendChat(m.from, m.text, !!(m.is_dev || m.isDev));
+    }
+  }
+  if (isPaneVisible('pane-chat')) {
+    setUnreadCount('chat', 0);
+  } else {
+    recomputeUnread('chat');
+  }
+}
+
+// Live chat: keep buffer + recompute vs chat_at.
+function onLiveChat(from, text, isDev) {
+  chatMessages.push({
+    from,
+    text,
+    at: new Date().toISOString(),
+    is_dev: !!isDev,
+  });
+  appendChat(from, text, isDev);
+  if (isPaneVisible('pane-chat')) {
+    setUnreadCount('chat', 0);
+  } else {
+    recomputeUnread('chat');
+  }
 }
 
 // ——— events ———
@@ -1369,12 +2104,12 @@ function appendChat(from, text) {
 function applyUsers(u, t) {
   if (t === 'full') {
     online.clear();
-    for (const [name, seen] of Object.entries(u || {})) {
-      online.set(name, seen);
+    for (const [name, raw] of Object.entries(u || {})) {
+      online.set(name, normalizePresence(raw));
     }
   } else if (t === 'add' || t === 'change') {
-    for (const [name, seen] of Object.entries(u || {})) {
-      online.set(name, seen);
+    for (const [name, raw] of Object.entries(u || {})) {
+      online.set(name, normalizePresence(raw));
     }
   } else if (t === 'sub') {
     for (const name of Object.keys(u || {})) {
@@ -1463,11 +2198,15 @@ function onServerEvent(ev) {
     });
     if (ev.prefs) cachePrefs(ev.prefs, uname);
     me = uname;
+    meIsDev = !!(ev.is_dev || ev.isDev);
     authPanel = 'hidden';
     setStatus('connected', 'ok');
     setBanner('');
     renderHeader();
     renderTables();
+    renderNews();
+    renderFeedback();
+    renderRanks();
     return;
   }
   if (a === 'prefs') {
@@ -1483,8 +2222,24 @@ function onServerEvent(ev) {
     applyTables(ev.g, ev.t);
     return;
   }
+  if (a === 'chathistory') {
+    applyChatHistory(ev.messages);
+    return;
+  }
   if (a === 'chat') {
-    appendChat(ev.from, ev.text);
+    onLiveChat(ev.from, ev.text, !!(ev.is_dev || ev.isDev));
+    return;
+  }
+  if (a === 'news') {
+    applyNews(ev.items, ev.t);
+    return;
+  }
+  if (a === 'feedback') {
+    applyFeedback(ev.items, ev.t);
+    return;
+  }
+  if (a === 'ranks') {
+    applyRanks(ev);
   }
 }
 
@@ -1508,6 +2263,16 @@ function loginAs(username, email = '') {
     intentionalClose = false;
     tables.clear();
     online.clear();
+    newsById.clear();
+    feedbackById.clear();
+    feedbackExpanded = '';
+    ranksState = { rows: [], you: null };
+    clearAllUnread();
+    meIsDev = false;
+    clearChatLog();
+    renderNews();
+    renderFeedback();
+    renderRanks();
     renderTables();
     renderOnline();
   }
@@ -1549,6 +2314,7 @@ function connect() {
 
   ws.onopen = () => {
     setStatus('authenticating…', '');
+    clearChatLog(); // ChatHistory on join will refill (E8g)
     const cur = loadIdentity();
     // Lobby Login is username+email only; server returns uuid on Welcome.
     send({
@@ -1675,6 +2441,8 @@ function cancelLoginForm() {
 }
 
 function wireUi() {
+  wireSideTabs();
+
   $('btn-login').addEventListener('click', () => submitLoginForm());
   $('btn-login-cancel').addEventListener('click', () => cancelLoginForm());
   $('btn-another-name').addEventListener('click', () => openCreateForm());
@@ -1718,6 +2486,58 @@ function wireUi() {
     send({ action: 'chat', text });
     input.value = '';
   });
+
+  const newsForm = $('news-compose');
+  if (newsForm) {
+    newsForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!meIsDev) return;
+      const ta = $('news-body');
+      const body = (ta?.value || '').trim();
+      if (!body) return;
+      send({ action: 'newspost', body });
+      if (ta) ta.value = '';
+    });
+  }
+
+  const btnFbNew = $('btn-feedback-new');
+  const fbNewForm = $('fb-new-form');
+  if (btnFbNew && fbNewForm) {
+    btnFbNew.addEventListener('click', () => {
+      if (!authenticated) return;
+      fbNewForm.hidden = false;
+      $('fb-new-body')?.focus();
+    });
+  }
+  const fbCancel = $('fb-new-cancel');
+  if (fbCancel && fbNewForm) {
+    fbCancel.addEventListener('click', () => {
+      fbNewForm.hidden = true;
+      const title = $('fb-new-title');
+      const body = $('fb-new-body');
+      if (title) title.value = '';
+      if (body) body.value = '';
+    });
+  }
+  if (fbNewForm) {
+    fbNewForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!authenticated) return;
+      const kind = ($('fb-new-kind')?.value || 'idea').trim();
+      const title = ($('fb-new-title')?.value || '').trim();
+      const body = ($('fb-new-body')?.value || '').trim();
+      if (!body) return;
+      send({
+        action: 'feedbacknew',
+        kind,
+        title: title || null,
+        body,
+      });
+      fbNewForm.hidden = true;
+      if ($('fb-new-title')) $('fb-new-title').value = '';
+      if ($('fb-new-body')) $('fb-new-body').value = '';
+    });
+  }
 
   $('in-user').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') submitLoginForm();

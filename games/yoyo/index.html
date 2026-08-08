@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Yoyo — Lobby</title>
-  <link rel="stylesheet" href="css/yoyo0.css?v=20260805c" />
-  <link rel="stylesheet" href="css/yoyo.css?v=20260805c" />
+  <link rel="stylesheet" href="css/yoyo0.css?v=20260807b" />
+  <link rel="stylesheet" href="css/yoyo.css?v=20260807b" />
 </head>
 <body class="lobby-page">
   <header class="app-header">
@@ -122,22 +122,111 @@
     </section>
 
     <div class="side-col">
-      <section class="panel" style="flex:0 0 auto; max-height:40%">
-        <h2>Online</h2>
-        <ul class="online-list" id="online-list"></ul>
+      <!-- People: presence + ranks -->
+      <section class="panel side-panel people-panel" aria-label="Players">
+        <div class="side-tabs" role="tablist" aria-label="People">
+          <button type="button" class="side-tab active" role="tab" id="tab-players"
+            aria-selected="true" aria-controls="pane-players">Players</button>
+          <button type="button" class="side-tab" role="tab" id="tab-ranks"
+            aria-selected="false" aria-controls="pane-ranks">Ranks</button>
+        </div>
+        <div class="side-pane" role="tabpanel" id="pane-players" aria-labelledby="tab-players">
+          <ul class="online-list player-list" id="online-list"></ul>
+        </div>
+        <div class="side-pane" role="tabpanel" id="pane-ranks" aria-labelledby="tab-ranks" hidden>
+          <p class="pane-note">Lifetime avg · 10+ games</p>
+          <div class="ranks-scroll">
+            <table class="ranks-table" id="ranks-table">
+              <thead>
+                <tr><th class="rk">#</th><th class="nm">Player</th><th class="avg">Avg</th><th class="n">G</th></tr>
+              </thead>
+              <tbody id="ranks-body"></tbody>
+            </table>
+            <p class="empty-state" id="ranks-empty">No ranked players yet (need 10+ games).</p>
+          </div>
+          <div class="ranks-you" id="ranks-you">
+            <span class="ranks-you-label">You</span>
+            <span class="ranks-you-meta" id="ranks-you-meta">Sign in to see your rank</span>
+          </div>
+        </div>
       </section>
-      <section class="panel" style="flex:1">
-        <h2>Chat</h2>
-        <ul class="chat-log" id="chat-log"></ul>
-        <form class="chat-form" id="chat-form">
-          <input id="chat-text" type="text" maxlength="200" placeholder="lobby chat…" disabled />
-          <button type="submit" disabled>Send</button>
-        </form>
+
+      <!-- Talk: news (default) · chat · feedback -->
+      <section class="panel side-panel talk-panel" aria-label="Talk">
+        <div class="side-tabs" role="tablist" aria-label="Talk">
+          <button type="button" class="side-tab active" role="tab" id="tab-news"
+            aria-selected="true" aria-controls="pane-news">
+            News <span class="tab-badge" id="badge-news" hidden>0</span>
+          </button>
+          <button type="button" class="side-tab" role="tab" id="tab-chat"
+            aria-selected="false" aria-controls="pane-chat">
+            Chat <span class="tab-badge" id="badge-chat" hidden>0</span>
+          </button>
+          <button type="button" class="side-tab" role="tab" id="tab-feedback"
+            aria-selected="false" aria-controls="pane-feedback">
+            Feedback <span class="tab-badge" id="badge-feedback" hidden>0</span>
+          </button>
+        </div>
+
+        <div class="side-pane talk-pane" role="tabpanel" id="pane-news" aria-labelledby="tab-news">
+          <ul class="news-list" id="news-list"></ul>
+          <p class="empty-state" id="news-empty">No announcements yet.</p>
+          <form class="news-compose" id="news-compose" hidden>
+            <textarea id="news-body" maxlength="2000" rows="2" placeholder="Post announcement…" disabled></textarea>
+            <button type="submit" disabled>Post</button>
+          </form>
+        </div>
+
+        <div class="side-pane talk-pane" role="tabpanel" id="pane-chat" aria-labelledby="tab-chat" hidden>
+          <ul class="chat-log" id="chat-log"></ul>
+          <form class="chat-form" id="chat-form">
+            <input id="chat-text" type="text" maxlength="200" placeholder="lobby chat…" disabled />
+            <button type="submit" disabled>Send</button>
+          </form>
+        </div>
+
+        <div class="side-pane talk-pane" role="tabpanel" id="pane-feedback" aria-labelledby="tab-feedback" hidden>
+          <div class="feedback-toolbar">
+            <button type="button" class="feedback-new" id="btn-feedback-new" disabled>New…</button>
+            <span class="pane-note">Public · Dev can reply in-thread</span>
+          </div>
+          <form class="fb-new-form" id="fb-new-form" hidden>
+            <div class="fb-new-row">
+              <label>
+                <span class="fb-new-lab">Type</span>
+                <select id="fb-new-kind">
+                  <option value="bug">bug</option>
+                  <option value="idea" selected>idea</option>
+                  <option value="other">other</option>
+                </select>
+              </label>
+              <label class="fb-new-title-wrap">
+                <span class="fb-new-lab">Title <span class="muted">(optional)</span></span>
+                <input id="fb-new-title" type="text" maxlength="120" placeholder="Short summary" />
+              </label>
+            </div>
+            <label class="fb-new-body-wrap">
+              <span class="fb-new-lab">Details</span>
+              <textarea id="fb-new-body" maxlength="2000" rows="3" placeholder="What should we know?"></textarea>
+            </label>
+            <div class="fb-new-actions">
+              <button type="button" class="fb-new-cancel" id="fb-new-cancel">Cancel</button>
+              <button type="submit">Post</button>
+            </div>
+          </form>
+          <ul class="feedback-list" id="feedback-list"></ul>
+          <p class="empty-state" id="feedback-empty">No feedback yet. Be the first.</p>
+        </div>
       </section>
     </div>
   </main>
 
-  <p class="footer-note">Lobby WS <code>/games/yoyo/lobby/ws</code> · cards <code>/games/A45s/cards0.svg</code></p>
+  <footer class="lobby-about" aria-label="About">
+    <p>
+      <strong>Yoyo</strong> is a multiplayer card game run as a hobby project —
+      have a seat, play a few hands, and leave feedback if something should be better.
+    </p>
+  </footer>
   <script type="module" src="js/lobby.js"></script>
 </body>
 </html>

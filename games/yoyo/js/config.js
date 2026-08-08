@@ -199,16 +199,28 @@ export function forgetProfile(username) {
 
 /**
  * @typedef {{
+ *   news_at?: string|null,
+ *   feedback_at?: string|null,
+ *   chat_at?: string|null,
+ * }} TalkRead
+ * @typedef {{
  *   hand_sort: 'desc'|'asc',
- *   game: { n?: number, hl?: number, opts?: number },
+ *   game: { n?: number, hl?: number, opts?: number, rank_pack?: string },
  *   recent_invitees: string[],
  *   friends: string[],
+ *   talk_read: TalkRead,
  * }} UserPrefs
  */
 
 /** @returns {UserPrefs} */
 export function defaultPrefs() {
-  return { hand_sort: 'desc', game: {}, recent_invitees: [], friends: [] };
+  return {
+    hand_sort: 'desc',
+    game: {},
+    recent_invitees: [],
+    friends: [],
+    talk_read: {},
+  };
 }
 
 function normalizeNameList(raw) {
@@ -239,11 +251,17 @@ export function normalizePrefs(raw) {
   if (g.rank_pack != null && String(g.rank_pack).trim()) {
     game.rank_pack = String(g.rank_pack).trim().toLowerCase();
   }
+  const trIn = raw.talk_read && typeof raw.talk_read === 'object' ? raw.talk_read : {};
+  const talk_read = {};
+  if (trIn.news_at) talk_read.news_at = String(trIn.news_at);
+  if (trIn.feedback_at) talk_read.feedback_at = String(trIn.feedback_at);
+  if (trIn.chat_at) talk_read.chat_at = String(trIn.chat_at);
   return {
     hand_sort: hs,
     game,
     recent_invitees: normalizeNameList(raw.recent_invitees),
     friends: normalizeNameList(raw.friends),
+    talk_read,
   };
 }
 
