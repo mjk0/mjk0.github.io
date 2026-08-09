@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Yoyo — Lobby</title>
-  <link rel="stylesheet" href="css/yoyo0.css?v=20260807b" />
-  <link rel="stylesheet" href="css/yoyo.css?v=20260807b" />
+  <link rel="stylesheet" href="css/yoyo0.css?v=20260808i" />
+  <link rel="stylesheet" href="css/yoyo.css?v=20260808i" />
 </head>
 <body class="lobby-page">
   <header class="app-header">
@@ -20,7 +20,6 @@
       />
       <span class="brand-text">
         <span class="title-word">Yoyo</span>
-        <span class="conn-status" id="conn-status">offline</span>
       </span>
     </h1>
     <img
@@ -44,6 +43,7 @@
         <span class="you" id="hdr-you">not signed in</span>
         <span class="caret" id="profile-caret" hidden>▾</span>
       </button>
+      <span class="conn-status" id="conn-status">sign in</span>
       <div class="profile-menu" id="profile-menu" role="menu" hidden></div>
     </div>
   </header>
@@ -89,6 +89,29 @@
       <ul class="manage-list" id="manage-list"></ul>
     </div>
 
+    <!-- How to play (short reference) -->
+    <div class="manage-panel howto-panel" id="howto-panel" hidden>
+      <div class="manage-panel-head">
+        <h2>How to play</h2>
+        <button type="button" id="btn-howto-close" aria-label="Close">✕</button>
+      </div>
+      <div class="howto-body">
+        <p>
+          <strong>Yoyo</strong> is a multiplayer variant of Asshole (President).
+          <strong>Win</strong> by playing all of your cards before everyone else.
+          Each game is a <strong>single hand</strong>—quick rounds. Keep playing to improve your average score.
+        </p>
+        <ol class="howto-steps">
+          <li>Choose a display name and enter the lobby.</li>
+          <li><strong>Sit</strong> at an open seat, or <strong>Create private</strong> to practice with bots.</li>
+          <li>When everyone you want is seated, press <strong>Start</strong> (for private tables, only the host may start).</li>
+          <li>On your turn, select a legal play and press <strong>Play</strong>, or <strong>Pass</strong>.</li>
+          <li>Empty your hand first to win that game.</li>
+        </ol>
+        <p class="hint">Bots fill empty seats so tables can start without a full human roster.</p>
+      </div>
+    </div>
+
     <!-- Display prefs (server UserData.prefs) -->
     <div class="manage-panel display-panel" id="display-panel" hidden>
       <div class="manage-panel-head">
@@ -110,15 +133,20 @@
     </div>
 
     <section class="panel tables" aria-label="Tables">
-      <div class="demo-banner" id="demo-banner"></div>
-      <h2>Tables</h2>
-      <p class="tables-sit-cue" id="tables-sit-cue" hidden>
-        Choose a table and <strong>Sit</strong> at an open seat to join.
+      <p class="tables-pitch" id="tables-pitch">
+        Yoyo is a multiplayer President/Asshole variant
+        <span class="pitch-dot" aria-hidden="true">·</span>
+        Play all your cards first to win
+        <span class="pitch-dot" aria-hidden="true">·</span>
+        Each game is one hand
+        <span class="pitch-dot" aria-hidden="true">·</span>
+        Bots fill open seats
       </p>
-      <div id="tables-root"></div>
-      <div class="table-actions" style="margin-top:0.75rem">
-        <button type="button" id="btn-create" disabled>Create private</button>
+      <div class="action-banner" id="action-banner" hidden role="status"></div>
+      <div class="table-actions">
+        <button type="button" id="btn-create" disabled title="Private table — bots fill empty seats">Create private</button>
       </div>
+      <div id="tables-root"></div>
     </section>
 
     <div class="side-col">
@@ -222,9 +250,12 @@
   </main>
 
   <footer class="lobby-about" aria-label="About">
-    <p>
-      <strong>Yoyo</strong> is a multiplayer card game run as a hobby project —
-      have a seat, play a few hands, and leave feedback if something should be better.
+    <p class="lobby-about-line">
+      <span>Yoyo is a hobby project</span>
+      <span class="about-dot" aria-hidden="true">·</span>
+      <button type="button" class="howto-link" id="btn-howto">How to play</button>
+      <span class="about-dot" aria-hidden="true">·</span>
+      <span>Leave feedback to help us improve</span>
     </p>
   </footer>
   <script type="module" src="js/lobby.js"></script>

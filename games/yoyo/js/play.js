@@ -417,6 +417,29 @@ function highAnchorToken(tokens) {
   return best;
 }
 
+// Lowest natural rank token (bay × anchors on low end, opposite the 5-chip).
+function lowAnchorToken(tokens) {
+  let best = tokens?.[0] || '';
+  let bestR = 99;
+  for (const t of tokens || []) {
+    const c = parseWireCard(t);
+    if (c && !c.joker && c.rank < bestR) {
+      bestR = c.rank;
+      best = t;
+    }
+  }
+  return best;
+}
+
+// Clear set chips from hosts but keep bay × controls.
+function clearChipHosts(wrap) {
+  wrap.querySelectorAll('.set-chip-host').forEach((h) => {
+    const unpark = h.querySelector('.bay-unpark');
+    h.replaceChildren();
+    if (unpark) h.appendChild(unpark);
+  });
+}
+
 // Same multiset of ranks (suits may differ) — match formable seq to a park.
 function sameRankMultiset(a, b) {
   if (!a?.length || !b?.length || a.length !== b.length) return false;
@@ -659,7 +682,7 @@ function unparkSeq(tokens) {
   renderHand();
 }
 
-// Build one bay cluster DOM (five cards + ×).
+// Build one bay cluster DOM (five card slots; × in low-end chip host).
 function buildBayCluster(bay, { elig, canAct, dealAnim, animIndex }) {
   const el = document.createElement('div');
   el.className = 'hand hand-bay';
@@ -667,46 +690,64 @@ function buildBayCluster(bay, { elig, canAct, dealAnim, animIndex }) {
   el.dataset.bayTokens = bay.tokens.join(',');
   if (handSort() === 'asc') el.classList.add('hand-asc');
 
-  const unpark = document.createElement('button');
-  unpark.type = 'button';
-  unpark.className = 'bay-unpark';
-  unpark.title = 'Unpark sequence';
-  unpark.setAttribute('aria-label', 'Unpark sequence');
-  unpark.textContent = '×';
-  const bayTokens = bay.tokens.slice();
-  unpark.addEventListener('click', (e) => {
-    e.stopPropagation();
-    unparkSeq(bayTokens);
-  });
-
   let i = animIndex;
-  const cards = displayHandTokens(bay.tokens).map((t) =>
+  const slots = displayHandTokens(bay.tokens).map((t) =>
     buildHandCardEl(t, { elig, canAct, dealAnim, animIndex: i++ }),
   );
-  el.replaceChildren(unpark, ...cards);
+  el.replaceChildren(...slots);
+
+  // × above low card (opposite 5-chip on high); same chip gutter as set chips
+  const lowTok = lowAnchorToken(bay.tokens);
+  const bayTokens = bay.tokens.slice();
+  for (const slot of slots) {
+    const card = slot.querySelector('.card');
+    if (card?.dataset.wire !== lowTok) continue;
+    const host = slot.querySelector('.set-chip-host');
+    if (!host) break;
+    const unpark = document.createElement('button');
+    unpark.type = 'button';
+    unpark.className = 'bay-unpark';
+    unpark.title = 'Unpark sequence';
+    unpark.setAttribute('aria-label', 'Unpark sequence');
+    unpark.textContent = '×';
+    unpark.addEventListener('click', (e) => {
+      e.stopPropagation();
+      unparkSeq(bayTokens);
+    });
+    host.appendChild(unpark);
+    break;
+  }
   return { el, nextAnim: i };
 }
 
-// Build one hand card element (select + drag).
+// Build one hand card in a slot (chip host + face) so chips wrap with multi-row hands.
 function buildHandCardEl(t, { elig, canAct, dealAnim, animIndex }) {
-  const el = cardEl(t);
-  el.dataset.wire = t;
-  if (selected.has(t)) el.classList.add('selected');
-  if (elig && !elig.live.has(t)) el.classList.add('dead');
+  const card = cardEl(t);
+  card.dataset.wire = t;
+  if (selected.has(t)) card.classList.add('selected');
+  if (elig && !elig.live.has(t)) card.classList.add('dead');
   if (dealAnim) {
-    el.classList.add('deal-in');
-    el.style.animationDelay = `${Math.min(animIndex, 12) * 35}ms`;
+    card.classList.add('deal-in');
+    card.style.animationDelay = `${Math.min(animIndex, 12) * 35}ms`;
   }
-  el.addEventListener('click', () => {
-    if (el._dragMoved) {
-      el._dragMoved = false;
+  card.addEventListener('click', () => {
+    if (card._dragMoved) {
+      card._dragMoved = false;
       return;
     }
     if (!canAct) return;
     toggleCardSelection(t);
   });
-  el.addEventListener('pointerdown', (ev) => onCardPointerDown(ev, el, t));
-  return el;
+  card.addEventListener('pointerdown', (ev) => onCardPointerDown(ev, card, t));
+
+  const host = document.createElement('div');
+  host.className = 'set-chip-host';
+  host.dataset.chipFor = t;
+
+  const slot = document.createElement('div');
+  slot.className = 'hand-slot';
+  slot.append(host, card);
+  return slot;
 }
 
 // Apply server history + hand to suit map.
@@ -2334,11 +2375,12 @@ function currentResponseEligibility(handTokens) {
   return responseEligibility(hand, st.legal || []);
 }
 
+// Empty set chips (keep bay ×) and collapse gutters.
 function clearSetChips() {
-  const layer = $('set-chip-layer');
-  if (layer) {
-    layer.replaceChildren();
-    layer.style.minHeight = '';
+  const wrap = $('hand-wrap');
+  if (wrap) {
+    wrap.classList.remove('has-set-chips');
+    clearChipHosts(wrap);
   }
   clearHandPreview();
 }
@@ -2426,10 +2468,10 @@ function setHandPreview(tokens) {
 
 // Mark interactive set-chip.active when selection exactly matches that unit.
 function syncSetChipActive() {
-  const layer = $('set-chip-layer');
-  if (!layer) return;
+  const wrap = $('hand-wrap');
+  if (!wrap) return;
   const sel = [...selected].sort().join(',');
-  layer.querySelectorAll('.set-chip').forEach((btn) => {
+  wrap.querySelectorAll('.set-chip').forEach((btn) => {
     if (btn.dataset.previewOnly === '1') {
       btn.classList.remove('active');
       return;
@@ -2454,10 +2496,9 @@ function setUnitCoverKey(u) {
  * - Summary / no hand: hidden
  */
 function renderSetChips() {
-  const layer = $('set-chip-layer');
   const hand = $('hand');
   const wrap = $('hand-wrap');
-  if (!layer || !hand || !wrap) return;
+  if (!hand || !wrap) return;
 
   const st = lastState;
   if (!st?.hand) {
@@ -2539,47 +2580,35 @@ function renderSetChips() {
     },
   });
 
+  // Reset set chips (keep bay ×); reopen gutters only when something mounts
+  clearChipHosts(wrap);
+  wrap.classList.remove('has-set-chips');
+
   if (!units.length) {
-    clearSetChips();
+    clearHandPreview();
     return;
   }
 
   /** @type {Map<string, HTMLElement>} */
-  const cardByWire = new Map();
-  // Free row + all bay cards (cluster-local anchors)
-  wrap.querySelectorAll('.card').forEach((el) => {
-    if (el.dataset.wire) cardByWire.set(el.dataset.wire, el);
+  const hostByWire = new Map();
+  wrap.querySelectorAll('.set-chip-host').forEach((el) => {
+    const w = el.dataset.chipFor;
+    if (w) hostByWire.set(w, el);
   });
 
-  layer.replaceChildren();
-  layer.style.minHeight = '1.65rem';
-  const layerRect = layer.getBoundingClientRect();
+  // Dual chips on one face: set (2–4) first, seq (5) second — host flex order
+  const ordered = [...units].sort((a, b) => {
+    if (a.anchorToken !== b.anchorToken) return 0;
+    const aSeq = a.kind === 'seq' || a.size === 5 ? 1 : 0;
+    const bSeq = b.kind === 'seq' || b.size === 5 ? 1 : 0;
+    return aSeq - bSeq;
+  });
 
-  // Max 2 chips per card (set + seq): half-width side-by-side; lone chip centered
-  /** @type {Map<string, number>} */
-  const perAnchor = new Map();
-  for (const u of units) {
-    const a = u.anchorToken || '';
-    if (!a || !cardByWire.has(a)) continue;
-    perAnchor.set(a, (perAnchor.get(a) || 0) + 1);
-  }
-
-  for (const u of units) {
-    const card = cardByWire.get(u.anchorToken);
-    if (!card) continue;
-    const cr = card.getBoundingClientRect();
-    const cardW = cr.width || 60;
-    const nOnCard = perAnchor.get(u.anchorToken) || 1;
+  let mounted = 0;
+  for (const u of ordered) {
+    const host = hostByWire.get(u.anchorToken || '');
+    if (!host) continue;
     const isSeq = u.kind === 'seq' || u.size === 5;
-    // Up to half a card each (max two chips on one face)
-    const chipW = cardW / 2;
-    let left;
-    if (nOnCard <= 1) {
-      left = cr.left - layerRect.left + (cardW - chipW) / 2;
-    } else {
-      // set (2–4) left half, seq (5) right half when co-located
-      left = cr.left - layerRect.left + (isSeq ? chipW : 0);
-    }
 
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -2605,8 +2634,6 @@ function renderSetChips() {
         : `${u.size}-of-a-kind (preview — not playable now)`;
       if (!isSeq) btn.tabIndex = -1;
     }
-    btn.style.left = `${left}px`;
-    btn.style.width = `${chipW}px`;
 
     btn.addEventListener('pointerenter', () => setHandPreview(u.tokens));
     btn.addEventListener('pointerleave', () => clearHandPreview());
@@ -2632,8 +2659,11 @@ function renderSetChips() {
         }),
       );
     }
-    layer.appendChild(btn);
+    host.appendChild(btn);
+    mounted++;
   }
+  if (mounted) wrap.classList.add('has-set-chips');
+  else clearHandPreview();
   syncSetChipActive();
 }
 
@@ -3767,6 +3797,17 @@ function onServerEvent(ev) {
       ev.err === 'no_table' ||
       ev.err === 'bad_seat'
     ) {
+      // Session gone / bad seat memory — drop so lobby won't re-open a dead game.
+      if (
+        ev.err === 'not_started' ||
+        ev.err === 'no_table' ||
+        ev.err === 'seat_taken' ||
+        ev.err === 'seat_mismatch' ||
+        ev.err === 'bad_seat'
+      ) {
+        sessionStorage.removeItem(SS.table);
+        sessionStorage.removeItem(SS.seat);
+      }
       setTimeout(() => {
         if (!joined) goLobby();
       }, 2000);
@@ -3957,6 +3998,9 @@ function onServerEvent(ev) {
     return;
   }
   if (a === 'shutdown') {
+    // Dead session — do not rejoin this table/seat on next play page load.
+    sessionStorage.removeItem(SS.table);
+    sessionStorage.removeItem(SS.seat);
     setStatus('Session ended');
     setTimeout(goLobby, 1200);
   }

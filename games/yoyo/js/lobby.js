@@ -78,16 +78,77 @@ function setStatus(text, kind = '') {
   el.className = 'conn-status' + (kind ? ` ${kind}` : '');
 }
 
-function setBanner(text, kind = 'info') {
-  const el = $('demo-banner');
+/** Sticky err/ok until cleared; prompts are state-driven via syncActionBanner. */
+let actionBannerSticky = false;
+
+// Set action banner; kind: prompt | err | ok. opts.html / opts.sticky.
+function setActionBanner(text, kind = 'prompt', opts = {}) {
+  const el = $('action-banner');
   if (!el) return;
   if (!text) {
     el.hidden = true;
+    el.replaceChildren();
+    el.className = 'action-banner';
+    actionBannerSticky = false;
     return;
   }
   el.hidden = false;
-  el.textContent = text;
-  el.className = 'demo-banner' + (kind === 'err' ? ' err' : kind === 'ok' ? ' ok' : '');
+  if (opts.html) el.innerHTML = text;
+  else el.textContent = text;
+  const mod = kind === 'err' ? ' err' : kind === 'ok' ? ' ok' : ' prompt';
+  el.className = 'action-banner' + mod;
+  actionBannerSticky = opts.sticky ?? (kind === 'err' || kind === 'ok');
+}
+
+// Next-action prompt from auth + seat state (skips sticky err/ok).
+function syncActionBanner() {
+  if (actionBannerSticky || takenOver) return;
+
+  // Connecting / reconnecting — conn-status only.
+  if (
+    !authenticated &&
+    authPanel === 'hidden' &&
+    loadIdentity().username &&
+    !isSignOutGate()
+  ) {
+    setActionBanner('');
+    return;
+  }
+
+  if (!authenticated) {
+    if (authPanel === 'gate' || (isSignOutGate() && listProfiles().length)) {
+      setActionBanner('Choose a profile to rejoin.', 'prompt', { sticky: false });
+    } else {
+      setActionBanner('Create a profile to join tables.', 'prompt', { sticky: false });
+    }
+    return;
+  }
+
+  for (const [id, t] of tables) {
+    if (!mySeatAt(id)) continue;
+    if (t.status === STATUS_PLAYING) {
+      setActionBanner('');
+      return;
+    }
+    const privateTable = isPrivateTable(id);
+    const privateOwner = privateTable && ukey(id) === ukey(me);
+    if (!privateTable || privateOwner) {
+      setActionBanner(
+        'Press <strong>Start</strong> when all intended players are ready.',
+        'prompt',
+        { html: true, sticky: false },
+      );
+    } else {
+      setActionBanner('Waiting for the host to start the game.', 'prompt', { sticky: false });
+    }
+    return;
+  }
+
+  setActionBanner(
+    'Choose a table and <strong>Sit</strong> at an open seat—or <strong>Create private</strong>',
+    'prompt',
+    { html: true, sticky: false },
+  );
 }
 
 // Drop pending auto-reconnect.
@@ -104,7 +165,7 @@ function handleTakenOver() {
   clearReconnect();
   authenticated = false;
   setStatus('signed in elsewhere', 'err');
-  setBanner(
+  setActionBanner(
     'Signed in on another device. This tab was disconnected. Choose Continue as… to play here.',
     'err',
   );
@@ -489,9 +550,7 @@ function renderAuthUi() {
   $('chat-form').querySelector('button').disabled = !chatOn;
   syncNewsCompose();
   syncFeedbackChrome();
-  // Sit cue only after lobby login (both index themes).
-  const sitCue = $('tables-sit-cue');
-  if (sitCue) sitCue.hidden = !authenticated;
+  syncActionBanner();
 }
 
 function renderHeader() {
@@ -519,6 +578,32 @@ function isBotSeatName(name) {
 
 function isPrivateOwner(tableId) {
   return !!(me && isPrivateTable(tableId) && ukey(tableId) === ukey(me));
+}
+
+// True if me is on the private invite ACL.
+function isInvitedTo(tableId, t) {
+  if (!me || !isPrivateTable(tableId)) return false;
+  return invitedList(t || tables.get(tableId)).some((n) => ukey(n) === ukey(me));
+}
+
+// Within private: mine (seat/owned) → invited → other.
+function privateSortKey(tableId) {
+  if (mySeatAt(tableId) || isPrivateOwner(tableId)) return 0;
+  if (isInvitedTo(tableId)) return 1;
+  return 2;
+}
+
+// Compare private tables by relevance, then name.
+function comparePrivateIds(a, b) {
+  const ka = privateSortKey(a);
+  const kb = privateSortKey(b);
+  if (ka !== kb) return ka - kb;
+  return a.localeCompare(b, undefined, { numeric: true });
+}
+
+// Open tables: ascending id (Open1, Open2, …); gaps OK if server pruned higher numbers.
+function compareOpenIds(a, b) {
+  return a.localeCompare(b, undefined, { numeric: true });
 }
 
 function seatSlot(tableId, t, i) {
@@ -858,6 +943,16 @@ function tableHasSeatedHumans(t) {
   return (t.seats || []).some((s) => !!s);
 }
 
+// Playing session with at least one seat filled (humans or bots).
+function tableIsInProgress(t) {
+  return t.status === STATUS_PLAYING && tableHasSeatedHumans(t);
+}
+
+// Playing session, seats empty (everyone left; still Playing until Stop / idle kill).
+function tableIsPaused(t) {
+  return t.status === STATUS_PLAYING && !tableHasSeatedHumans(t);
+}
+
 /** Private owner trash: confirm only if a live session still has humans seated. */
 function privateDeleteBtn(tableId, t, waiting) {
   const del = document.createElement('button');
@@ -890,9 +985,12 @@ function renderStatusCluster(tableId, t, waiting, mine, privateTable, privateOwn
   status.className = 'status' + (waiting ? '' : ' live');
 
   if (!waiting) {
-    // Empty in-progress (everyone left) is still status Playing until idle kill / Stop.
-    status.textContent = tableHasSeatedHumans(t) ? 'Playing…' : 'Paused…';
-    cluster.appendChild(status);
+    // In-progress uses header chip + stripes; only empty sessions show status text.
+    if (tableIsPaused(t)) {
+      status.textContent = 'Paused…';
+      status.title = 'Game session open but no one is seated';
+      cluster.appendChild(status);
+    }
     if (privateOwner) {
       const stop = document.createElement('button');
       stop.type = 'button';
@@ -1256,10 +1354,14 @@ function renderInviteRow(tableId, t, privateOwner) {
 function renderTable(tableId, t) {
   const waiting = t.status === STATUS_WAITING;
   const privateTable = isPrivateTable(tableId);
+  const inProgress = tableIsInProgress(t);
+  const paused = tableIsPaused(t);
   const card = document.createElement('article');
   card.className =
     'table-card' +
     (waiting ? '' : ' playing') +
+    (inProgress ? ' in-progress' : '') +
+    (paused ? ' paused' : '') +
     (privateTable ? ' private' : ' open');
   card.dataset.table = tableId;
 
@@ -1284,6 +1386,15 @@ function renderTable(tableId, t) {
     hdr.appendChild(badge);
   }
   hdr.appendChild(renderOptPills(t));
+
+  // After option chips: attention chip when a game is actively running.
+  if (inProgress) {
+    const live = document.createElement('span');
+    live.className = 'table-live-badge';
+    live.textContent = 'In progress';
+    live.title = 'Game already started — use Join on an open seat';
+    hdr.appendChild(live);
+  }
 
   if (canEditOpts) {
     const gearWrap = document.createElement('div');
@@ -1330,21 +1441,27 @@ function renderTable(tableId, t) {
 function renderTables() {
   clearBodyTablePopovers();
   const root = $('tables-root');
-  const ids = [...tables.keys()].sort((a, b) => {
-    const ao = a.startsWith('Open') ? 0 : 1;
-    const bo = b.startsWith('Open') ? 0 : 1;
-    if (ao !== bo) return ao - bo;
-    return a.localeCompare(b, undefined, { numeric: true });
-  });
+  const ids = [...tables.keys()];
   if (!ids.length) {
     root.innerHTML = authenticated
       ? '<p class="hint">No tables — create a private table or wait for opens.</p>'
       : '<p class="hint">Sign in to see live tables.</p>';
+    syncActionBanner();
     return;
   }
-  const openIds = ids.filter((id) => !isPrivateTable(id));
-  const privIds = ids.filter((id) => isPrivateTable(id));
+  // Private first (yours → invited → other), then open ascending (Open1, Open2, …).
+  const privIds = ids.filter((id) => isPrivateTable(id)).sort(comparePrivateIds);
+  const openIds = ids.filter((id) => !isPrivateTable(id)).sort(compareOpenIds);
   const frag = document.createDocumentFragment();
+  if (privIds.length) {
+    if (openIds.length) {
+      const lab = document.createElement('p');
+      lab.className = 'tables-section-label private';
+      lab.textContent = 'Private tables';
+      frag.appendChild(lab);
+    }
+    for (const id of privIds) frag.appendChild(renderTable(id, tables.get(id)));
+  }
   if (openIds.length) {
     if (privIds.length) {
       const lab = document.createElement('p');
@@ -1354,16 +1471,10 @@ function renderTables() {
     }
     for (const id of openIds) frag.appendChild(renderTable(id, tables.get(id)));
   }
-  if (privIds.length) {
-    const lab = document.createElement('p');
-    lab.className = 'tables-section-label private';
-    lab.textContent = 'Private tables';
-    frag.appendChild(lab);
-    for (const id of privIds) frag.appendChild(renderTable(id, tables.get(id)));
-  }
   root.replaceChildren(frag);
   // Portals escape .panel.tables (overflow + backdrop-filter containing block).
   requestAnimationFrame(mountOpenTablePopovers);
+  syncActionBanner();
 }
 
 // Normalize presence value (object or legacy string last_seen).
@@ -2164,7 +2275,7 @@ function onServerEvent(ev) {
       handleTakenOver();
       return;
     }
-    setBanner(ev.err || 'error', 'err');
+    setActionBanner(ev.err || 'error', 'err');
     if (ev.err === 'username_taken') {
       setStatus('name/email mismatch', 'err');
       // Stay on form if they were creating; clear bad session name only if not connected.
@@ -2200,8 +2311,8 @@ function onServerEvent(ev) {
     me = uname;
     meIsDev = !!(ev.is_dev || ev.isDev);
     authPanel = 'hidden';
-    setStatus('connected', 'ok');
-    setBanner('');
+    setStatus('online', 'ok');
+    setActionBanner(''); // clear sticky err; sync from renderTables / renderHeader
     renderHeader();
     renderTables();
     renderNews();
@@ -2292,28 +2403,28 @@ function connect() {
   clearReconnect();
   const id = loadIdentity();
   if (!id.username) {
-    setStatus('enter name', '');
+    setStatus('sign in', '');
     pickUnsignedPanel();
     renderHeader();
     return;
   }
   me = id.username;
-  setStatus('connecting…', '');
+  setStatus('connecting', '');
   // Connection progress lives in conn-status only (not the banner).
   renderHeader();
 
   try {
     ws = new WebSocket(LOBBY_WS);
   } catch (e) {
-    setStatus('ws failed', 'err');
-    setBanner(String(e), 'err');
+    setStatus('reconnecting', 'err');
+    setActionBanner(String(e), 'err');
     scheduleReconnect();
     return;
   }
   renderHeader();
 
   ws.onopen = () => {
-    setStatus('authenticating…', '');
+    setStatus('connecting', '');
     clearChatLog(); // ChatHistory on join will refill (E8g)
     const cur = loadIdentity();
     // Lobby Login is username+email only; server returns uuid on Welcome.
@@ -2339,7 +2450,7 @@ function connect() {
     ws = null;
     renderHeader();
     if (intentionalClose) {
-      setStatus('signed out', '');
+      setStatus('sign in', '');
       return;
     }
     // Booted by another login — stay idle until user reclaims (Continue as…).
@@ -2352,13 +2463,13 @@ function connect() {
     }
     // Only auto-reconnect if we still have a session user and are not on the gate.
     if (!loadIdentity().username || isSignOutGate()) {
-      setStatus('disconnected', '');
+      setStatus('sign in', '');
       pickUnsignedPanel();
       renderHeader();
       return;
     }
-    setStatus('reconnecting…', 'err');
-    setBanner(''); // reconnect attempts: status line only
+    setStatus('reconnecting', 'err');
+    setActionBanner(''); // reconnect attempts: status line only
     scheduleReconnect();
   };
 
@@ -2389,8 +2500,8 @@ function doSignOut() {
   }
   clearSession();
   authPanel = listProfiles().length ? 'gate' : 'first';
-  setStatus('signed out', '');
-  setBanner(listProfiles().length ? 'Choose a profile to rejoin.' : 'Create a profile to join tables.');
+  setStatus('sign in', '');
+  setActionBanner('');
   renderTables();
   renderOnline();
   renderHeader();
@@ -2456,6 +2567,14 @@ function wireUi() {
     if ($('pref-hand-asc').checked) setHandSortFromUi('asc');
   });
 
+  const howto = $('howto-panel');
+  $('btn-howto')?.addEventListener('click', () => {
+    if (howto) howto.hidden = false;
+  });
+  $('btn-howto-close')?.addEventListener('click', () => {
+    if (howto) howto.hidden = true;
+  });
+
   $('btn-profile').addEventListener('click', (e) => {
     e.stopPropagation();
     toggleProfileMenu();
@@ -2467,6 +2586,10 @@ function wireUi() {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       closeProfileMenu();
+      if (howto && !howto.hidden) {
+        howto.hidden = true;
+        return;
+      }
       if (authPanel === 'manage' || authPanel === 'display') closeManagePanel();
       else if (authPanel === 'create' && (isSignedInUi() || listProfiles().length)) {
         cancelLoginForm();
@@ -2599,8 +2722,8 @@ function main() {
   if (isSignOutGate() && profiles.length) {
     me = '';
     authPanel = 'gate';
-    setStatus('signed out', '');
-    setBanner('Choose a profile to rejoin.');
+    setStatus('sign in', '');
+    setActionBanner('');
     renderHeader();
     return;
   }
@@ -2617,8 +2740,8 @@ function main() {
   // 4) First visit.
   me = '';
   authPanel = 'first';
-  setStatus('enter name', '');
-  setBanner('Create a profile to join tables.');
+  setStatus('sign in', '');
+  setActionBanner('');
   renderHeader();
 }
 

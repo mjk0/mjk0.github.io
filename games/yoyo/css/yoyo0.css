@@ -167,9 +167,20 @@ button:focus-visible {
 }
 .app-header .you b { color: var(--ink); }
 
-/* Profile menu (E7) */
+/* Profile menu (E7) — name chip + conn status stacked */
 .profile-wrap {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+}
+.profile-wrap .conn-status {
+  font-size: 0.72rem;
+  line-height: 1.2;
+  max-width: 12rem;
+  text-align: right;
+  white-space: nowrap;
 }
 .profile-btn {
   display: inline-flex;
@@ -512,24 +523,48 @@ button:focus-visible {
   flex-direction: column;
   gap: 1rem; /* clear separation between table cards */
 }
-.tables-sit-cue {
+.tables-pitch {
+  margin: 0 0 0.55rem;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.tables-pitch .pitch-dot {
+  margin: 0 0.35em;
+  opacity: 0.55;
+  user-select: none;
+}
+.action-banner {
   margin: 0 0 0.65rem;
   padding: 0.45rem 0.65rem;
   font-size: 0.95rem;
   line-height: 1.35;
-  color: #1a1810;
-  background: linear-gradient(90deg, #e8c84a, #d4ae2e);
-  border: 1px solid #1a1810;
   border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--accent);
 }
-.tables-sit-cue[hidden] {
+.action-banner[hidden] {
   display: none !important;
 }
-.tables-sit-cue strong {
+.action-banner.prompt {
+  color: #1a1810;
+  background: linear-gradient(90deg, #e8c84a, #d4ae2e);
+  border-color: #1a1810;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+.action-banner.prompt strong {
   font-weight: 800;
   text-decoration: underline;
   text-underline-offset: 0.12em;
+}
+.action-banner.err {
+  background: #3a2020;
+  border-color: var(--danger);
+  color: #fcc;
+}
+.action-banner.ok {
+  background: #203a28;
+  border-color: var(--ok);
+  color: #cfe;
 }
 .tables-section-label {
   margin: 0.15rem 0 0;
@@ -540,10 +575,16 @@ button:focus-visible {
   color: var(--accent-hi);
   opacity: 0.95;
 }
-.tables-section-label.private {
-  margin-top: 0.35rem;
+/* Open section follows private — separator on open, not private */
+.tables-section-label:not(.private) {
+  margin-top: 0.55rem;
   padding-top: 0.55rem;
   border-top: 1px dashed rgba(232, 200, 74, 0.35);
+}
+.tables-section-label.private {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
   color: #e8c8a0;
 }
 .table-card {
@@ -590,6 +631,50 @@ button:focus-visible {
   box-shadow:
     0 0 0 2px rgba(232, 200, 74, 0.7),
     0 4px 16px rgba(0, 0, 0, 0.32);
+}
+/* Soft diagonal “IN PROGRESS” watermark on live tables */
+.table-card.in-progress {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.table-card.in-progress::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+  background-image:
+    repeating-linear-gradient(
+      -28deg,
+      transparent 0,
+      transparent 14px,
+      rgba(0, 0, 0, 0.14) 14px,
+      rgba(0, 0, 0, 0.14) 15px
+    ),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='90' viewBox='0 0 220 90'><text x='8' y='58' fill='rgba(255,255,255,0.5)' font-family='system-ui,Segoe UI,sans-serif' font-size='15' font-weight='700' letter-spacing='0.06em' transform='rotate(-28 8 58)'>IN PROGRESS</text></svg>");
+  background-size: auto, 200px 90px;
+  background-repeat: repeat;
+}
+.table-card.in-progress > * {
+  position: relative;
+  z-index: 1;
+}
+.table-live-badge {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.2em 0.55em;
+  border-radius: 4px;
+  border: 1px solid #1a1810;
+  background: #ffeb3b;
+  color: #1a1810;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
 }
 .table-card header.table-head {
   display: flex;
@@ -1007,7 +1092,7 @@ button:focus-visible {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
-  margin-top: 0.55rem;
+  margin: 0 0 0.65rem;
 }
 .side-col {
   display: flex;
@@ -1519,36 +1604,7 @@ button:focus-visible {
   color: var(--muted);
   margin: 0.25rem 0 0;
 }
-.demo-banner {
-  background: #3a3020;
-  border: 1px solid var(--accent);
-  color: var(--accent-hi);
-  padding: 0.4rem 0.75rem;
-  font-size: 0.85rem;
-  border-radius: 6px;
-  margin-bottom: 0.5rem;
-}
-.lobby-page .demo-banner {
-  background: rgba(55, 48, 28, 0.92);
-  border-color: var(--accent-hi);
-  color: #f5e6a8;
-}
-.demo-banner.err {
-  background: #3a2020;
-  border-color: var(--danger);
-  color: #fcc;
-}
-.lobby-page .demo-banner.err {
-  background: rgba(90, 36, 36, 0.92);
-}
-.demo-banner.ok {
-  background: #203a28;
-  border-color: var(--ok);
-  color: #cfe;
-}
-.lobby-page .demo-banner.ok {
-  background: rgba(32, 70, 48, 0.92);
-}
+/* action-banner styles live with .tables-pitch above */
 /* Play page: duplicate_login takeover (sticky until Continue / Lobby) */
 .taken-over-banner {
   position: absolute;
@@ -3311,7 +3367,9 @@ button:focus-visible {
 .hand.hand-bay {
   position: relative;
   flex: 0 0 auto;
-  padding: 0.25rem 0.45rem;
+  /* Tight top: chips already live in slot gutter; avoid double padding above them */
+  padding: 0.1rem 0.4rem 0.2rem;
+  min-height: 0; /* don't inherit free-hand min-height (flex-end would gap above slots) */
   border-radius: 8px;
   border: 1px solid #5a7a4a;
   background: rgba(40, 70, 45, 0.55);
@@ -3336,39 +3394,60 @@ button:focus-visible {
 .hand-bays-right .hand.hand-bay::before {
   left: -0.2rem;
 }
+/* Unpark sits in low-end chip host (opposite 5-chip), same gutter as set chips */
 .bay-unpark {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  z-index: 3;
-  width: 1.25rem;
-  height: 1.25rem;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  width: 1.5rem;
+  height: 1.5rem;
   padding: 0;
+  margin: 0;
   line-height: 1;
   font-size: 0.85rem;
-  border-radius: 4px;
+  border-radius: 6px;
   border: 1px solid #5a6a5a;
   background: var(--bg-elev);
   color: var(--muted);
+  pointer-events: auto;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
 }
 .bay-unpark:hover {
   border-color: var(--danger);
   color: #fcc;
 }
-.set-chip-layer {
-  position: relative;
-  height: 0;
-  z-index: 2;
-  pointer-events: none;
+/* Per-card chip gutter: wraps with faces so multi-row hands keep chips on the right row */
+.hand-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 auto;
+  min-width: 0;
 }
-.set-chip-layer:not(:empty) {
-  height: 1.65rem;
-  margin-bottom: 0.2rem;
+.set-chip-host {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 0;
+  margin: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+}
+.hand-wrap.has-set-chips .set-chip-host,
+.hand-bay:has(.bay-unpark) .set-chip-host {
+  height: 1.5rem; /* match .set-chip / .bay-unpark */
+  margin-bottom: 0.08rem;
+  overflow: visible;
 }
 .set-chip {
-  position: absolute;
-  top: 0;
   box-sizing: border-box;
+  flex: 0 0 50%;
+  width: 50%;
   min-width: 1.45rem;
   height: 1.5rem;
   padding: 0;
@@ -3433,6 +3512,7 @@ button:focus-visible {
   gap: 0.2rem;
   justify-content: center;
   align-items: flex-end;
+  /* Content (slots + optional chip gutter) sizes the bar; min only for empty free hand */
   min-height: calc(var(--card-h) + 8px);
   padding: 0.25rem;
   touch-action: none;
@@ -3628,29 +3708,73 @@ button:focus-visible {
   color: var(--muted);
   padding: 0.35rem;
 }
-/* Compact about strip — sits in lobby flex column, does not force page scroll */
+/* Compact one-line about strip */
 .lobby-about {
   flex: 0 0 auto;
   margin: 0;
-  padding: 0.4rem 1rem 0.55rem;
+  padding: 0.28rem 0.75rem 0.35rem;
   text-align: center;
   max-width: 1500px;
   width: 100%;
   align-self: center;
   box-sizing: border-box;
+  border-top: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.12);
 }
-.lobby-about p {
+.lobby-about-line {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.2rem 0.4rem;
   margin: 0 auto;
-  max-width: 46rem;
-  font-size: 0.78rem;
-  line-height: 1.35;
+  max-width: 48rem;
+  font-size: 0.74rem;
+  line-height: 1.3;
   color: var(--muted);
-  opacity: 0.92;
+  opacity: 0.95;
 }
-.lobby-about strong {
-  font-weight: 700;
-  color: var(--ink);
-  opacity: 0.9;
+.about-dot {
+  opacity: 0.55;
+  user-select: none;
+}
+.howto-link {
+  display: inline;
+  margin: 0;
+  padding: 0.05em 0.2em;
+  font: inherit;
+  font-size: inherit;
+  font-weight: 650;
+  color: var(--accent-hi);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid currentColor;
+  border-radius: 0;
+  cursor: pointer;
+  line-height: inherit;
+}
+.howto-link:hover {
+  color: #fff;
+  border-bottom-color: #fff;
+}
+.howto-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0 0.15rem 0.25rem;
+}
+.howto-body p { margin: 0; font-size: 0.9rem; line-height: 1.4; }
+.howto-steps {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+.howto-steps li { margin: 0.25rem 0; }
+.howto-steps strong {
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
 }
 
 @media (max-width: 720px) {
@@ -3675,4 +3799,8 @@ button:focus-visible {
   }
   .seat-token { min-width: 4.2rem; font-size: 0.85rem; }
   .hand .card .card-svg { width: 48px; height: 64px; }
+  /* Match free-hand min-height to scaled faces (avoid flex-end gap above slots) */
+  .hand:not(.hand-bay) {
+    min-height: calc(64px + 8px);
+  }
 }
