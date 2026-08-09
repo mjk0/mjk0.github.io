@@ -174,8 +174,9 @@ function orderPreferFree(toks, reserved) {
  * Lead multi-card units: pairs/triples/quads + seq5 (if opts allow).
  * No jokers. Sets: only free (non-reserved) faces of a rank.
  * Seq5: free-only path, or fully reserved (park bay); never mix free+parked.
- * Set chips cascade across the free rank block (largest on primary end);
- * tokens always the primary-end faces. Seq5 anchor → high.
+ * Set chips cascade across the free rank block (largest on primary end).
+ * Selection is the size faces from the chip toward the secondary / lower-rank
+ * end of the free block (not always the primary-end k). Seq5 anchor → high.
  * @param {Iterable<string>|null} [reservedTokens] parked/reserved wire tokens
  * @returns {{ id: string, size: number, rank: number, tokens: string[], anchorToken: string, kind?: string }[]}
  */
@@ -209,10 +210,12 @@ export function enumerateLeadSetUnits(handTokens, opts = 0, reservedTokens = nul
     const primaryIdx = setFromEnd ? n - 1 : 0;
     const step = setFromEnd ? -1 : 1;
     for (let size = 2; size <= maxSet; size++) {
-      // Play selection: always the size faces at the primary end
-      const tokens = setFromEnd ? free.slice(n - size) : free.slice(0, size);
-      // Chip sits on the rank runway: largest on primary, smaller on next cards
+      // Chip runway: largest on primary, smaller stepped toward lower-rank end
       const chipIdx = primaryIdx + (maxSet - size) * step;
+      // Select size faces from chip toward secondary end of free block
+      const tokens = setFromEnd
+        ? free.slice(chipIdx - size + 1, chipIdx + 1)
+        : free.slice(chipIdx, chipIdx + size);
       units.push({
         id: `${rank}-${size}`,
         size,

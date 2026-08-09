@@ -1664,6 +1664,8 @@ function renderTrick() {
       midTrick,
       // Hand over: sole remaining hand → LOSER pill (not false PASS)
       gameOver: atEnd,
+      // Tier OUT fireworks (1st bigger); partial mid-hand order is fine
+      finishOrder: lastState.finish_order || lastSummary?.finish_order || [],
       turnCues: atEnd ? [] : buildTurnCues(),
     },
   );

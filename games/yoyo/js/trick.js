@@ -95,16 +95,39 @@ function stackStep(count) {
   return 0.32; // seq5
 }
 
-// Position a felt object at a seat's stack offset (k=0.32).
-function placeAtSeat(el, seat, layout, z) {
+// Position a felt object on a seat ray. Default k=0.32 (stack); higher = seat-ward.
+function placeAtSeat(el, seat, layout, z, k = 0.32) {
   const { n, youSeat, visualIndex } = layout;
   const vi = visualIndex(seat, n, youSeat);
-  const off = seatStackOffset(vi, n);
+  const off = seatArcOffset(vi, n, k);
   el.style.left = `${off.x}%`;
   el.style.top = `${off.y}%`;
   el.style.zIndex = String(z);
   el.dataset.seat = String(seat);
 }
+
+// Finish place 1..n from finish_order (seat list), or 0 if still in / unknown.
+function placeFromOrder(finishOrder, seat) {
+  const order = finishOrder || [];
+  const i = order.findIndex((s) => +s === +seat);
+  return i >= 0 ? i + 1 : 0;
+}
+
+// Place for OUT FX; sole empty seat → 1st if order lags (rare).
+function resolveOutPlace(finishOrder, seat, remaining, n) {
+  const p = placeFromOrder(finishOrder, seat);
+  if (p > 0) return p;
+  let empties = 0;
+  for (let i = 0; i < n; i++) {
+    if ((remaining[i] ?? -1) === 0) empties++;
+  }
+  if (empties === 1) return 1;
+  return 0;
+}
+
+// OUT pill sits seat-ward of a live stack so cards stay readable.
+const OUT_K_FREE = 0.32;
+const OUT_K_WITH_STACK = 0.46;
 
 // Oval PASS pill (not a button).
 function makePassPill(seat) {
@@ -129,51 +152,121 @@ function makeLoserPill(seat) {
   return el;
 }
 
-// Seats that already played the one-shot OUT burst this hand.
+// One-shot OUT burst per seat this hand.
+// FX live on a durable sibling of #trick-layer (.trick-out-fx). Re-parenting
+// after replaceChildren restarts CSS animations — 1st (longest) looked random.
 const outBurstShown = new Set();
+/** @type {Map<number, HTMLElement>} */
+const outFxBySeat = new Map();
 
-// First-time OUT chrome for seat this hand → pop + local spark burst.
-function markOutBurst(el, seat) {
-  if (!el || seat < 1 || outBurstShown.has(seat)) return;
+function clearOutFireworks() {
+  for (const fx of outFxBySeat.values()) fx.remove();
+  outFxBySeat.clear();
+}
+
+// Sibling host over the felt; never wiped by trick-layer replaceChildren.
+function ensureOutFxHost(layerEl) {
+  const area = layerEl?.parentElement;
+  if (!area) return layerEl;
+  let host = area.querySelector(':scope > .trick-out-fx');
+  if (!host) {
+    host = document.createElement('div');
+    host.className = 'trick-out-fx';
+    host.setAttribute('aria-hidden', 'true');
+    layerEl.after(host);
+  }
+  return host;
+}
+
+// OUT FX tier: 1st gold boom > 2nd cool full > 3rd+ quieter. Unknown place → 2nd.
+function outFxTier(place) {
+  if (place === 1) return 'first';
+  if (place >= 3) return 'third';
+  return 'second'; // 2nd or place 0 (order not yet known)
+}
+
+// Spark waves for one OUT: 1st=3 waves, 2nd=2, 3rd+=1.
+function buildOutFirework(place) {
+  const tier = outFxTier(place);
+  const fx = document.createElement('span');
+  fx.className =
+    'out-firework' + (tier === 'first' ? ' first' : tier === 'third' ? ' third' : '');
+  fx.setAttribute('aria-hidden', 'true');
+  const waves =
+    tier === 'first'
+      ? [
+          { n: 36, d0: 110, dSpread: 55, delay0: 0, dur: 2.1 },
+          { n: 24, d0: 85, dSpread: 48, delay0: 380, dur: 1.9 },
+          { n: 18, d0: 65, dSpread: 42, delay0: 780, dur: 1.7 },
+        ]
+      : tier === 'second'
+        ? [
+            { n: 26, d0: 85, dSpread: 40, delay0: 0, dur: 1.7 },
+            { n: 16, d0: 55, dSpread: 35, delay0: 380, dur: 1.5 },
+          ]
+        : [
+            // Single quieter boom
+            { n: 18, d0: 68, dSpread: 30, delay0: 0, dur: 1.35 },
+          ];
+  for (const w of waves) {
+    for (let i = 0; i < w.n; i++) {
+      const s = document.createElement('span');
+      s.className =
+        'out-spark' +
+        (tier === 'first' && i % 5 === 0 ? ' out-spark-lg' : '');
+      const a = (i * 360) / w.n + (i % 2 ? 12 : -8) + (w.delay0 ? 7 : 0);
+      s.style.setProperty('--a', `${a}deg`);
+      s.style.setProperty('--d', `${w.d0 + (i % 5) * (w.dSpread / 4)}px`);
+      s.style.setProperty('--delay', `${w.delay0 + (i % 6) * 22}ms`);
+      s.style.setProperty('--dur', `${w.dur}s`);
+      // 1st gold-heavy; 2nd cool + gold flecks; 3rd cooler / fewer golds
+      let hue;
+      if (tier === 'first') {
+        hue = i % 4 === 0 ? 205 : i % 4 === 1 ? 42 : i % 4 === 2 ? 28 : 48;
+      } else if (tier === 'second') {
+        hue = i % 3 === 1 ? 42 : i % 3 === 2 ? 175 : 205;
+      } else {
+        hue = i % 4 === 1 ? 48 : i % 4 === 2 ? 185 : 210;
+      }
+      s.style.setProperty('--hue', String(hue));
+      fx.appendChild(s);
+    }
+  }
+  return fx;
+}
+
+// First-time OUT for seat: pill pop + layered sparks at (x%, y%) on durable host.
+function markOutBurst(pillEl, seat, { place = 0, host, x, y } = {}) {
+  if (!pillEl || seat < 1 || outBurstShown.has(seat)) return;
   outBurstShown.add(seat);
-  el.classList.add('out-burst');
+  const tier = outFxTier(place);
+  pillEl.classList.add('out-burst');
+  if (tier === 'first') pillEl.classList.add('out-burst-first');
+  else if (tier === 'third') pillEl.classList.add('out-burst-third');
   if (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches) {
     return;
   }
-  // Brief firework: sparks radiate from pill center
-  const fx = document.createElement('span');
-  fx.className = 'out-firework';
-  fx.setAttribute('aria-hidden', 'true');
-  const n = 14;
-  for (let i = 0; i < n; i++) {
-    const s = document.createElement('span');
-    s.className = 'out-spark';
-    const a = (i * 360) / n + (i % 2 ? 10 : -6);
-    s.style.setProperty('--a', `${a}deg`);
-    s.style.setProperty('--d', `${20 + (i % 4) * 7}px`);
-    s.style.setProperty('--delay', `${(i % 5) * 18}ms`);
-    // Cool blue + warm gold flecks
-    s.style.setProperty('--hue', String(i % 3 === 1 ? 42 : i % 3 === 2 ? 175 : 205));
-    fx.appendChild(s);
-  }
-  el.appendChild(fx);
+  if (!host) return;
+  const fx = buildOutFirework(place);
+  fx.style.left = x != null ? x : pillEl.style.left;
+  fx.style.top = y != null ? y : pillEl.style.top;
+  fx.dataset.seat = String(seat);
+  host.appendChild(fx);
+  outFxBySeat.set(seat, fx);
+  // Cover last wave: 1st ~0.78s+1.7s, 2nd ~0.38s+1.5s, 3rd ~1.35s
+  const ttl = tier === 'first' ? 3200 : tier === 'second' ? 2100 : 1500;
+  setTimeout(() => {
+    if (outFxBySeat.get(seat) === fx) outFxBySeat.delete(seat);
+    fx.remove();
+  }, ttl);
 }
 
-// Free-slot OUT pill (place is on seat place-pill; felt is status only).
+// Free-slot / seat-ward OUT pill (place ranking lives on seat place-pill).
 function makeOutPill(seat) {
   const el = document.createElement('div');
   el.className = 'felt-pill out-pill';
   el.textContent = 'OUT';
   el.setAttribute('aria-label', `Seat ${seat}: Out of cards`);
-  return el;
-}
-
-// Badge centered on a finishing play stack (rem hit 0 on this set).
-function makeStackOutBadge() {
-  const el = document.createElement('div');
-  el.className = 'stack-out-badge';
-  el.textContent = 'OUT';
-  el.setAttribute('aria-label', 'Out of cards');
   return el;
 }
 
@@ -229,6 +322,7 @@ function makeTurnCue(seat, label, rotDeg, opts = {}) {
  *   cont?: boolean,
  *   midTrick?: boolean,
  *   gameOver?: boolean,
+ *   finishOrder?: number[],
  *   turnCues?: { seat: number, label: string, mine?: boolean, exchange?: boolean, active?: boolean }[],
  * }} [felt]
  */
@@ -241,6 +335,7 @@ export function renderPlayStacks(layerEl, plays, layout, felt = {}) {
   const cont = !!felt.cont;
   const midTrick = !!felt.midTrick;
   const gameOver = !!felt.gameOver;
+  const finishOrder = felt.finishOrder || [];
   const turnCues = felt.turnCues || [];
 
   const cw = 48;
@@ -291,37 +386,47 @@ export function renderPlayStacks(layerEl, plays, layout, felt = {}) {
       stack.appendChild(el);
     });
 
-    // Emptied on this play: keep set visible, stamp OUT on top (place → seat pill)
+    // Emptied on this play: keep set fully readable; OUT pill is seat-ward (below).
     if ((remaining[p.seat - 1] ?? -1) === 0) {
       stack.classList.add('out');
-      const badge = makeStackOutBadge();
-      markOutBurst(badge, p.seat);
-      stack.appendChild(badge);
     }
 
     piles.appendChild(stack);
   }
 
-  // Empty-slot markers: OUT > PASS; skip live stacks
   let anyOut = false;
   for (let seat = 1; seat <= n; seat++) {
     if ((remaining[seat - 1] ?? -1) === 0) anyOut = true;
   }
-  if (!anyOut) outBurstShown.clear(); // new hand / nobody out yet
+  if (!anyOut) {
+    outBurstShown.clear();
+    clearOutFireworks();
+  }
 
-  // PASS: live mask mid-trick; on completed-trick shelf infer non-players
-  // (server clears mask on next LEAD). Never infer during exchange / empty history.
-  // Hand over: remaining hand is the loser (new Yoyo) — LOSER, not false PASS.
+  // OUT for every empty seat (with or without live stack). PASS/LOSER only free slots.
+  // Hand over: sole remaining hand → LOSER, not false PASS.
+  // PASS: live mask mid-trick; completed-trick shelf infers non-players (mask cleared on LEAD).
   const inferCompletedPasses = !midTrick && !gameOver && plays.length > 0;
+  // Durable host: not under replaceChildren (keeps CSS animations continuous).
+  const fxHost = ensureOutFxHost(layerEl);
   for (let seat = 1; seat <= n; seat++) {
-    if (played.has(seat)) continue;
     const rem = remaining[seat - 1] ?? -1;
     if (rem === 0) {
+      // With a finishing stack: seat-ward of cards; free slot: stack radius
+      const k = played.has(seat) ? OUT_K_WITH_STACK : OUT_K_FREE;
       const pill = makeOutPill(seat);
-      markOutBurst(pill, seat);
-      placeAtSeat(pill, seat, layout, 4);
+      placeAtSeat(pill, seat, layout, 35, k);
+      markOutBurst(pill, seat, {
+        place: resolveOutPlace(finishOrder, seat, remaining, n),
+        host: fxHost,
+        x: pill.style.left,
+        y: pill.style.top,
+      });
       piles.appendChild(pill);
-    } else if (rem > 0 && gameOver) {
+      continue;
+    }
+    if (played.has(seat)) continue;
+    if (rem > 0 && gameOver) {
       const pill = makeLoserPill(seat);
       placeAtSeat(pill, seat, layout, 5);
       piles.appendChild(pill);
