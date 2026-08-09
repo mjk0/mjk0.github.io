@@ -943,12 +943,13 @@ function tableHasSeatedHumans(t) {
   return (t.seats || []).some((s) => !!s);
 }
 
-// Playing session with at least one seat filled (humans or bots).
+// Any live session (Playing) — includes empty/paused until Stop or idle kill.
+// Drives in-progress card chrome (chip, stripes, seat contrast).
 function tableIsInProgress(t) {
-  return t.status === STATUS_PLAYING && tableHasSeatedHumans(t);
+  return t.status === STATUS_PLAYING;
 }
 
-// Playing session, seats empty (everyone left; still Playing until Stop / idle kill).
+// Playing but no humans seated (bots may still be present; idle kill if empty long enough).
 function tableIsPaused(t) {
   return t.status === STATUS_PLAYING && !tableHasSeatedHumans(t);
 }
@@ -1387,12 +1388,14 @@ function renderTable(tableId, t) {
   }
   hdr.appendChild(renderOptPills(t));
 
-  // After option chips: attention chip when a game is actively running.
+  // After option chips: attention chip for any live session (incl. paused/empty).
   if (inProgress) {
     const live = document.createElement('span');
     live.className = 'table-live-badge';
     live.textContent = 'In progress';
-    live.title = 'Game already started — use Join on an open seat';
+    live.title = paused
+      ? 'Session open with no one seated — join before idle timeout ends the game'
+      : 'Game already started — use Join on an open seat';
     hdr.appendChild(live);
   }
 

@@ -20,21 +20,21 @@ export const CARD_H = 80;
 export const BACK_ID = 'cbcatsil';
 export const JOKER_ID = 'jk5';
 
-// 'ace_high' | 'two_high' — table option later; default ace high for Yoyo.
+// 'ace_high' | 'two_high' — from table/State OPT_TWO_HIGH; default ace high (Yoyo).
 let faceMode = 'ace_high';
 
 export function getFaceMode() {
   return faceMode;
 }
 
-// Apply face mode from table/State opts (E1+). Unknown → ace_high.
+// Apply face mode from table/State opts. Unknown → ace_high.
 export function setFaceMode(mode) {
   faceMode = mode === 'two_high' || mode === '2_high' ? 'two_high' : 'ace_high';
 }
 
-// From opts bitmask when OPT_TWO_HIGH is defined server-side (planned 0x10).
+// OPT_TWO_HIGH (0x10) set → two_high faces; clear → ace_high. Keep in sync with server.
 export function setFaceModeFromOpts(opts) {
-  const TWO_HIGH = 0x10; // keep in sync with server OPT_TWO_HIGH
+  const TWO_HIGH = 0x10;
   setFaceMode((opts & TWO_HIGH) !== 0 ? 'two_high' : 'ace_high');
 }
 
