@@ -151,10 +151,19 @@ let drag = null;
 let parkedSeqs = [];
 /** @type {object|null} last ExchangePhase event */
 let exchPhase = null;
-/** president committed offer (local) — irreversible in Ex1 */
-let presCommitted = false;
 /** Optimistic hide of Prez offer cards until ExchangePhase / State catch up */
 let localOfferCards = /** @type {string[]} */ ([]);
+/** Yoyo pick from surplus offer pile (wire tokens ⊆ president_offer) */
+let yoyoPick = /** @type {string[]} */ ([]);
+/** Last seen server offer csv — detect new arrivals for pop-in */
+let prevOfferCsv = '';
+/** Wires that just joined the offer pile (CSS ex-arrive) */
+let exchArriveWires = /** @type {Set<string>} */ (new Set());
+/**
+ * Snapshot for Ex3d settle anim when exchange → lead.
+ * @type {null | { pile: string[], need: number, rects: Record<string, DOMRect>, yGive: string[] }}
+ */
+let exchSettleSnap = null;
 
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) =>
@@ -168,6 +177,16 @@ function ukey(n) {
 // Session robot seat labels (server: B.{Name}).
 function isBotName(name) {
   return /^B\./.test(name || '');
+}
+
+// True when same multiset of names, different seat order (next-hand rotate).
+// Leave/handoff botify changes the multiset — not a rotation.
+function isNamePermutation(a, b) {
+  if (!a?.length || a.length !== b?.length) return false;
+  const sa = a.map(ukey).slice().sort().join('\0');
+  const sb = b.map(ukey).slice().sort().join('\0');
+  if (sa !== sb) return false;
+  return a.some((n, i) => ukey(n) !== ukey(b[i]));
 }
 
 // Wire series avg 0..1 → display 0..100.
@@ -1507,22 +1526,33 @@ function buildExchangeCues() {
     exchPhase?.stage ||
     (lastState?.step === STEP.YOYO_SELECT ? 'await_yoyo_ack' : 'await_president');
   const awaitYoyo = stage === 'await_yoyo_ack';
+  const surplus = awaitYoyo && offerServerPile().length > offerNeed();
+  // Dual-human: Prez may still append while Yoyo is choosing
+  const prezCanStillAdd = !!(awaitYoyo && exchPhase?.can_add && exchPhase?.allow_surplus);
   const prez = 1;
   const yoyo = n;
   return [
     {
       seat: prez,
       exchange: true,
-      active: !awaitYoyo,
+      active: !awaitYoyo || prezCanStillAdd,
       mine: mySeat === prez,
-      label: awaitYoyo ? 'Card exchange' : 'Selecting offer…',
+      label: !awaitYoyo
+        ? 'Selecting offer…'
+        : prezCanStillAdd
+          ? 'May offer more…'
+          : 'Card exchange',
     },
     {
       seat: yoyo,
       exchange: true,
       active: awaitYoyo,
       mine: mySeat === yoyo,
-      label: awaitYoyo ? 'Acknowledge…' : 'Card exchange',
+      label: awaitYoyo
+        ? surplus
+          ? 'Choosing…'
+          : 'Acknowledge…'
+        : 'Card exchange',
     },
   ];
 }
@@ -2015,6 +2045,8 @@ function applyState(ev) {
     lastSummary = null;
     lastLoserReveal = null;
     playAgainStatus = { ready: {}, waiting: [] };
+    // Drop if identity rotate never fired E4.4 (same seat order)
+    seatShiftPending = false;
     showPlayAgainPanel(false);
     const board = $('finish-board');
     if (board) board.replaceChildren();
@@ -2033,14 +2065,31 @@ function applyState(ev) {
     lastLoserReveal = null;
     ensureLoserReveal();
   }
+  // Ex3d: capture offer rects before trays clear on lead
+  let settleSnap = null;
+  let settleChosen = null;
+  if (ev.step >= STEP.LEAD && (exchPhase || exchSettleSnap)) {
+    updateExchSettleSnap();
+    settleSnap = exchSettleSnap;
+    if (yoyoPick.length && yoyoPick.length === (settleSnap?.need || 0)) {
+      settleChosen = yoyoPick.slice();
+    }
+  }
   if (ev.step >= STEP.LEAD) {
     exchPhase = null;
-    presCommitted = false;
     localOfferCards = [];
+    yoyoPick = [];
+    prevOfferCsv = '';
+    exchArriveWires = new Set();
+    exchSettleSnap = null;
   }
   renderStrip();
   if (!animating && !seatCeremonyActive) renderSeatsFromState();
   if (!seatCeremonyActive) {
+    // Fly taken/returned before trays unmount (still in DOM until overlay render)
+    if (ev.step >= STEP.LEAD && settleSnap?.pile?.length) {
+      playExchangeSettleAnim(settleSnap, ev, settleChosen);
+    }
     renderTrick();
     renderExchangeOverlays(); // high/low seat floats + hand filter inputs
     renderHand();
@@ -2078,8 +2127,8 @@ function applyState(ev) {
 function isMyAction() {
   const st = lastState;
   if (!st || !mySeat) return false;
-  // President offer only while await_president and not yet committed
-  if (st.step === STEP.EXCHANGE && mySeat === 1 && !presCommitted) return true;
+  // President may append while exchange open and under offer cap (Ex3 multi-drop)
+  if (canPresidentOffer()) return true;
   if ((st.step === STEP.LEAD || st.step === STEP.PLAY) && st.next === mySeat) return true;
   return false;
 }
@@ -2091,22 +2140,330 @@ function exchangeActive() {
   return true;
 }
 
+function offerNeed() {
+  return Number(exchPhase?.need) || offerCount(lastState?.legal) || 1;
+}
+
+function offerMax() {
+  return Number(exchPhase?.max_offer) || 3;
+}
+
+// Server pile + optimistic local adds not yet echoed.
+function offerPileTokens() {
+  const server = parseHand(exchPhase?.president_offer || '');
+  const seen = new Set(server);
+  const out = server.slice();
+  for (const t of localOfferCards) {
+    if (!seen.has(t)) {
+      out.push(t);
+      seen.add(t);
+    }
+  }
+  return out;
+}
+
+// Remaining slots in offer pile (dual-human ⇒ max_offer; else need).
+function offerRoom() {
+  const pile = offerPileTokens().length;
+  const need = offerNeed();
+  const maxO = offerMax();
+  if (exchPhase && typeof exchPhase.can_add === 'boolean') {
+    if (!exchPhase.can_add) return 0;
+    const cap = exchPhase.allow_surplus ? maxO : need;
+    return Math.max(0, cap - pile);
+  }
+  // Phase lag: still on offer step with empty local pile
+  if (lastState?.step === STEP.EXCHANGE && mySeat === 1 && pile < need) {
+    return need - pile;
+  }
+  return 0;
+}
+
+function canPresidentOffer() {
+  if (mySeat !== 1) return false;
+  if (exchPhase?.role && exchPhase.role !== 'president') return false;
+  const step = lastState?.step;
+  if (
+    step !== STEP.EXCHANGE &&
+    step !== STEP.YOYO_SELECT &&
+    !exchangeActive()
+  ) {
+    return false;
+  }
+  return offerRoom() > 0;
+}
+
+// Prez may pull cards off the offer pile until Yoyo finalizes.
+function canPresidentWithdraw() {
+  if (mySeat !== 1) return false;
+  if (exchPhase?.role && exchPhase.role !== 'president') return false;
+  if (typeof exchPhase?.can_withdraw === 'boolean') return !!exchPhase.can_withdraw;
+  return exchangeActive() && offerPileTokens().length > 0;
+}
+
+function sendWithdrawExchange(wires) {
+  const list = (wires || []).filter(Boolean);
+  if (!list.length || !canPresidentWithdraw()) return false;
+  const cards = list.join(',');
+  lastSentPlay = cards;
+  dbgPlay('send withdraw', { sent: cards });
+  send({ action: 'withdrawexchange', cards });
+  // Optimistic: drop from local offer hide list; server pile updates via ExchangePhase
+  const rm = new Set(list);
+  localOfferCards = localOfferCards.filter((t) => !rm.has(t));
+  return true;
+}
+
+// Server offer faces only (no Prez optimistic locals).
+function offerServerPile() {
+  return parseHand(exchPhase?.president_offer || '');
+}
+
+function yoyoCanResolve() {
+  return !!exchPhase?.can_ack && exchPhase?.role === 'yoyo';
+}
+
+function offerHasSurplus() {
+  return offerServerPile().length > offerNeed();
+}
+
+// Drop picks that left the pile (Prez withdraw / phase refresh).
+function pruneYoyoPick() {
+  const pile = new Set(offerServerPile());
+  yoyoPick = yoyoPick.filter((t) => pile.has(t));
+}
+
+function yoyoPickReady() {
+  pruneYoyoPick();
+  return yoyoCanResolve() && yoyoPick.length === offerNeed();
+}
+
+// Ack when exact need; SelectExchange when surplus pick complete.
+function yoyoAckEnabled() {
+  if (!yoyoCanResolve()) return false;
+  if (!offerHasSurplus()) return true;
+  return yoyoPickReady();
+}
+
+function toggleYoyoPick(wire) {
+  if (!yoyoCanResolve()) return;
+  const pile = offerServerPile();
+  if (!pile.includes(wire)) return;
+  const i = yoyoPick.indexOf(wire);
+  if (i >= 0) yoyoPick.splice(i, 1);
+  else {
+    const need = offerNeed();
+    if (yoyoPick.length >= need) {
+      // Replace oldest when already full (need=1 common)
+      if (need === 1) yoyoPick = [wire];
+      else return;
+    } else yoyoPick.push(wire);
+  }
+  renderExchangeOverlays();
+  if (exchangeActive() && exchPhase) setStatus(exchangeStatusText(exchPhase));
+}
+
+// Finalize yoyo take: exact pile → ExchangeAck; else SelectExchange(chosen).
+function sendYoyoResolve(chosen) {
+  if (!yoyoCanResolve()) return false;
+  const need = offerNeed();
+  const pile = offerServerPile();
+  let cards = chosen || yoyoPick.slice();
+  if (pile.length === need && (!cards.length || cards.length === need)) {
+    // Exact offer — Ack (ignore selection)
+    lastSentPlay = pile.join(',');
+    send({ action: 'exchangeack' });
+  } else {
+    if (cards.length !== need) return false;
+    if (!cards.every((t) => pile.includes(t))) return false;
+    // Prefer chosen order when drag supplied it
+    if (chosen?.length) yoyoPick = chosen.slice();
+    lastSentPlay = cards.join(',');
+    dbgPlay('send selectexchange', { sent: lastSentPlay });
+    send({ action: 'selectexchange', cards: cards.join(',') });
+  }
+  const ack = $('btn-exchange-ack');
+  if (ack) ack.disabled = true;
+  return true;
+}
+
 // Shared table status for all seats + optional actor hint.
 function exchangeStatusText(ev) {
   const need = ev.need || 1;
+  const maxO = ev.max_offer || 3;
   const n = lastState?.n || playerNames.length || 0;
   const pName = playerNames[0] || placeLabels(n || 4, 1);
   const yName = (n > 0 && playerNames[n - 1]) || placeLabels(n || 4, n || 4);
+  const pile = offerPileTokens().length;
+  const surplus = pile > need;
   let base =
     ev.stage === 'await_yoyo_ack'
-      ? `Card exchange — waiting for ${yName} to acknowledge`
-      : `Card exchange — ${pName} selecting card(s) to offer`;
-  if (ev.role === 'president' && ev.stage === 'await_president') {
-    base += ` · You: offer ${need} low card${need > 1 ? 's' : ''} (drop beside seat)`;
-  } else if (ev.role === 'yoyo' && ev.stage === 'await_yoyo_ack' && ev.can_ack) {
-    base += ' · You: review offer, then Acknowledge';
+      ? surplus
+        ? `Card exchange — ${yName} choosing from ${pile} offered`
+        : `Card exchange — waiting for ${yName} to acknowledge`
+      : `Card exchange — ${pName} selecting offer`;
+  if (ev.role === 'president' && canPresidentOffer()) {
+    if (ev.allow_surplus && pile >= need) {
+      base += ` · You may still add (pile ${pile}/${maxO})`;
+    } else if (ev.allow_surplus) {
+      base += ` · Drop one at a time (need ${need}, up to ${maxO})`;
+    } else {
+      base += ` · Offer ${need} card${need > 1 ? 's' : ''} beside seat`;
+    }
+  } else if (ev.role === 'president' && ev.stage === 'await_yoyo_ack') {
+    base += surplus
+      ? ' · Waiting on pick · extras return to you'
+      : ' · Waiting on acknowledge';
+  } else if (ev.role === 'yoyo' && ev.can_ack) {
+    if (surplus) {
+      base += ` · Pick ${need} of ${pile} · Take or drag to hand`;
+    } else {
+      base += ' · Review offer · Acknowledge';
+    }
   }
   return base;
+}
+
+// ——— Ex3d: offer pop-in + finalize fly (taken → Yoyo, returned → Prez) ———
+
+function seatTokenRect(seat) {
+  const el = document.querySelector(
+    `#seats-layer .seat-token[data-seat="${seat}"]`,
+  );
+  return el?.getBoundingClientRect?.() || null;
+}
+
+function captureOfferCardRects() {
+  /** @type {Record<string, DOMRect>} */
+  const rects = {};
+  $('ex-right-cards')?.querySelectorAll('.card[data-wire]')?.forEach((el) => {
+    const w = el.dataset.wire;
+    if (w) rects[w] = el.getBoundingClientRect();
+  });
+  return rects;
+}
+
+// Keep settle snapshot fresh while trays are painted (rects for fly-from).
+// Call while exchPhase still set (even if State already advanced to LEAD).
+function updateExchSettleSnap() {
+  if (!exchPhase) return;
+  const pile = offerServerPile();
+  if (!pile.length) return;
+  exchSettleSnap = {
+    pile: pile.slice(),
+    need: offerNeed(),
+    rects: captureOfferCardRects(),
+    yGive: parseHand(exchPhase.yoyo_give || ''),
+  };
+}
+
+// Fixed-position card flies from → to; resolves when removed.
+function flyExCard(token, fromRect, toRect, kind, ms = 480) {
+  if (reducedMotion || !fromRect || !toRect) return Promise.resolve();
+  const el = cardEl(token, {
+    w: Math.max(28, Math.round(fromRect.width) || 40),
+    h: Math.max(38, Math.round(fromRect.height) || 54),
+    cls: `ex-fly ex-fly-${kind}`,
+  });
+  el.style.position = 'fixed';
+  el.style.left = `${fromRect.left}px`;
+  el.style.top = `${fromRect.top}px`;
+  el.style.width = `${fromRect.width || 40}px`;
+  el.style.height = `${fromRect.height || 54}px`;
+  el.style.zIndex = '220';
+  el.style.pointerEvents = 'none';
+  el.style.margin = '0';
+  el.style.transition = `transform ${ms}ms cubic-bezier(0.2, 0.75, 0.25, 1), opacity ${ms}ms ease`;
+  document.body.appendChild(el);
+  const dx =
+    toRect.left +
+    toRect.width / 2 -
+    (fromRect.left + (fromRect.width || 40) / 2);
+  const dy =
+    toRect.top +
+    toRect.height / 2 -
+    (fromRect.top + (fromRect.height || 54) / 2);
+  const scale = kind === 'return' ? 0.72 : 0.9;
+  requestAnimationFrame(() => {
+    el.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
+    el.style.opacity = kind === 'return' ? '0.25' : '0.4';
+  });
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      el.remove();
+      resolve();
+    }, ms + 20);
+  });
+}
+
+/**
+ * After exchange finalizes: taken → Yoyo hand/seat, returned → Prez hand/seat.
+ * @param {{ pile: string[], need: number, rects: Record<string, DOMRect> }} snap
+ * @param {{ hand: string, n?: number }} st new State
+ * @param {string[]} [chosen] yoyo pick when known
+ */
+function playExchangeSettleAnim(snap, st, chosen) {
+  if (reducedMotion || !snap?.pile?.length) return;
+  const n = st.n || lastState?.n || playerNames.length || 0;
+  const hand = parseHand(st.hand || '');
+  const pile = snap.pile;
+  let taken;
+  let returned;
+  if (chosen?.length === snap.need) {
+    taken = chosen.slice();
+    const takeSet = new Set(taken);
+    returned = pile.filter((t) => !takeSet.has(t));
+  } else if (mySeat === 1) {
+    returned = pile.filter((t) => hand.includes(t));
+    taken = pile.filter((t) => !hand.includes(t));
+  } else if (mySeat === n) {
+    taken = pile.filter((t) => hand.includes(t));
+    returned = pile.filter((t) => !hand.includes(t));
+  } else {
+    // Spectator: no private hands — skip split anim
+    return;
+  }
+  if (!taken.length && !returned.length) return;
+
+  const handRect = $('hand')?.getBoundingClientRect?.();
+  const prezTarget =
+    mySeat === 1 && handRect?.width
+      ? handRect
+      : seatTokenRect(1) || handRect;
+  const yoyoTarget =
+    mySeat === n && handRect?.width
+      ? handRect
+      : seatTokenRect(n) || handRect;
+  if (!prezTarget && !yoyoTarget) return;
+
+  // Fallback from-rect: center of low tray
+  const tray = $('ex-right-cards')?.getBoundingClientRect?.() ||
+    $('ex-right')?.getBoundingClientRect?.();
+  const fallbackFrom = tray || prezTarget || yoyoTarget;
+
+  const jobs = [];
+  for (const t of returned) {
+    const from = snap.rects[t] || fallbackFrom;
+    if (prezTarget) jobs.push(flyExCard(t, from, prezTarget, 'return'));
+  }
+  for (const t of taken) {
+    const from = snap.rects[t] || fallbackFrom;
+    if (yoyoTarget) jobs.push(flyExCard(t, from, yoyoTarget, 'take'));
+  }
+  if (returned.length && mySeat === 1) {
+    setStatus(
+      returned.length === 1
+        ? 'Exchange done · 1 card returned to you'
+        : `Exchange done · ${returned.length} cards returned to you`,
+    );
+  } else if (taken.length && mySeat === n) {
+    setStatus(
+      taken.length === 1
+        ? 'Exchange done · you took 1 card'
+        : `Exchange done · you took ${taken.length} cards`,
+    );
+  }
+  void Promise.all(jobs);
 }
 
 // Wire tokens currently in exchange transit (still often present in State.hand).
@@ -2172,8 +2529,7 @@ function layoutPlayActions() {
   const area = $('table-area');
   if (!root || !pass || !play || !area) return;
   const r = area.getBoundingClientRect();
-  const offering =
-    lastState?.step === STEP.EXCHANGE && mySeat === 1 && !presCommitted;
+  const offering = canPresidentOffer();
   const lowRail = $('ex-low-rail');
 
   play.style.zIndex = '';
@@ -2197,8 +2553,200 @@ function layoutPlayActions() {
 }
 
 // Pending transit card element (outlined via CSS).
-function exTransitCard(t) {
-  return cardEl(t, { w: 40, h: 54, cls: 'ex-pending' });
+function exTransitCard(
+  t,
+  { pickable = false, withdrawable = false, picked = false, arrive = false } = {},
+) {
+  let cls = 'ex-pending';
+  if (pickable || withdrawable) cls += ' ex-pickable';
+  if (withdrawable) cls += ' ex-withdrawable';
+  if (picked) cls += ' selected';
+  if (arrive && !reducedMotion) cls += ' ex-arrive';
+  const el = cardEl(t, { w: 40, h: 54, cls });
+  // SVG child can steal hits on some Chromium builds — faces stay the target
+  el.querySelector('svg')?.style.setProperty('pointer-events', 'none');
+  if (pickable) {
+    // Select via click (hand-like); drag separate — RDP/Chromebook mice often
+    // emit micro-moves that used to mark wasMoved and skip pointerup-toggle.
+    el.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      if (el._dragMoved) {
+        el._dragMoved = false;
+        return;
+      }
+      if (!yoyoCanResolve()) return;
+      toggleYoyoPick(t);
+    });
+    el.addEventListener('pointerdown', (ev) => onYoyoOfferPointerDown(ev, el, t));
+  } else if (withdrawable) {
+    el.addEventListener('pointerdown', (ev) => onPrezOfferPointerDown(ev, el, t));
+  }
+  return el;
+}
+
+// Shared offer-pile drag → hand. Select is click-owned for Yoyo (not pointerup).
+// opts.getPayload: after threshold → wire[] or null (null = no drag, keep click).
+// opts.onDrop(payload): hand hit after drag.
+function beginOfferCardDrag(ev, el, { canStart, getPayload, onDrop, onNoPayload }) {
+  if (!canStart()) return;
+  if (ev.button != null && ev.button !== 0) return;
+  // Do not preventDefault on down — preserves click for pick (Chrome Remote / OS).
+  ev.stopPropagation();
+
+  const pointerId = ev.pointerId;
+  const startX = ev.clientX;
+  const startY = ev.clientY;
+  let dragging = false; // true only once a ghost is out
+  let warnedNoPayload = false;
+  let ghost = null;
+  let finished = false;
+  el._dragMoved = false;
+  try {
+    el.setPointerCapture?.(pointerId);
+  } catch {
+    /* ok */
+  }
+
+  const handHot = (on) => {
+    $('hand-wrap')?.classList.toggle('ex-take-hot', on);
+    $('hand')?.classList.toggle('ex-take-hot', on);
+  };
+
+  const detach = () => {
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onEnd);
+    window.removeEventListener('pointercancel', onEnd);
+    window.removeEventListener('blur', onAbort);
+    window.removeEventListener('contextmenu', onContextMenu);
+    el.removeEventListener('lostpointercapture', onLostCapture);
+  };
+
+  const scrub = () => {
+    try {
+      el.releasePointerCapture?.(pointerId);
+    } catch {
+      /* ok */
+    }
+    ghost?.remove();
+    ghost = null;
+    handHot(false);
+  };
+
+  const finish = (e, { cancel = false } = {}) => {
+    if (finished) return;
+    if (e?.pointerId != null && e.pointerId !== pointerId) return;
+    finished = true;
+    const payload = ghost?._offerPayload;
+    const cx = e?.clientX;
+    const cy = e?.clientY;
+    const wasDrag = dragging;
+    detach();
+    scrub();
+    if (cancel || !wasDrag || !payload?.length) return;
+    if (
+      cx != null &&
+      cy != null &&
+      (hitFreeHand(cx, cy) || hitHandWrap(cx, cy))
+    ) {
+      onDrop(payload);
+    }
+  };
+
+  const onAbort = () => finish(null, { cancel: true });
+  const onLostCapture = () => finish(null, { cancel: true });
+  const onContextMenu = (e) => {
+    e.preventDefault();
+    finish(e, { cancel: true });
+  };
+  const onEnd = (e) => finish(e, { cancel: e.type === 'pointercancel' });
+
+  const onMove = (e) => {
+    if (e.pointerId !== pointerId) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    if (!dragging && dx * dx + dy * dy > 36) {
+      const payload = getPayload();
+      if (!payload?.length) {
+        // Incomplete multi-pick etc.: do not set _dragMoved so click still selects
+        if (!warnedNoPayload) {
+          warnedNoPayload = true;
+          onNoPayload?.();
+        }
+        return;
+      }
+      dragging = true;
+      el._dragMoved = true;
+      e.preventDefault();
+      ghost = buildDragGhost(payload);
+      ghost._offerPayload = payload;
+      document.body.appendChild(ghost);
+      handHot(true);
+    }
+    if (ghost) {
+      ghost.style.left = `${e.clientX}px`;
+      ghost.style.top = `${e.clientY}px`;
+      const over =
+        hitFreeHand(e.clientX, e.clientY) || hitHandWrap(e.clientX, e.clientY);
+      $('hand-wrap')?.classList.toggle('ex-take-hot', over);
+      $('hand')?.classList.toggle('ex-take-hot', over);
+    }
+  };
+
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onEnd);
+  window.addEventListener('pointercancel', onEnd);
+  window.addEventListener('blur', onAbort);
+  window.addEventListener('contextmenu', onContextMenu);
+  el.addEventListener('lostpointercapture', onLostCapture);
+}
+
+// Prez: drag offer card to hand → WithdrawExchange (one at a time).
+function onPrezOfferPointerDown(ev, el, wire) {
+  beginOfferCardDrag(ev, el, {
+    canStart: () => canPresidentWithdraw(),
+    getPayload: () => [wire],
+    onDrop: (payload) => {
+      sendWithdrawExchange(payload);
+      renderExchangeOverlays();
+      renderHand();
+      updatePlayButtons();
+    },
+  });
+}
+
+// Yoyo: click toggles pick; drag to hand takes (need=1 card, or full selection).
+function onYoyoOfferPointerDown(ev, el, wire) {
+  beginOfferCardDrag(ev, el, {
+    canStart: () => yoyoCanResolve(),
+    getPayload: () => {
+      // need=1: drag this face; multi: only if selection complete and includes wire
+      const need = offerNeed();
+      if (need === 1) return [wire];
+      if (yoyoPick.includes(wire) && yoyoPick.length === need) {
+        return yoyoPick.slice();
+      }
+      return null;
+    },
+    onNoPayload: () => {
+      setStatus(`Select ${offerNeed()} cards, then drag to hand or Take`);
+    },
+    onDrop: (payload) => {
+      sendYoyoResolve(payload);
+    },
+  });
+}
+
+// Hand bar (wrap) hit for yoyo take-drop.
+function hitHandWrap(clientX, clientY) {
+  const wrap = $('hand-wrap') || $('hand-bar') || $('hand-main');
+  if (!wrap || wrap.hidden) return false;
+  const r = wrap.getBoundingClientRect();
+  return (
+    clientX >= r.left &&
+    clientX <= r.right &&
+    clientY >= r.top &&
+    clientY <= r.bottom
+  );
 }
 
 // High/low seat floats; P/Y only. Spectators: status only.
@@ -2214,19 +2762,21 @@ function renderExchangeOverlays() {
     if (ack) {
       ack.hidden = true;
       ack.disabled = true;
+      ack.textContent = 'Acknowledge';
     }
     $('ex-high-cards')?.replaceChildren();
     $('ex-right-cards')?.replaceChildren();
-    $('ex-right')?.classList.remove('hot');
+    $('ex-right')?.classList.remove('hot', 'ex-yoyo-pick');
+    yoyoPick = [];
   };
 
   if (seatCeremonyActive || !exchangeActive()) {
     hideAll();
     if (!exchangeActive()) {
       localOfferCards = [];
+      yoyoPick = [];
       if (exchPhase?.stage === 'done' || lastState?.step >= STEP.LEAD) {
         exchPhase = null;
-        if (lastState?.step >= STEP.LEAD) presCommitted = false;
       }
     }
     return;
@@ -2238,10 +2788,25 @@ function renderExchangeOverlays() {
     return;
   }
 
-  const stage = exchPhase.stage || '';
+  pruneYoyoPick();
   const yGive = displayPlayTokens(parseHand(exchPhase.yoyo_give || ''));
-  const pOffer = displayPlayTokens(parseHand(exchPhase.president_offer || ''));
-  if (pOffer.length) localOfferCards = [];
+  // Full pile: server faces + optimistic locals not yet echoed
+  const pOffer = displayPlayTokens(offerPileTokens());
+  // Drop locals that server has accepted
+  if (exchPhase.president_offer) {
+    const srv = new Set(parseHand(exchPhase.president_offer));
+    localOfferCards = localOfferCards.filter((t) => !srv.has(t));
+  }
+
+  // New offer faces → brief pop-in (Ex3d)
+  const offerCsv = exchPhase.president_offer || '';
+  if (offerCsv !== prevOfferCsv) {
+    const prev = new Set(parseHand(prevOfferCsv));
+    exchArriveWires = new Set(pOffer.filter((t) => !prev.has(t)));
+    prevOfferCsv = offerCsv;
+  } else {
+    exchArriveWires = new Set();
+  }
 
   high.hidden = yGive.length === 0;
   const nEx = lastState?.n || playerNames.length || 4;
@@ -2249,29 +2814,68 @@ function renderExchangeOverlays() {
   const pTitle = placeLabels(nEx, 1);
   $('ex-high-label').textContent =
     role === 'yoyo' ? 'You give (high)' : `From ${yTitle} (high)`;
-  $('ex-high-cards')?.replaceChildren(...yGive.map(exTransitCard));
+  $('ex-high-cards')?.replaceChildren(...yGive.map((t) => exTransitCard(t)));
 
+  const prezCanAdd = role === 'president' && canPresidentOffer();
+  const prezCanWithdraw = role === 'president' && canPresidentWithdraw();
+  const yoyoPickMode = role === 'yoyo' && yoyoCanResolve();
+  const surplus = offerHasSurplus();
+  const pileN = pOffer.length;
+  const need = offerNeed();
+  const maxO = offerMax();
   lowRail.hidden = false;
-  $('ex-right-label').textContent =
-    role === 'president'
-      ? stage === 'await_president' && !presCommitted
-        ? 'Your offer — drop here'
-        : 'Your offer (low)'
-      : `From ${pTitle} (low)`;
-  $('ex-right-cards')?.replaceChildren(...pOffer.map(exTransitCard));
-  $('ex-right')?.classList.toggle(
-    'hot',
-    role === 'president' && stage === 'await_president' && !presCommitted,
+  if (role === 'president') {
+    if (prezCanAdd && pileN === 0) {
+      $('ex-right-label').textContent = exchPhase.allow_surplus
+        ? `Your offer — drop 1 (up to ${maxO})`
+        : `Your offer — drop ${need}`;
+    } else if (prezCanAdd || prezCanWithdraw) {
+      $('ex-right-label').textContent = exchPhase.allow_surplus
+        ? `Offer ${pileN}/${maxO} · drag back to hand to undo`
+        : `Your offer (${pileN}/${need}) · drag back to undo`;
+    } else if (surplus) {
+      $('ex-right-label').textContent = `Offered ${pileN} · extras return`;
+    } else {
+      $('ex-right-label').textContent = 'Your offer (low)';
+    }
+  } else if (yoyoPickMode && surplus) {
+    $('ex-right-label').textContent = `Pick ${need} of ${pileN} · rest returns`;
+  } else if (yoyoPickMode) {
+    $('ex-right-label').textContent = `From ${pTitle} · Acknowledge`;
+  } else {
+    $('ex-right-label').textContent = `From ${pTitle} (low)`;
+  }
+  const pickSet = new Set(yoyoPick);
+  $('ex-right-cards')?.replaceChildren(
+    ...pOffer.map((t) =>
+      exTransitCard(t, {
+        pickable: yoyoPickMode,
+        withdrawable: prezCanWithdraw,
+        picked: pickSet.has(t),
+        arrive: exchArriveWires.has(t),
+      }),
+    ),
   );
+  const exRight = $('ex-right');
+  exRight?.classList.toggle('hot', prezCanAdd);
+  exRight?.classList.toggle('ex-yoyo-pick', yoyoPickMode && surplus);
 
   if (ack) {
-    const showAck = role === 'yoyo' && !!exchPhase.can_ack;
+    const showAck = yoyoPickMode;
     ack.hidden = !showAck;
-    ack.disabled = !showAck;
+    ack.disabled = !yoyoAckEnabled();
+    if (surplus) {
+      ack.textContent = yoyoPickReady()
+        ? 'Take selected'
+        : `Pick ${need}`;
+    } else {
+      ack.textContent = 'Acknowledge';
+    }
   }
   requestAnimationFrame(() => {
     layoutExchangeFloats();
     layoutPlayActions();
+    updateExchSettleSnap();
   });
 }
 
@@ -2422,9 +3026,11 @@ function toggleCardSelection(wire) {
       if (lock === 1) selected.clear();
       else if (lock > 1 && selected.size >= lock) return;
     }
-    if (lastState?.step === STEP.EXCHANGE) {
-      const n = offerCount(lastState.legal);
-      if (n && selected.size >= n) return;
+    if (canPresidentOffer() || lastState?.step === STEP.EXCHANGE || lastState?.step === STEP.YOYO_SELECT) {
+      // Surplus multi: 1 at a time; else up to room (EXCH2 exact need)
+      const room = offerRoom() || offerNeed();
+      const cap = exchPhase?.allow_surplus ? 1 : room;
+      if (selected.size >= cap) return;
     }
     selected.add(wire);
   }
@@ -2441,9 +3047,10 @@ function ensureCardSelectedForDrag(wire) {
     if (lock === 1) selected.clear();
     else if (lock > 1 && selected.size >= lock) selected.clear(); // grab replaces full multi
   }
-  if (lastState?.step === STEP.EXCHANGE) {
-    const n = offerCount(lastState.legal) || 1;
-    if (selected.size >= n) selected.clear();
+  if (canPresidentOffer() || lastState?.step === STEP.EXCHANGE || lastState?.step === STEP.YOYO_SELECT) {
+    const room = offerRoom() || 1;
+    const cap = exchPhase?.allow_surplus ? 1 : room;
+    if (selected.size >= cap) selected.clear();
   }
   selected.add(wire);
   refreshSelectionUi();
@@ -2697,7 +3304,7 @@ function updatePlayButtons() {
     gameOverHoldActive ||
     gameOverSummaryOpen;
   const myTurn = isMyAction();
-  const offering = st && st.step === STEP.EXCHANGE && mySeat === 1 && !presCommitted;
+  const offering = canPresidentOffer();
   const lead = st && st.step === STEP.LEAD && st.next === mySeat;
   const resp = st && st.step === STEP.PLAY && st.next === mySeat;
   const elig = resp ? currentResponseEligibility() : null;
@@ -2729,10 +3336,12 @@ function updatePlayButtons() {
       btnPass.disabled = true;
     }
   } else if (offering) {
-    // Prez offer only: Offer button (laid out atop low drop target)
-    const n = offerCount(st.legal) || exchPhase?.need || 1;
-    btnPlay.textContent = 'Offer';
-    btnPlay.disabled = !myTurn || selected.size !== n;
+    // Prez offer: multi-drop (Ex3) — button atop low drop target
+    const room = offerRoom();
+    const lim = exchPhase?.allow_surplus ? 1 : room;
+    const nSel = selected.size;
+    btnPlay.textContent = offerPileTokens().length ? 'Add' : 'Offer';
+    btnPlay.disabled = !myTurn || nSel < 1 || nSel > lim;
     btnPlay.hidden = false;
     btnPlay.classList.remove('no-play');
     if (btnPass) {
@@ -2780,8 +3389,16 @@ function updatePlayButtons() {
         ? 'Game over · last trick on the table'
         : 'Game over · Play again when ready';
     } else if (offering) {
-      hint.textContent =
-        'Click offer cards · drag to pile beside seat (or Offer) · muted chips = hover only';
+      const room = offerRoom();
+      const pile = offerPileTokens().length;
+      const maxO = offerMax();
+      hint.textContent = exchPhase?.allow_surplus
+        ? pile
+          ? `Drop 1 more card onto offer pile (${pile}/${maxO}) · or Add`
+          : `Drop cards one at a time onto offer pile (need ${offerNeed()}, up to ${maxO})`
+        : room > 1
+          ? `Select ${room} cards · drag to pile or Offer`
+          : 'Click a card · drag to pile beside seat (or Offer)';
     } else if (lead) {
       hint.textContent = hasOpt(st.opts || 0, OPT.SEQ5)
         ? 'Click cards · chips · drag 5-chip to empty side to park · table or Play'
@@ -2793,9 +3410,25 @@ function updatePlayButtons() {
       hint.textContent = hasOpt(st.opts || 0, OPT.SEQ5)
         ? 'Live cards · chips · drag 5-chip to empty side to park · muted = structure'
         : 'Click live cards · bright chips playable · drag or Play · muted = structure only';
+    } else if (exchangeActive() && exchPhase?.role === 'yoyo' && exchPhase.can_ack) {
+      hint.textContent = offerHasSurplus()
+        ? `Select ${offerNeed()} from offer · Take or drag to hand · extras return to ${placeLabels(st?.n || 4, 1)}`
+        : 'Review offer · Acknowledge';
+    } else if (exchangeActive() && (canPresidentOffer() || canPresidentWithdraw())) {
+      const pile = offerPileTokens().length;
+      if (pile && canPresidentWithdraw()) {
+        hint.textContent = canPresidentOffer()
+          ? `Add to offer (${pile}/${offerMax()}) · or drag a pile card back to hand to undo`
+          : 'Drag offer card back to hand to undo · waiting on Yoyo';
+      } else if (exchPhase?.allow_surplus) {
+        hint.textContent = `Drop cards one at a time (need ${offerNeed()}, up to ${offerMax()})`;
+      } else {
+        hint.textContent = 'Select offer cards · drag to pile or Offer';
+      }
     } else if (exchangeActive()) {
-      hint.textContent =
-        'Exchange… · high/low piles flank your seat (card sort)';
+      hint.textContent = offerHasSurplus()
+        ? 'Exchange · Yoyo choosing · extras return to President'
+        : 'Exchange… · high/low piles flank your seat';
     } else if (
       st &&
       (st.step === STEP.LEAD || st.step === STEP.PLAY) &&
@@ -2810,25 +3443,33 @@ function updatePlayButtons() {
 function trySubmitPlay(dropTarget = 'table') {
   if (!selected.size) return false;
   const list = [...selected];
-  const offering =
-    lastState?.step === STEP.EXCHANGE && mySeat === 1 && !presCommitted;
+  const offering = canPresidentOffer();
 
   if (offering || dropTarget === 'ex-right') {
     if (!offering) {
       rejectPlay('not your offer turn');
       return false;
     }
-    const n = offerCount(lastState.legal) || exchPhase?.need || 1;
-    if (list.length !== n) {
-      rejectPlay(`select exactly ${n} card(s) to offer`);
+    const room = offerRoom();
+    // Dual-human multi-offer: one card per drop (product intent)
+    const maxBatch = exchPhase?.allow_surplus ? 1 : room;
+    const lim = Math.min(room, maxBatch);
+    if (list.length < 1 || list.length > lim) {
+      rejectPlay(
+        lim <= 1
+          ? 'select 1 card to offer'
+          : `select 1–${lim} card(s) to offer`,
+      );
       return false;
     }
     const cards = list.join(',');
     lastSentPlay = cards;
-    dbgPlay('send offer', { sent: cards, selected: list });
+    dbgPlay('send offer', { sent: cards, selected: list, pile: offerPileTokens().length });
     send({ action: 'offerexchange', cards });
-    presCommitted = true;
-    localOfferCards = list.slice(); // hide from active hand until phase/state catch-up
+    // Optimistic hide until ExchangePhase echoes pile
+    for (const t of list) {
+      if (!localOfferCards.includes(t)) localOfferCards.push(t);
+    }
     selected.clear();
     renderExchangeOverlays();
     renderHand();
@@ -3118,10 +3759,13 @@ function currentLeadSize() {
 function clientValidatePlay(wireList) {
   const st = lastState;
   if (!st || !mySeat) return 'not ready';
-  if (st.step === STEP.EXCHANGE) {
+  if (st.step === STEP.EXCHANGE || st.step === STEP.YOYO_SELECT) {
     if (mySeat !== 1) return 'not president';
-    const n = offerCount(st.legal) || 1;
-    if (wireList.length !== n) return `select exactly ${n} card(s)`;
+    if (!canPresidentOffer()) return 'offer locked';
+    const room = offerRoom();
+    if (wireList.length < 1 || wireList.length > room) {
+      return room <= 1 ? 'select 1 card to offer' : `select 1–${room} card(s)`;
+    }
     return null;
   }
   if (st.next !== mySeat) return 'not your turn';
@@ -3752,12 +4396,10 @@ function onServerEvent(ev) {
     // Rejected play: drop pending history→face map only (hand suits never re-claimed).
     clearPending(histSuits);
     lastSentPlay = null;
-    // Failed Prez offer: restore hand visibility
-    if (localOfferCards.length || presCommitted) {
-      localOfferCards = [];
-      if (lastState?.step === STEP.EXCHANGE && mySeat === 1) {
-        presCommitted = false;
-      }
+    // Failed Prez offer / yoyo select: restore chrome
+    if (localOfferCards.length || yoyoPick.length || exchPhase) {
+      if (localOfferCards.length) localOfferCards = [];
+      // Keep yoyoPick on reject so they can retry; re-enable Ack via render
       renderExchangeOverlays();
     }
     if (playReject) {
@@ -3833,26 +4475,39 @@ function onServerEvent(ev) {
   }
   if (a === 'players') {
     const newNames = ev.seats || [];
-    // E4.4: after Play Again consensus, names reorder by finish → animate tokens
+    // E4.4: only real finish→seat rotation (same names, new order). Leave/handoff
+    // botify also broadcasts Players with same length — must not wipe summary.
     if (
       seatShiftPending &&
       drawDone &&
       preShiftNames.length &&
-      newNames.length === preShiftNames.length &&
-      !animating
+      !animating &&
+      isNamePermutation(preShiftNames, newNames)
     ) {
       seatShiftPending = false;
       pausedSeats.clear(); // server clears pauses on next-hand rotate
       animateSeatRotate(preShiftNames, preShiftMySeat, newNames);
       return;
     }
-    seatShiftPending = false;
+    // Mid-summary leave/handoff: keep seatShiftPending for the real next-hand rotate;
+    // refresh frozen baseline so later animation maps from current (botified) roster.
+    if (seatShiftPending) {
+      preShiftNames = newNames.slice();
+    }
     playerNames = newNames;
     // Handoff / LeaveGame → bot name; drop matching pauses
     syncPausedWithNames(playerNames);
     renderStrip();
     if (!drawDone && !lastState) renderSeatsLobbyOrder(playerNames);
     else if (drawDone && !animating) renderSeatsFromState();
+    // Summary board rows key off playerNames — re-paint bot label + votes
+    if (
+      gameOverSummaryOpen ||
+      lastSummary ||
+      (lastState && lastState.step >= STEP.SUMMARY)
+    ) {
+      renderHandOverBoard();
+    }
     return;
   }
   if (a === 'seatdrawstatus') {
@@ -3870,14 +4525,16 @@ function onServerEvent(ev) {
   }
   if (a === 'exchangephase') {
     exchPhase = ev;
-    if (ev.stage === 'await_president') {
-      presCommitted = false;
+    // Clear optimistic locals that server now lists in the pile
+    if (ev.president_offer) {
+      const srv = new Set(parseHand(ev.president_offer));
+      localOfferCards = localOfferCards.filter((t) => !srv.has(t));
+    }
+    if (ev.stage === 'await_president' && !parseHand(ev.president_offer || '').length) {
       localOfferCards = [];
+      yoyoPick = [];
     }
-    if (ev.stage === 'await_yoyo_ack' && ev.role === 'president') {
-      presCommitted = true;
-      if (parseHand(ev.president_offer || '').length) localOfferCards = [];
-    }
+    pruneYoyoPick();
     // Model only during seat theater; paint after ceremony
     if (seatCeremonyActive) {
       updatePlayButtons();
@@ -4255,15 +4912,12 @@ function wireControls() {
   });
 
   $('btn-play').addEventListener('click', () => {
-    trySubmitPlay(
-      lastState?.step === STEP.EXCHANGE && mySeat === 1 ? 'ex-right' : 'table',
-    );
+    trySubmitPlay(canPresidentOffer() ? 'ex-right' : 'table');
   });
 
   $('btn-exchange-ack')?.addEventListener('click', () => {
-    if (!exchPhase?.can_ack) return;
-    send({ action: 'exchangeack' });
-    $('btn-exchange-ack').disabled = true;
+    if (!yoyoAckEnabled()) return;
+    sendYoyoResolve();
   });
 
   $('btn-pass').addEventListener('click', () => {

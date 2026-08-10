@@ -3322,6 +3322,81 @@ button:focus-visible {
   outline-offset: 1px;
   border-radius: 4px;
 }
+/* Yoyo pick / Prez withdraw: interactive offer faces (match hand touch-action) */
+.ex-cards .card.ex-pickable,
+.ex-cards .card.ex-withdrawable {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.ex-cards .card.ex-pickable {
+  cursor: pointer;
+}
+.ex-cards .card.ex-withdrawable {
+  cursor: grab;
+}
+.ex-cards .card.ex-pickable.selected {
+  outline: 2px solid var(--accent-hi);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 1px rgba(232, 200, 74, 0.5);
+}
+/* Keep pick pile above seat tokens / felt chrome on short viewports */
+.ex-seat-float.ex-low-float:not([hidden]) {
+  z-index: 9;
+}
+.ex-zone.ex-yoyo-pick {
+  border-style: solid;
+  border-color: rgba(100, 160, 220, 0.75);
+  box-shadow:
+    0 0 0 1px rgba(120, 180, 240, 0.3),
+    0 4px 14px rgba(0, 0, 0, 0.4);
+}
+.ex-zone.ex-yoyo-pick .ex-cards {
+  touch-action: none;
+  position: relative;
+  z-index: 1;
+}
+/* Hand drop target while dragging offer → take */
+#hand-wrap.ex-take-hot,
+#hand.ex-take-hot {
+  outline: 2px solid var(--accent-hi);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+/* Ex3d: new offer card pop-in */
+.ex-cards .card.ex-arrive {
+  animation: ex-card-arrive 0.38s cubic-bezier(0.22, 1.15, 0.36, 1) both;
+}
+@keyframes ex-card-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.82);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* Ex3d: finalize fly clones (body-fixed) */
+.card.ex-fly {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  border-radius: 4px;
+  will-change: transform, opacity;
+}
+.card.ex-fly-return {
+  outline: 1px solid rgba(180, 200, 160, 0.7);
+}
+.card.ex-fly-take {
+  outline: 1px solid rgba(232, 200, 74, 0.75);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ex-cards .card.ex-arrive {
+    animation: none;
+  }
+}
 /* Pass left / Play right of local seat; Offer repositions atop low drop during exchange */
 .play-actions {
   position: absolute;
