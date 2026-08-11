@@ -1,5 +1,5 @@
 // Current-trick parse + seat-offset stack rendering (center table).
-import { cardEl } from './cards.js';
+import { cardEl, pxScale } from './cards.js';
 import { displayPlayTokens } from './config.js';
 import { parseHistoryString, displayFace } from './historySuits.js';
 
@@ -128,6 +128,8 @@ function resolveOutPlace(finishOrder, seat, remaining, n) {
 // OUT pill sits seat-ward of a live stack so cards stay readable.
 const OUT_K_FREE = 0.32;
 const OUT_K_WITH_STACK = 0.46;
+// Top (opposite) ray is straight up — seat-ward lands on the card face; slide right to clear a single.
+const OUT_TOP_DX = 5.5; // % of felt width
 
 // Oval PASS pill (not a button).
 function makePassPill(seat) {
@@ -270,22 +272,22 @@ function makeOutPill(seat) {
   return el;
 }
 
-// Mid-radius cue: upright label + arrow under it. opts: mine, exchange, active.
-// rotDeg: CSS degrees so arrow local "up" points outward along the seat ray.
+// Mid-radius cue: upright label + arrow under it. opts: mine, exchange, active, aria.
+// Empty label → arrow only (a11y via aria / title). rotDeg: arrow local-up → seat ray.
 function makeTurnCue(seat, label, rotDeg, opts = {}) {
   const el = document.createElement('div');
+  const text = label || '';
+  const aria = opts.aria || text || '…';
   el.className =
     'turn-cue' +
     (opts.mine ? ' mine' : '') +
     (opts.exchange ? ' exchange' : '') +
-    (opts.active ? ' active' : '');
+    (opts.active ? ' active' : '') +
+    (!text ? ' arrow-only' : '');
   el.setAttribute('role', 'status');
-  el.setAttribute('aria-label', label);
+  el.setAttribute('aria-label', aria);
+  el.title = aria;
   el.dataset.seat = String(seat);
-
-  const lab = document.createElement('div');
-  lab.className = 'turn-cue-label';
-  lab.textContent = label;
 
   // Only the arrow rotates — label stays screen-upright (avoids L/R paint overlap)
   const arrowHost = document.createElement('div');
@@ -303,8 +305,13 @@ function makeTurnCue(seat, label, rotDeg, opts = {}) {
   arrow.appendChild(stem);
   arrowHost.appendChild(arrow);
 
-  // Text on top, arrow directly below (points toward seat)
-  el.appendChild(lab);
+  // Text on top (if any), arrow below pointing toward seat
+  if (text) {
+    const lab = document.createElement('div');
+    lab.className = 'turn-cue-label';
+    lab.textContent = text;
+    el.appendChild(lab);
+  }
   el.appendChild(arrowHost);
   return el;
 }
@@ -338,8 +345,8 @@ export function renderPlayStacks(layerEl, plays, layout, felt = {}) {
   const finishOrder = felt.finishOrder || [];
   const turnCues = felt.turnCues || [];
 
-  const cw = 48;
-  const ch = 64;
+  const cw = pxScale(48);
+  const ch = pxScale(64);
   const piles = document.createElement('div');
   piles.className = 'trick-piles';
   const played = new Set();
@@ -416,6 +423,12 @@ export function renderPlayStacks(layerEl, plays, layout, felt = {}) {
       const k = played.has(seat) ? OUT_K_WITH_STACK : OUT_K_FREE;
       const pill = makeOutPill(seat);
       placeAtSeat(pill, seat, layout, 35, k);
+      // Opposite seat (top): seat-ward is pure up onto the stack — nudge right so a single stays visible
+      const vi = visualIndex(seat, n, youSeat);
+      if (n % 2 === 0 && vi === n / 2) {
+        const L = parseFloat(pill.style.left);
+        if (Number.isFinite(L)) pill.style.left = `${(L + OUT_TOP_DX).toFixed(2)}%`;
+      }
       markOutBurst(pill, seat, {
         place: resolveOutPlace(finishOrder, seat, remaining, n),
         host: fxHost,
@@ -451,10 +464,11 @@ export function renderPlayStacks(layerEl, plays, layout, felt = {}) {
     const off = seatArcOffset(vi, n, 0.58);
     // Arrow local "up" (-Y); rotate so it points outward along seat ray
     const rotDeg = ((off.a + Math.PI / 2) * 180) / Math.PI;
-    const cue = makeTurnCue(seat, tc.label || '…', rotDeg, {
+    const cue = makeTurnCue(seat, tc.label || '', rotDeg, {
       mine: !!tc.mine,
       exchange: !!tc.exchange,
       active: !!tc.active,
+      aria: tc.aria || tc.label || undefined,
     });
     cue.style.left = `${off.x}%`;
     cue.style.top = `${off.y}%`;

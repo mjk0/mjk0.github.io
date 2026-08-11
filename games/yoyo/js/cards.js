@@ -20,6 +20,19 @@ export const CARD_H = 80;
 export const BACK_ID = 'cbcatsil';
 export const JOKER_ID = 'jk5';
 
+// Play-page --ui (1 when not on play). CSS and JS layout share this factor.
+export function uiScale() {
+  const el = document.querySelector('.play-page');
+  if (!el) return 1;
+  const v = parseFloat(getComputedStyle(el).getPropertyValue('--ui'));
+  return Number.isFinite(v) && v > 0.5 ? v : 1;
+}
+
+// Scale a design-time px length by --ui (min 1).
+export function pxScale(base) {
+  return Math.max(1, Math.round(base * uiScale()));
+}
+
 // 'ace_high' | 'two_high' — from table/State OPT_TWO_HIGH; default ace high (Yoyo).
 let faceMode = 'ace_high';
 
@@ -81,13 +94,16 @@ export function cardSvg(symbolId, { w = CARD_W, h = CARD_H, cls = '' } = {}) {
 }
 
 // Build a .card element from wire token (or back if null/empty).
+// Default face size follows play-page --ui when w/h omitted.
 export function cardEl(token, opts = {}) {
   const el = document.createElement('div');
   el.className = 'card' + (opts.selected ? ' selected' : '') + (opts.cls ? ` ${opts.cls}` : '');
   const sym = token ? wireToSymbol(token) : BACK_ID;
   if (token) el.dataset.wire = token;
   if (sym) el.dataset.sym = sym;
-  el.appendChild(cardSvg(sym || BACK_ID, opts));
+  const w = opts.w != null ? opts.w : pxScale(CARD_W);
+  const h = opts.h != null ? opts.h : pxScale(CARD_H);
+  el.appendChild(cardSvg(sym || BACK_ID, { ...opts, w, h }));
   if (opts.title) el.title = opts.title;
   else if (token) el.title = token;
   return el;
@@ -155,7 +171,8 @@ function linearFaceFan(list, { w = 28, h = 38 } = {}) {
   const mid = n <= 8 ? n : Math.ceil(n / 2);
   const rows = n <= 8 ? [list] : [list.slice(0, mid), list.slice(mid)];
   const cols = rows.reduce((m, r) => Math.max(m, r.length), 0);
-  const step = fanStep(cols, w, 110, 12);
+  // max row width tracks --ui so large faces still fit under the seat token
+  const step = fanStep(cols, w, pxScale(110), pxScale(12));
   wrap.style.setProperty('--fan-w', `${w}px`);
   wrap.style.setProperty('--fan-h', `${h}px`);
   wrap.style.setProperty('--fan-step', `${step}px`);

@@ -12,7 +12,14 @@ import {
   displayPlayTokens,
   displayTableName,
 } from './config.js';
-import { cardEl, parseHand, backFan, faceFan, setFaceModeFromOpts } from './cards.js';
+import {
+  cardEl,
+  parseHand,
+  backFan,
+  faceFan,
+  setFaceModeFromOpts,
+  pxScale,
+} from './cards.js';
 import {
   createHistorySuits,
   clearHistorySuits,
@@ -111,12 +118,19 @@ const GAME_OVER_HOLD_MS_REDUCED = 1000;
 // Park slide duration before summary panel opens (match CSS transform).
 const GAME_OVER_PARK_MS = 480;
 const GAME_OVER_PARK_MS_REDUCED = 0;
+// Mid-hand: full-size last trick before shrink (server TRICK_RESOLVE_DELAY ≈ 2000ms for bots).
+const TRICK_PARK_HOLD_MS = 1000;
 /**
  * After trick ends (LEAD + history): park piles on next render with animation.
  * Cleared on new lead play / summary / empty history. Rejoin snaps parked.
+ * Stays true through pre-park hold so re-renders don't snap early.
  */
 let pendingTrickParkAnim = false;
 let trickParkGen = 0;
+/** performance.now() when pre-park hold ends; 0 = no hold (snap / summary dock). */
+let parkHoldDeadline = 0;
+/** @type {ReturnType<typeof setTimeout>|null} */
+let trickParkHoldTimer = null;
 /** Snapshot of names/seat before rotation for seat-shift animation. */
 let preShiftNames = /** @type {string[]} */ ([]);
 let preShiftMySeat = 1;
@@ -132,6 +146,8 @@ let drawDone = false;
 /** E2b seat theater running (spin/fanfare/token settle). */
 let seatCeremonyActive = false;
 let seatCeremonyGen = 0;
+/** Local seat chrome docked as 1-row strip (not bottom-arc token). */
+let youStripHome = false;
 let animating = false;
 let reducedMotion = false;
 /** @type {import('./historySuits.js').HistorySuits} */
@@ -270,16 +286,39 @@ function boardsUseNextOffices() {
   return false;
 }
 
-// Place-pill side: inboard toward center; you lateral; opposite right + top (+ up under summary).
+// Place-pill side: inboard toward center; opposite right + top (+ up under summary).
+// Local strip uses in-flow pill (placeInline) — not absolute sides.
 function placePillLayout(vi, n, summaryOpen) {
   const isYou = vi === 0;
   const isOpp = n >= 2 && n % 2 === 0 && vi === n / 2;
-  if (isYou) return { side: 'end', opposite: false, nudge: false };
+  if (isYou) return { side: 'end', opposite: false, nudge: false, inline: true };
   if (isOpp) return { side: 'end', opposite: true, nudge: !!summaryOpen };
   const pos = seatPositions(n)[vi];
   // Left of felt → pill right (center); right → pill left
   if (pos.x < 50) return { side: 'end', opposite: false, nudge: false };
   return { side: 'start', opposite: false, nudge: false };
+}
+
+// Lower-right of felt, flush on the hand-bar: top=100% + translateY(-100%) sits
+// the strip bottom edge on the table-area bottom (hand-bar top).
+function youStripDockPercent() {
+  return { x: 99, y: 100 };
+}
+
+function applyYouStripPosition(el) {
+  if (!el) return;
+  const p = youStripDockPercent();
+  el.style.left = `${p.x}%`;
+  el.style.top = `${p.y}%`;
+  // Right-align + bottom-align so strip touches hand-bar with no felt gap
+  el.style.transform = 'translate(-100%, -100%)';
+}
+
+function applyArcSeatPosition(el, x, y) {
+  if (!el) return;
+  el.style.left = `${x}%`;
+  el.style.top = `${y}%`;
+  el.style.transform = ''; // CSS default: translate(-50%, -50%)
 }
 
 // Max series.games across players (session hands completed).
@@ -1020,19 +1059,25 @@ function isPlayAgainReady(name) {
  *   next?: boolean, myTurn?: boolean, passed?: boolean, paused?: boolean,
  *   handoff?: boolean, noRank?: boolean,
  *   faceTokens?: string[]|null, place?: number,
- *   placeSide?: 'start'|'end', placeOpposite?: boolean, placeNudge?: boolean
+ *   placeSide?: 'start'|'end', placeOpposite?: boolean, placeNudge?: boolean,
+ *   asStrip?: boolean, placeInline?: boolean
  * }} [opts]
  *   Office chrome always follows absSeat (this-hand title). place = finish 1..n pill.
  *   noRank = hide chip/wash (seat-draw lobby slots).
  *   faceTokens = end-of-hand face-up fan (opponent loser).
  *   handoff = show “Robot take over?” (other humans only).
+ *   asStrip = local 1-row chrome (Name [n] Role); placeInline = pill before name.
  */
 function buildSeatToken(name, absSeat, n, rem, opts = {}) {
   const el = document.createElement('div');
   el.className = 'seat-token';
   el.dataset.seat = String(absSeat);
   el.dataset.name = name;
-  if (mySeat === absSeat) el.classList.add('you');
+  const isYou = mySeat === absSeat;
+  // opts.asStrip false forces arc chrome (seat-draw settle); omit → youStripHome
+  const asStrip = !!(isYou && (opts.asStrip ?? youStripHome));
+  if (isYou) el.classList.add('you');
+  if (asStrip) el.classList.add('you-strip');
   if (opts.next) el.classList.add('next');
   if (opts.myTurn) el.classList.add('my-turn');
   if (opts.passed) el.classList.add('passed');
@@ -1045,10 +1090,53 @@ function buildSeatToken(name, absSeat, n, rem, opts = {}) {
   if (rank != null) el.dataset.rank = String(rank);
 
   const place = opts.place > 0 ? opts.place : 0;
-  if (place) {
+  const placeInline = asStrip || opts.placeInline;
+  if (place && !placeInline) {
     el.classList.add(opts.placeSide === 'start' ? 'pp-start' : 'pp-end');
     if (opts.placeOpposite) el.classList.add('pp-opposite');
     if (opts.placeNudge) el.classList.add('pp-nudge');
+  }
+
+  const makePlacePill = () => {
+    const pill = document.createElement('span');
+    pill.className = 'place-pill';
+    if (place === 1) pill.classList.add('gold');
+    else if (place === 2) pill.classList.add('silver');
+    pill.textContent = placeOrdinal(place);
+    pill.title = `Finished ${placeOrdinal(place)}`;
+    return pill;
+  };
+
+  // Strip: [place] Name [chip] Role — one row, out of hand→felt path
+  if (asStrip) {
+    if (place) el.appendChild(makePlacePill());
+    const nm = document.createElement('span');
+    nm.className = 'sname';
+    nm.textContent = name;
+    el.appendChild(nm);
+    const meta = document.createElement('span');
+    meta.className = 'smeta srole';
+    if (rank != null) {
+      const chip = document.createElement('span');
+      chip.className = 'rank-chip';
+      if (rank === 1) chip.classList.add('gold');
+      else if (rank === 2) chip.classList.add('silver');
+      chip.textContent = String(rank);
+      chip.title = `Office ${rank}`;
+      meta.appendChild(chip);
+    }
+    const role = document.createElement('span');
+    role.className = 'role-name';
+    role.textContent = rank != null ? placeLabels(n, rank) : placeLabels(n, absSeat);
+    meta.appendChild(role);
+    el.appendChild(meta);
+    if (opts.paused) {
+      const b = document.createElement('span');
+      b.className = 'badge pause';
+      b.textContent = 'PAUSED';
+      el.appendChild(b);
+    }
+    return el;
   }
 
   const nm = document.createElement('div');
@@ -1074,14 +1162,14 @@ function buildSeatToken(name, absSeat, n, rem, opts = {}) {
   meta.appendChild(role);
   el.appendChild(meta);
 
-  if (mySeat !== absSeat) {
+  if (!isYou) {
     const mass = document.createElement('div');
     mass.className = 'seat-mass';
     const faces = opts.faceTokens;
     if (faces && faces.length) {
-      mass.appendChild(faceFan(faces, { w: 28, h: 38 }));
+      mass.appendChild(faceFan(faces, { w: pxScale(28), h: pxScale(38) }));
     } else {
-      mass.appendChild(backFan(rem ?? 0, { w: 22, h: 30 }));
+      mass.appendChild(backFan(rem ?? 0, { w: pxScale(22), h: pxScale(30) }));
     }
     el.appendChild(mass);
   }
@@ -1105,15 +1193,7 @@ function buildSeatToken(name, absSeat, n, rem, opts = {}) {
     el.appendChild(btn);
   }
   // Finish place beside token (as soon as OUT; stays through summary)
-  if (place) {
-    const pill = document.createElement('span');
-    pill.className = 'place-pill';
-    if (place === 1) pill.classList.add('gold');
-    else if (place === 2) pill.classList.add('silver');
-    pill.textContent = placeOrdinal(place);
-    pill.title = `Finished ${placeOrdinal(place)}`;
-    el.appendChild(pill);
-  }
+  if (place) el.appendChild(makePlacePill());
   return el;
 }
 
@@ -1192,11 +1272,13 @@ function renderSeatsFromState() {
   for (let seat = 1; seat <= n; seat++) {
     const name = playerNames[seat - 1] || `Seat ${seat}`;
     const vi = visualIndex(seat, n, you);
+    const isYou = seat === you;
+    const asStrip = isYou && youStripHome;
     const isPaused = pausedSeats.has(seat);
     const handoff =
       isPaused && joined && seat !== mySeat && !isBotName(name);
     const place = finishPlaceForSeat(seat);
-    const pl = place ? placePillLayout(vi, n, summaryOpen) : null;
+    const pl = place && !asStrip ? placePillLayout(vi, n, summaryOpen) : null;
     const el = buildSeatToken(name, seat, n, rem[seat - 1] ?? 0, {
       next: !atSummary && next === seat,
       myTurn: !atSummary && myTurn && seat === mySeat,
@@ -1208,20 +1290,23 @@ function renderSeatsFromState() {
       placeSide: pl?.side,
       placeOpposite: pl?.opposite,
       placeNudge: pl?.nudge,
+      asStrip,
+      placeInline: asStrip,
     });
-    el.style.left = `${pos[vi].x}%`;
-    el.style.top = `${pos[vi].y}%`;
+    if (asStrip) applyYouStripPosition(el);
+    else applyArcSeatPosition(el, pos[vi].x, pos[vi].y);
     tokens.push(el);
   }
   layer.replaceChildren(...tokens);
   requestAnimationFrame(layoutPlayActions);
 }
 
-// Pre-draw: show lobby-order names on arc (no table-rank chrome).
+// Pre-draw: show lobby-order names on arc (no table-rank chrome / no strip).
 function renderSeatsLobbyOrder(names) {
   const layer = $('seats-layer');
   const n = names.length;
   if (!n) return;
+  youStripHome = false;
   const youName = loadIdentity().username;
   const youIdx = names.findIndex((nm) => ukey(nm) === ukey(youName));
   const youSeat = youIdx >= 0 ? youIdx + 1 : 1;
@@ -1230,11 +1315,10 @@ function renderSeatsLobbyOrder(names) {
   for (let seat = 1; seat <= n; seat++) {
     const name = names[seat - 1] || `?${seat}`;
     const vi = visualIndex(seat, n, youSeat);
-    const el = buildSeatToken(name, seat, n, 0, { noRank: true });
+    const el = buildSeatToken(name, seat, n, 0, { noRank: true, asStrip: false });
     const meta = el.querySelector('.smeta');
     if (meta) meta.textContent = `slot ${seat}`;
-    el.style.left = `${pos[vi].x}%`;
-    el.style.top = `${pos[vi].y}%`;
+    applyArcSeatPosition(el, pos[vi].x, pos[vi].y);
     tokens.push(el);
   }
   layer.replaceChildren(...tokens);
@@ -1256,8 +1340,20 @@ function lastTrickPlaySeat(historyStr) {
   return entries[entries.length - 1]?.seat || 0;
 }
 
-// Must match .trick-piles.parked scale in yoyo0.css (.summary-dock uses 0.5)
-const TRICK_PARK_SCALE = 0.58;
+// Parked last-trick scale — written to .play-page as --trick-park-scale (CSS transform).
+const TRICK_PARK_SCALE = 0.9;
+const TRICK_PARK_SUMMARY_SCALE = 0.9;
+
+// Keep CSS transform scale in lockstep with JS park-position math.
+function syncTrickParkScaleCss() {
+  const page = document.querySelector('.play-page');
+  if (!page) return;
+  page.style.setProperty('--trick-park-scale', String(TRICK_PARK_SCALE));
+  page.style.setProperty(
+    '--trick-park-summary-scale',
+    String(TRICK_PARK_SUMMARY_SCALE),
+  );
+}
 
 // Bounding box of parkable children, in piles-local px (no park transform).
 function trickPilesContentBox(piles) {
@@ -1286,9 +1382,11 @@ function trickPilesContentBox(piles) {
 }
 
 /**
- * Mid-hand park: put last-trick cluster under the winner seat token.
+ * Mid-hand park: last-trick cluster near the winner.
  * Uses measured content bbox (after converge) + CSS scale math so the
- * *top* of the scaled piles sits just below the token bottom (not overlapping).
+ * *top* of the scaled piles lands at a chosen target.
+ * You-win: lower-left shelf above hand-bar, clear of bottom-center turn cue.
+ * Others: just under their seat token.
  */
 function applyWinnerParkOffset(piles, winSeat, youSeat, n, scale = TRICK_PARK_SCALE) {
   const fallback = () => {
@@ -1303,36 +1401,46 @@ function applyWinnerParkOffset(piles, winSeat, youSeat, n, scale = TRICK_PARK_SC
   const wasParked = piles.classList.contains('parked');
   if (wasParked) piles.classList.remove('parked');
   const pr = piles.getBoundingClientRect();
-  const token = document.querySelector(
-    `#seats-layer .seat-token[data-seat="${winSeat}"]`,
-  );
   const bb = trickPilesContentBox(piles);
   if (wasParked) piles.classList.add('parked');
-  if (!token || !bb || pr.width < 8 || pr.height < 8) {
+  if (!bb || pr.width < 8 || pr.height < 8) {
     fallback();
     return;
   }
 
-  const tr = token.getBoundingClientRect();
-  // Token edges in piles-local px
-  const tokenCX = tr.left + tr.width * 0.5 - pr.left;
-  const tokenTop = tr.top - pr.top;
-  const tokenBottom = tr.bottom - pr.top;
   const vi = visualIndex(winSeat, n, youSeat || 1);
   const gap = 10;
-
   // Where the TOP-CENTER of the *scaled* content should land
-  let targetTopX = tokenCX;
+  let targetTopX;
   let targetTopY;
   if (vi === 0) {
-    // You: hang park above your token (toward felt)
+    // You: above hand-bar, centered at 25% from left (clear of bottom-center turn cue)
     const scaledH = bb.height * scale;
-    targetTopX = tokenCX + 8;
-    targetTopY = tokenTop - gap - scaledH;
+    const padB = 6;
+    targetTopX = pr.width * 0.25;
+    targetTopY = pr.height - padB - scaledH;
+    // Keep a bit of air if content is very tall
+    if (targetTopY < pr.height * 0.42) {
+      targetTopY = pr.height * 0.42;
+    }
   } else {
-    // Everyone else: top of park just under token bottom
-    targetTopX = tokenCX;
-    targetTopY = tokenBottom + gap;
+    const token = document.querySelector(
+      `#seats-layer .seat-token[data-seat="${winSeat}"]`,
+    );
+    if (!token) {
+      fallback();
+      return;
+    }
+    const tr = token.getBoundingClientRect();
+    targetTopX = tr.left + tr.width * 0.5 - pr.left;
+    targetTopY = tr.bottom - pr.top + gap;
+    // Top opposite: park is under the mid-ray play arrow — slide left so cards stay clear
+    if (n % 2 === 0 && vi === n / 2) {
+      const scaledHalfW = (bb.width * scale) / 2;
+      targetTopX -= scaledHalfW + 18; // half stack + arrow/gap
+      const minX = scaledHalfW + 4;
+      if (targetTopX < minX) targetTopX = minX;
+    }
   }
 
   // CSS: transform-origin 50% 40%; transform: translate(T) scale(s)
@@ -1384,8 +1492,8 @@ function applySummaryDockOffset(piles) {
     if (lr.width < 8 || lr.height < 8 || pr.width < 8) return false;
 
     // Fixed docked footprint (scaled last-trick ≈ this size) — do not unpark to measure
-    const halfW = 72;
-    const halfH = 52;
+    const halfW = Math.round(72 * (TRICK_PARK_SUMMARY_SCALE / 0.5));
+    const halfH = Math.round(52 * (TRICK_PARK_SUMMARY_SCALE / 0.5));
     const gapPanel = 18;
     const gapSeat = 12;
 
@@ -1558,6 +1666,7 @@ function buildExchangeCues() {
 }
 
 // Mid-radius play-turn cue for state.next, or null (not during exchange).
+// Local: label + arrow. Others: arrow only (name already on seat token).
 function buildPlayTurnCue() {
   const st = lastState;
   if (!st) return null;
@@ -1579,7 +1688,8 @@ function buildPlayTurnCue() {
     seat,
     mine: false,
     active: true,
-    label: `Waiting for ${shortTurnName(name)}…`,
+    label: '',
+    aria: `Waiting for ${shortTurnName(name)}`,
   };
 }
 
@@ -1599,42 +1709,70 @@ function buildTurnCues() {
   return one ? [one] : [];
 }
 
+function cancelTrickParkHold() {
+  if (trickParkHoldTimer != null) {
+    clearTimeout(trickParkHoldTimer);
+    trickParkHoldTimer = null;
+  }
+}
+
 // Apply park shelf + converge to current .trick-piles (stacks + PASS/OUT).
-// Converge first, then measure seat token + content box for --park-x/y.
+// Mid-hand animate: full-size hold → converge → measure seat + park scale.
 function applyParkToPiles(piles, winSeat, you, n, { animate, summaryDock } = {}) {
   if (!piles) return;
   const dock = !!summaryDock;
   const conv = dock ? PARK_SUMMARY_CONVERGE : PARK_STACK_CONVERGE;
   if (animate && !reducedMotion) {
-    pendingTrickParkAnim = false;
-    const gen = ++trickParkGen;
+    // Keep pendingTrickParkAnim through hold so re-renders re-enter animate (not snap)
+    const gen = trickParkGen;
     piles.classList.remove('parked', 'win-flash', 'park-motion', 'summary-dock');
     clearTrickParkOffset(piles);
-    // Double rAF: full seat spacing → converge → measure → park scale
-    requestAnimationFrame(() => {
+    // Summary dock already had game-over full-size hold; mid-hand uses parkHoldDeadline
+    const holdMs =
+      !dock && parkHoldDeadline > 0
+        ? Math.max(0, parkHoldDeadline - performance.now())
+        : 0;
+
+    const startParkMotion = () => {
+      if (gen !== trickParkGen || !piles.isConnected) return;
+      pendingTrickParkAnim = false;
+      parkHoldDeadline = 0;
+      trickParkHoldTimer = null;
+      // Double rAF: full seat spacing → converge → measure → park scale
       requestAnimationFrame(() => {
-        if (gen !== trickParkGen || !piles.isConnected) return;
-        piles.classList.add('park-motion');
-        applyTrickParkConverge(piles, conv);
-        // Layout after converge before measuring for seat-token anchor
-        void piles.offsetWidth;
-        applyTrickParkOffset(piles, winSeat, you, n, { summaryDock: dock });
-        piles.classList.add('win-flash', 'parked');
-        if (dock) {
-          // Ghost estimate now; final place when panel is visible (scheduleSummaryDockRefresh)
-          if ($('panel-play-again')?.classList.contains('visible')) {
-            scheduleSummaryDockRefresh();
+        requestAnimationFrame(() => {
+          if (gen !== trickParkGen || !piles.isConnected) return;
+          piles.classList.add('park-motion');
+          applyTrickParkConverge(piles, conv);
+          // Layout after converge before measuring for seat-token anchor
+          void piles.offsetWidth;
+          applyTrickParkOffset(piles, winSeat, you, n, { summaryDock: dock });
+          piles.classList.add('win-flash', 'parked');
+          if (dock) {
+            // Ghost estimate now; final place when panel is visible (scheduleSummaryDockRefresh)
+            if ($('panel-play-again')?.classList.contains('visible')) {
+              scheduleSummaryDockRefresh();
+            }
+          } else {
+            requestAnimationFrame(() => {
+              if (gen !== trickParkGen || !piles.isConnected) return;
+              applyWinnerParkOffset(piles, winSeat, you, n, TRICK_PARK_SCALE);
+            });
           }
-        } else {
-          requestAnimationFrame(() => {
-            if (gen !== trickParkGen || !piles.isConnected) return;
-            applyWinnerParkOffset(piles, winSeat, you, n, TRICK_PARK_SCALE);
-          });
-        }
+        });
       });
-    });
+    };
+
+    cancelTrickParkHold();
+    if (holdMs > 0) {
+      trickParkHoldTimer = setTimeout(startParkMotion, holdMs);
+    } else {
+      startParkMotion();
+    }
   } else {
+    cancelTrickParkHold();
     pendingTrickParkAnim = false;
+    parkHoldDeadline = 0;
     piles.classList.remove('win-flash', 'park-motion');
     applyTrickParkConverge(piles, conv);
     void piles.offsetWidth;
@@ -1796,13 +1934,18 @@ function openGameSummary() {
   const snap = reducedMotion || gameOverSkipHold;
   if (snap) {
     pendingTrickParkAnim = false;
+    parkHoldDeadline = 0;
+    cancelTrickParkHold();
     renderTrick();
     revealGameSummaryPanel();
     return;
   }
 
-  // Slide to left dock first (panel measured invisibly)
+  // Slide to left dock first (panel measured invisibly). No pre-park hold — game-over beat already ran.
   pendingTrickParkAnim = true;
+  parkHoldDeadline = 0;
+  cancelTrickParkHold();
+  trickParkGen += 1;
   renderTrick();
   updatePlayButtons();
   updateHistoryChrome();
@@ -2011,16 +2154,23 @@ function applyState(ev) {
   if (ev.seat) mySeat = ev.seat;
   drawDone = true;
   // During seat theater keep overlay; still apply model under the curtain
-  if (!seatCeremonyActive) showSeatDrawPanel(false);
+  if (!seatCeremonyActive) {
+    showSeatDrawPanel(false);
+    youStripHome = true; // rejoin / live play — strip already home
+  }
 
   // Trick-end park: LEAD with completed history; game end keeps last trick for hold/summary
   const histLen = (ev.history || '').length;
   if (!histLen) {
     pendingTrickParkAnim = false;
+    parkHoldDeadline = 0;
+    cancelTrickParkHold();
     trickParkGen += 1;
   } else if (ev.step >= STEP.SUMMARY) {
     // Hold shows full-size; openGameSummary will set pending + park
     pendingTrickParkAnim = false;
+    parkHoldDeadline = 0;
+    cancelTrickParkHold();
     trickParkGen += 1;
   } else if (ev.step === STEP.LEAD) {
     // PLAY→LEAD, or LEAD→LEAD with more history (e.g. joker ends trick)
@@ -2030,10 +2180,16 @@ function applyState(ev) {
     if (fromPlay || leadAgainGrew) {
       pendingTrickParkAnim = true;
       trickParkGen += 1;
+      cancelTrickParkHold();
+      parkHoldDeadline = reducedMotion
+        ? 0
+        : performance.now() + TRICK_PARK_HOLD_MS;
     }
   } else if (ev.step === STEP.PLAY) {
     // New lead / mid-trick — clear shelf (new piles)
     pendingTrickParkAnim = false;
+    parkHoldDeadline = 0;
+    cancelTrickParkHold();
     trickParkGen += 1;
   }
 
@@ -2475,17 +2631,12 @@ function exchangeTransitSet() {
   return s;
 }
 
-// Gaps left/right of local seat within a container rect (local coords).
+// Gaps left/right of bottom-center play corridor (Pass/Play + exchange floats).
+// Does not use the docked you-strip — strip sits off the hand→felt path.
 function youSeatGaps(containerRect) {
-  let youL = containerRect.width * 0.5 - 44;
-  let youR = containerRect.width * 0.5 + 44;
-  const you = document.querySelector('.seat-token.you');
-  if (you) {
-    const yr = you.getBoundingClientRect();
-    youL = yr.left - containerRect.left;
-    youR = yr.right - containerRect.left;
-  }
-  return { youL, youR };
+  const cx = containerRect.width * 0.5;
+  const half = Math.min(72, Math.max(44, containerRect.width * 0.07));
+  return { youL: cx - half, youR: cx + half };
 }
 
 // Anchor float to seat edge: side 'right' ⇒ left edge at youR+gap; 'left' ⇒ right edge at youL−gap.
@@ -2521,7 +2672,7 @@ function layoutExchangeFloats() {
   }
 }
 
-// Pass left / Play right of .seat-token.you; during Prez offer, Offer sits atop low drop target.
+// Pass left / Play right of bottom-center corridor; during Prez offer, Offer atop low rail.
 function layoutPlayActions() {
   const root = $('play-actions');
   const pass = $('btn-pass');
@@ -2562,7 +2713,7 @@ function exTransitCard(
   if (withdrawable) cls += ' ex-withdrawable';
   if (picked) cls += ' selected';
   if (arrive && !reducedMotion) cls += ' ex-arrive';
-  const el = cardEl(t, { w: 40, h: 54, cls });
+  const el = cardEl(t, { w: pxScale(40), h: pxScale(54), cls });
   // SVG child can steal hits on some Chromium builds — faces stay the target
   el.querySelector('svg')?.style.setProperty('pointer-events', 'none');
   if (pickable) {
@@ -3712,7 +3863,7 @@ function buildDragGhost(tokenList) {
   // Same High→Low / Low→High order as hand (not Set insertion order)
   const list = displayPlayTokens(tokenList?.length ? tokenList : [...selected]);
   for (const t of list.slice(0, 6)) {
-    g.appendChild(cardEl(t, { w: 44, h: 58 }));
+    g.appendChild(cardEl(t, { w: pxScale(44), h: pxScale(58) }));
   }
   if (list.length > 6) {
     const more = document.createElement('span');
@@ -3944,7 +4095,8 @@ function renderSeatDrawTally(status) {
 }
 
 /**
- * E4.4: animate seat tokens from pre-rotation layout to new seats (you at bottom).
+ * E4.4: animate seat tokens from pre-rotation layout to new seats.
+ * Opponents slide on the arc; local you-strip stays docked (office text updates).
  * @param {string[]} oldNames names by old seat 1..n
  * @param {number} oldMySeat
  * @param {string[]} newNames names by new seat 1..n
@@ -3965,6 +4117,7 @@ async function animateSeatRotate(oldNames, oldMySeat, newNames) {
   setHistoryOpen(false);
   setStandingsOpen(false);
   histViewIndex = -1;
+  youStripHome = true; // never re-dock on later hands
 
   if (reducedMotion || n < 2) {
     playerNames = newNames.slice();
@@ -3998,27 +4151,37 @@ async function animateSeatRotate(oldNames, oldMySeat, newNames) {
     return;
   }
 
-  // One token per name; start at old you-relative position, end at new offices.
+  // Opponents slide old→new arc; local strip stays put with new office.
   const els = newNames.map((name, i) => {
     const newSeat = i + 1;
+    const isMe = ukey(name) === ukey(me);
     let oldSeat = oldNames.findIndex((nm) => ukey(nm) === ukey(name)) + 1;
     if (oldSeat < 1) oldSeat = newSeat;
     const oldVi = visualIndex(oldSeat, n, oldMySeat || 1);
+    if (isMe) {
+      // Temporarily set mySeat so buildSeatToken marks .you
+      const prevSeat = mySeat;
+      mySeat = newSeat;
+      const el = buildSeatToken(name, newSeat, n, 0, { asStrip: true });
+      mySeat = prevSeat;
+      applyYouStripPosition(el);
+      el.style.transition = 'none';
+      return { el, newSeat, isMe: true };
+    }
     const el = buildSeatToken(name, newSeat, n, 0, {});
-    el.style.left = `${posFrom[oldVi].x}%`;
-    el.style.top = `${posFrom[oldVi].y}%`;
+    applyArcSeatPosition(el, posFrom[oldVi].x, posFrom[oldVi].y);
     el.style.transition = 'none';
-    return { el, newSeat };
+    return { el, newSeat, isMe: false };
   });
   layer.replaceChildren(...els.map((x) => x.el));
 
-  // Force layout, then transition to new arc
+  // Force layout, then transition opponents on the arc
   void layer.offsetWidth;
-  for (const { el, newSeat } of els) {
+  for (const { el, newSeat, isMe } of els) {
+    if (isMe) continue;
     const newVi = visualIndex(newSeat, n, newMy);
     el.style.transition = 'left 0.65s ease, top 0.65s ease';
-    el.style.left = `${posTo[newVi].x}%`;
-    el.style.top = `${posTo[newVi].y}%`;
+    applyArcSeatPosition(el, posTo[newVi].x, posTo[newVi].y);
   }
 
   await new Promise((r) => setTimeout(r, 700));
@@ -4145,6 +4308,7 @@ async function animateSeatDraw(finalSeats) {
   const gen = ++seatCeremonyGen;
   seatCeremonyActive = true;
   animating = true;
+  youStripHome = false; // ceremony uses full bottom token, then docks
   playerNames = finalSeats.slice();
   drawDone = true;
   const n = finalSeats.length;
@@ -4267,11 +4431,13 @@ async function animateSeatDraw(finalSeats) {
 }
 
 // Absolute arc → you-relative seats (shared by full + reduced-motion paths).
+// Local chrome lands bottom-arc first, then docks to the side strip.
 async function settleSeatTokens(finalSeats, myFinal, gen) {
   const n = finalSeats.length;
   const layer = $('seats-layer');
   if (!layer) return;
   showSeatDrawPanel(false);
+  youStripHome = false; // force full tokens on arc during settle
   const absPos = [];
   for (let i = 0; i < n; i++) {
     const a = -Math.PI / 2 + (i * 2 * Math.PI) / n; // seat1 at top
@@ -4280,31 +4446,75 @@ async function settleSeatTokens(finalSeats, myFinal, gen) {
   const posTo = seatPositions(n);
   const els = finalSeats.map((name, i) => {
     const seat = i + 1;
-    const el = buildSeatToken(name, seat, n, 0, {});
-    el.style.left = `${absPos[i].x}%`;
-    el.style.top = `${absPos[i].y}%`;
+    const el = buildSeatToken(name, seat, n, 0, { asStrip: false });
     el.style.transition = reducedMotion ? 'none' : 'left 0.55s ease, top 0.55s ease';
+    applyArcSeatPosition(el, absPos[i].x, absPos[i].y);
     return el;
   });
   layer.replaceChildren(...els);
   if (reducedMotion) {
     for (let i = 0; i < n; i++) {
       const vi = visualIndex(i + 1, n, myFinal);
-      els[i].style.left = `${posTo[vi].x}%`;
-      els[i].style.top = `${posTo[vi].y}%`;
+      applyArcSeatPosition(els[i], posTo[vi].x, posTo[vi].y);
     }
+    await dockYouToStrip(gen, myFinal, finalSeats, { animate: false });
     return;
   }
   await sleepMs(80);
   if (gen !== seatCeremonyGen) return;
   for (let i = 0; i < n; i++) {
     const vi = visualIndex(i + 1, n, myFinal);
-    els[i].style.left = `${posTo[vi].x}%`;
-    els[i].style.top = `${posTo[vi].y}%`;
+    applyArcSeatPosition(els[i], posTo[vi].x, posTo[vi].y);
   }
   await sleepMs(600);
   if (gen !== seatCeremonyGen) return;
   for (const el of els) el.style.transition = '';
+  // Short beat so the full circle reads, then peel local chrome to the strip
+  await sleepMs(100);
+  if (gen !== seatCeremonyGen) return;
+  await dockYouToStrip(gen, myFinal, finalSeats, { animate: true });
+}
+
+// Morph local bottom-arc token → 1-row strip at lower-right dock.
+async function dockYouToStrip(gen, myFinal, finalSeats, { animate = true } = {}) {
+  if (gen !== seatCeremonyGen) return;
+  const layer = $('seats-layer');
+  const n = finalSeats?.length || playerNames.length || 0;
+  if (!layer || !myFinal || n < 1) {
+    youStripHome = true;
+    return;
+  }
+  const name = finalSeats[myFinal - 1] || playerNames[myFinal - 1] || '';
+  const old = layer.querySelector(`.seat-token[data-seat="${myFinal}"]`);
+  const startL = old?.style.left || `${seatPositions(n)[0].x}%`;
+  const startT = old?.style.top || `${seatPositions(n)[0].y}%`;
+
+  youStripHome = true;
+  const strip = buildSeatToken(name, myFinal, n, 0, { asStrip: true });
+  if (!animate || reducedMotion) {
+    applyYouStripPosition(strip);
+    if (old) old.replaceWith(strip);
+    else layer.appendChild(strip);
+    return;
+  }
+
+  // Start at arc bottom (centered), then ease to flush lower-right dock
+  strip.style.transition = 'none';
+  strip.style.left = startL;
+  strip.style.top = startT;
+  strip.style.transform = 'translate(-50%, -50%)';
+  if (old) old.replaceWith(strip);
+  else layer.appendChild(strip);
+  void strip.offsetWidth;
+  const dock = youStripDockPercent();
+  strip.style.transition =
+    'left 0.48s ease, top 0.48s ease, transform 0.48s ease';
+  strip.style.left = `${dock.x}%`;
+  strip.style.top = `${dock.y}%`;
+  strip.style.transform = 'translate(-100%, -100%)';
+  await sleepMs(500);
+  if (gen !== seatCeremonyGen) return;
+  strip.style.transition = '';
 }
 
 // Compact play/err debug (seq5, illegal response, etc.) — check DevTools console after Ctrl-F5.
@@ -4861,9 +5071,38 @@ function setHandSortFromGear(sort) {
   if (!$('history-pop')?.hidden) renderHistoryPopover();
 }
 
+// Fit play chrome to felt size: --ui drives card/token CSS + pxScale() layout.
+// Baseline ~1000×620 table-area; clamp so Chromebooks stay readable without ballooning.
+function updateUiScale() {
+  const page = document.querySelector('.play-page');
+  const area = $('table-area');
+  if (!page || !area) return false;
+  const r = area.getBoundingClientRect();
+  if (r.width < 40 || r.height < 40) return false;
+  const raw = Math.min(r.width / 1000, r.height / 620);
+  const ui = Math.round(Math.min(1.35, Math.max(0.9, raw)) * 100) / 100;
+  const prev = page.style.getPropertyValue('--ui');
+  if (prev === String(ui)) return false;
+  page.style.setProperty('--ui', String(ui));
+  return true;
+}
+
+// Re-apply sizes that bake --ui into SVG attrs / stack geometry.
+function refreshUiScaleLayout() {
+  if (!lastState) return;
+  if (!animating && !seatCeremonyActive) renderSeatsFromState();
+  renderTrick();
+  renderHand();
+  renderExchangeOverlays();
+}
+
 function wireControls() {
   reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  syncTrickParkScaleCss();
+  updateUiScale();
   window.addEventListener('resize', () => {
+    const scaled = updateUiScale();
+    if (scaled) refreshUiScaleLayout();
     layoutExchangeFloats();
     layoutPlayActions();
     renderSetChips();

@@ -7,7 +7,7 @@ export const RANK_PACKS = {
   // Order = lobby Titles segment order (corp default first).
   corp: {
     label: 'Corporate',
-    roles: ['CEO', 'VP', 'Yesman', 'Grunt', 'Asst', 'Yoyo'],
+    roles: ['CEO', 'VP', 'Yesman', 'Grunt', 'Intern', 'Yoyo'],
   },
   classic: {
     label: 'Classic',
