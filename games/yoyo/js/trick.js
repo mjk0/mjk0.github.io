@@ -125,11 +125,8 @@ function resolveOutPlace(finishOrder, seat, remaining, n) {
   return 0;
 }
 
-// OUT pill sits seat-ward of a live stack so cards stay readable.
-const OUT_K_FREE = 0.32;
-const OUT_K_WITH_STACK = 0.46;
-// Top (opposite) ray is straight up — seat-ward lands on the card face; slide right to clear a single.
-const OUT_TOP_DX = 5.5; // % of felt width
+// OUT pill centered on seat stack ray (glass on-stack vs solid free slot).
+const OUT_K = 0.32;
 
 // Oval PASS pill (not a button).
 function makePassPill(seat) {
@@ -263,7 +260,7 @@ function markOutBurst(pillEl, seat, { place = 0, host, x, y } = {}) {
   }, ttl);
 }
 
-// Free-slot / seat-ward OUT pill (place ranking lives on seat place-pill).
+// OUT pill (place ranking lives on seat place-pill). Glass class added when on-stack.
 function makeOutPill(seat) {
   const el = document.createElement('div');
   el.className = 'felt-pill out-pill';
@@ -393,7 +390,7 @@ export function renderPlayStacks(layerEl, plays, layout, felt = {}) {
       stack.appendChild(el);
     });
 
-    // Emptied on this play: keep set fully readable; OUT pill is seat-ward (below).
+    // Emptied on this play: keep set fully readable; OUT glass centers on stack
     if ((remaining[p.seat - 1] ?? -1) === 0) {
       stack.classList.add('out');
     }
@@ -419,16 +416,10 @@ export function renderPlayStacks(layerEl, plays, layout, felt = {}) {
   for (let seat = 1; seat <= n; seat++) {
     const rem = remaining[seat - 1] ?? -1;
     if (rem === 0) {
-      // With a finishing stack: seat-ward of cards; free slot: stack radius
-      const k = played.has(seat) ? OUT_K_WITH_STACK : OUT_K_FREE;
+      // Center on stack ray; glass when a card is under the pill, solid when free slot
       const pill = makeOutPill(seat);
-      placeAtSeat(pill, seat, layout, 35, k);
-      // Opposite seat (top): seat-ward is pure up onto the stack — nudge right so a single stays visible
-      const vi = visualIndex(seat, n, youSeat);
-      if (n % 2 === 0 && vi === n / 2) {
-        const L = parseFloat(pill.style.left);
-        if (Number.isFinite(L)) pill.style.left = `${(L + OUT_TOP_DX).toFixed(2)}%`;
-      }
+      if (played.has(seat)) pill.classList.add('on-stack');
+      placeAtSeat(pill, seat, layout, 35, OUT_K);
       markOutBurst(pill, seat, {
         place: resolveOutPlace(finishOrder, seat, remaining, n),
         host: fxHost,

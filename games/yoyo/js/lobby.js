@@ -30,6 +30,11 @@ let ws = null;
 let intentionalClose = false;
 /** True after server `duplicate_login` — do not auto-reconnect (stops takeover fight). */
 let takenOver = false;
+/**
+ * True after login rejected (e.g. username_taken / email mismatch).
+ * Stops reconnect storm until the user re-submits a login.
+ */
+let authRejected = false;
 let reconnectTimer = null;
 let authenticated = false;
 /** @type {string} preferred name from server / session */
@@ -102,7 +107,7 @@ function setActionBanner(text, kind = 'prompt', opts = {}) {
 
 // Next-action prompt from auth + seat state (skips sticky err/ok).
 function syncActionBanner() {
-  if (actionBannerSticky || takenOver) return;
+  if (actionBannerSticky || takenOver || authRejected) return;
 
   // Connecting / reconnecting — conn-status only.
   if (
@@ -145,7 +150,7 @@ function syncActionBanner() {
   }
 
   setActionBanner(
-    'Choose a table and <strong>Sit</strong> at an open seat—or <strong>Create private</strong>',
+    'Choose a table and <strong>Sit</strong> at an open seat—or <i>Create private</i>',
     'prompt',
     { html: true, sticky: false },
   );
@@ -162,6 +167,7 @@ function clearReconnect() {
 // Server booted this tab for the same username (other device/tab won).
 function handleTakenOver() {
   takenOver = true;
+  authRejected = false;
   clearReconnect();
   authenticated = false;
   setStatus('signed in elsewhere', 'err');
@@ -195,6 +201,44 @@ function handleTakenOver() {
     if (e) e.value = id.email || '';
   }
   renderHeader();
+}
+
+// Login failed before Welcome (name locked / email mismatch). No reconnect until user fixes form.
+function handleAuthRejected(errCode) {
+  authRejected = true;
+  takenOver = false;
+  clearReconnect();
+  intentionalClose = true; // stay true until next connect()/loginAs — avoids onclose race
+  authenticated = false;
+  const locked = errCode === 'username_taken';
+  setStatus('sign-in failed', 'err');
+  setActionBanner(
+    locked
+      ? 'That name is locked on this server. Enter the email used to claim it, then try again.'
+      : 'Sign-in failed. Check name and email, then try again.',
+    'err',
+  );
+  if (ws) {
+    try {
+      ws.close();
+    } catch {
+      /* ignore */
+    }
+    ws = null;
+  }
+  const id = loadIdentity();
+  const u = $('in-user');
+  const e = $('in-email');
+  if (u) u.value = id.username || me || '';
+  if (e) e.value = id.email || '';
+  // Show name/email form (not silent gate chips) so user can add email.
+  authPanel = listProfiles().length ? 'create' : 'first';
+  me = '';
+  renderHeader();
+  // Focus email — usual fix for locked-name without email in the profile.
+  requestAnimationFrame(() => {
+    $('in-email')?.focus();
+  });
 }
 
 function send(obj) {
@@ -495,12 +539,18 @@ function renderAuthUi() {
   if (showLogin) {
     const isCreate = authPanel === 'create' || (profiles.length > 0 && authPanel !== 'first');
     if (title) {
-      title.textContent = isCreate && profiles.length ? 'Create new profile' : 'Join the lobby';
+      title.textContent = authRejected
+        ? 'Sign-in failed'
+        : isCreate && profiles.length
+          ? 'Create new profile'
+          : 'Join the lobby';
     }
     if (hint) {
-      hint.textContent = isCreate && profiles.length
-        ? 'Add another display name on this browser.'
-        : 'Choose a display name. Optional email locks the name to you.';
+      hint.textContent = authRejected
+        ? 'Name may be locked on this server — enter the matching email, or pick another name.'
+        : isCreate && profiles.length
+          ? 'Add another display name on this browser.'
+          : 'Choose a display name. Optional email locks the name to you.';
     }
     if (btnLogin) {
       btnLogin.textContent = isCreate && profiles.length ? 'Create & enter' : 'Enter lobby';
@@ -2278,30 +2328,18 @@ function onServerEvent(ev) {
       handleTakenOver();
       return;
     }
-    setActionBanner(ev.err || 'error', 'err');
-    if (ev.err === 'username_taken') {
-      setStatus('name/email mismatch', 'err');
-      // Stay on form if they were creating; clear bad session name only if not connected.
-      if (!authenticated) {
-        intentionalClose = true;
-        if (ws) {
-          ws.close();
-          ws = null;
-        }
-        intentionalClose = false;
-        me = '';
-        // Keep gate/form state so they can fix name.
-        if (listProfiles().length && isSignOutGate()) authPanel = 'gate';
-        else if (listProfiles().length) authPanel = 'create';
-        else authPanel = 'first';
-        renderHeader();
-      }
+    // Pre-Welcome auth failure: stop reconnect and show the login form.
+    if (!authenticated && (ev.err === 'username_taken' || ev.err === 'authenticate')) {
+      handleAuthRejected(ev.err);
+      return;
     }
+    setActionBanner(ev.err || 'error', 'err');
     return;
   }
   if (a === 'welcome') {
     authenticated = true;
     takenOver = false;
+    authRejected = false;
     const id = loadIdentity();
     const uname = me || id.username;
     saveIdentity({
@@ -2366,6 +2404,7 @@ function loginAs(username, email = '') {
   const name = String(username || '').trim();
   if (!name) return;
   takenOver = false;
+  authRejected = false;
   // Tear down any live connection before switching accounts.
   if (isLiveWs() || authenticated) {
     intentionalClose = true;
@@ -2398,6 +2437,12 @@ function loginAs(username, email = '') {
 
 function connect() {
   if (isLiveWs()) {
+    renderHeader();
+    return;
+  }
+  // Auth failure: wait for user to fix name/email (loginAs clears the flag).
+  if (authRejected) {
+    setStatus('sign-in failed', 'err');
     renderHeader();
     return;
   }
@@ -2452,8 +2497,9 @@ function connect() {
     authenticated = false;
     ws = null;
     renderHeader();
-    if (intentionalClose) {
-      setStatus('sign in', '');
+    if (intentionalClose || authRejected) {
+      if (authRejected) setStatus('sign-in failed', 'err');
+      else setStatus('sign in', '');
       return;
     }
     // Booted by another login — stay idle until user reclaims (Continue as…).
@@ -2482,10 +2528,17 @@ function connect() {
 }
 
 function scheduleReconnect() {
-  if (reconnectTimer || takenOver || isSignOutGate()) return;
+  if (reconnectTimer || takenOver || authRejected || isSignOutGate()) return;
   reconnectTimer = setTimeout(() => {
     reconnectTimer = null;
-    if (!takenOver && loadIdentity().username && !isSignOutGate()) connect();
+    if (
+      !takenOver &&
+      !authRejected &&
+      loadIdentity().username &&
+      !isSignOutGate()
+    ) {
+      connect();
+    }
   }, 1500);
 }
 
@@ -2493,6 +2546,7 @@ function doSignOut() {
   clearReconnect();
   intentionalClose = true;
   takenOver = false;
+  authRejected = false;
   authenticated = false;
   me = '';
   tables.clear();

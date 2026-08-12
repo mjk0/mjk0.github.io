@@ -2306,7 +2306,7 @@ button:focus-visible {
   white-space: nowrap;
   line-height: 1.2;
 }
-/* Finishing play: keep cards readable; OUT pill is seat-ward on the felt */
+/* Finishing play: keep cards readable; OUT glass sits on stack center */
 .play-stack.out .stack-card {
   filter: drop-shadow(1px 2px 4px rgba(0, 0, 0, 0.5));
 }
@@ -2336,6 +2336,23 @@ button:focus-visible {
   background: rgba(30, 55, 85, 0.92);
   border: 1px solid rgba(80, 130, 180, 0.55);
   overflow: visible;
+}
+/* Over a finishing stack: frosted badge — cards stay readable, OUT still clear */
+.out-pill.on-stack {
+  color: #f0f8ff;
+  background: rgba(16, 36, 56, 0.5);
+  border-color: rgba(160, 210, 255, 0.72);
+  padding: 0.3em 0.78em;
+  font-size: calc(var(--felt-pill-size, 0.72rem) * 0.92);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 2px 6px rgba(0, 0, 0, 0.4);
+  text-shadow:
+    0 0 2px #000,
+    0 1px 2px #000,
+    0 0 6px rgba(0, 40, 80, 0.85);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
 }
 /* Sole remaining hand at game end — 😢 throughout; no dark pill / no X swap */
 .loser-pill {
@@ -2924,6 +2941,63 @@ button:focus-visible {
   box-shadow: var(--shadow);
   z-index: 5;
   display: none;
+}
+/* Game summary: lower + narrower; light blue glass + solid gold (user-tuned) */
+#panel-play-again {
+  top: 48%;
+  min-width: min(18.5rem, 88vw);
+  max-width: min(20rem, 90vw);
+  background: rgb(129 167 241 / 7%);
+  border-color: rgba(201, 162, 39, 1);
+  color: #f4f7fa;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 2px 14px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(8px) saturate(0.65);
+  -webkit-backdrop-filter: blur(8px) saturate(0.65);
+}
+/* Clear glass over felt: cooler/brighter type than global --muted/--ink */
+#panel-play-again h3,
+#panel-play-again .fin-name,
+#panel-play-again .fin-avg {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
+}
+#panel-play-again .summary-games,
+#panel-play-again .fin-head,
+#panel-play-again .fin-head .fin-avg,
+#panel-play-again .fin-head .fin-delta,
+#panel-play-again .fin-head .fin-vote,
+#panel-play-again .fin-delta.zero,
+#panel-play-again .fin-delta.na,
+#panel-play-again .fin-vote.wait,
+#panel-play-again .play-again-waiting {
+  color: #c8d4e0;
+}
+#panel-play-again .fin-name {
+  color: #f7fafc;
+}
+#panel-play-again .finish-board li {
+  border-bottom-color: rgba(232, 240, 248, 0.14);
+}
+#panel-play-again .finish-board li.fin-head {
+  border-bottom-color: rgba(201, 162, 39, 0.35);
+}
+#panel-play-again .fin-rank {
+  background: rgba(20, 24, 32, 0.72);
+  color: #f0f4f8;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+/* Prez/VP rank chips keep their gold/silver gradients */
+#panel-play-again li.fin-prez .fin-rank {
+  background: linear-gradient(160deg, var(--rank-gold-hi), var(--rank-gold));
+  color: #1a1a10;
+  box-shadow: none;
+}
+#panel-play-again li.fin-vp .fin-rank {
+  background: linear-gradient(160deg, var(--rank-silver-hi), var(--rank-silver));
+  color: #1a1a1c;
+  box-shadow: none;
 }
 .overlay-panel.visible { display: block; }
 /* Invisible layout pass so last-trick dock can measure panel before it opens */
