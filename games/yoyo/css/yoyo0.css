@@ -2947,7 +2947,7 @@ button:focus-visible {
   top: 48%;
   min-width: min(18.5rem, 88vw);
   max-width: min(20rem, 90vw);
-  background: rgb(129 167 241 / 7%);
+  background: rgb(0 0 0 / 12%);
   border-color: rgba(201, 162, 39, 1);
   color: #f4f7fa;
   box-shadow:
