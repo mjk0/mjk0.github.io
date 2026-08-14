@@ -1,6 +1,7 @@
 // Play page: deal/exchange, set chips (E4b), drag-to-table.
 // LeaveGame only. History suits client-side (historySuits.js).
 import {
+  CARDS_SVG,
   GAME_WS,
   loadIdentity,
   SS,
@@ -131,6 +132,10 @@ let trickParkGen = 0;
 let parkHoldDeadline = 0;
 /** @type {ReturnType<typeof setTimeout>|null} */
 let trickParkHoldTimer = null;
+/** Open-table occupied idle warn: unix ms deadline from server ends_at. */
+let idleWarnEndsAt = 0;
+/** @type {ReturnType<typeof setInterval>|null} */
+let idleWarnTick = null;
 /** Snapshot of names/seat before rotation for seat-shift animation. */
 let preShiftNames = /** @type {string[]} */ ([]);
 let preShiftMySeat = 1;
@@ -261,6 +266,32 @@ function placeLabels(n, absSeat) {
   return placeLabel(n, absSeat, tableRankPack);
 }
 
+// Rank-1 mark: A45s #crown (gold crown; disc color from CSS).
+function makeRankCrown() {
+  const wrap = document.createElement('span');
+  wrap.className = 'rank-crown-wrap';
+  wrap.title = 'Rank 1';
+  wrap.setAttribute('aria-hidden', 'true');
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 64 64');
+  svg.setAttribute('class', 'rank-crown');
+  const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+  use.setAttribute('href', `${CARDS_SVG}#crown`);
+  use.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', `${CARDS_SVG}#crown`);
+  svg.appendChild(use);
+  wrap.appendChild(svg);
+  return wrap;
+}
+
+// Role word + crown on office 1 (no numeric chip).
+function appendOffice(meta, n, rank, absSeat) {
+  if (rank === 1) meta.appendChild(makeRankCrown());
+  const role = document.createElement('span');
+  role.className = 'role-name';
+  role.textContent = rank != null ? placeLabels(n, rank) : placeLabels(n, absSeat);
+  meta.appendChild(role);
+}
+
 // Remember pack from Joined / State for seat-draw reels before deal State.
 function setTableRankPack(raw) {
   tableRankPack = normalizeRankPack(raw);
@@ -348,6 +379,60 @@ function roleTransitionHtml(n, oldRank, nextRank) {
 function setStatus(msg) {
   const el = $('status-line');
   if (el) el.textContent = msg || '';
+}
+
+// ——— Open occupied-idle warn (server IdleWarning / IdleStay) ———
+function formatIdleCountdown(sec) {
+  const s = Math.max(0, sec | 0);
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return m > 0 ? `${m}:${String(r).padStart(2, '0')}` : `${s}s`;
+}
+
+function paintIdleWarnCountdown() {
+  const el = $('idle-warn-countdown');
+  if (!el || !idleWarnEndsAt) return;
+  const left = Math.max(0, Math.ceil((idleWarnEndsAt - Date.now()) / 1000));
+  el.textContent = formatIdleCountdown(left);
+}
+
+function hideIdleWarn() {
+  if (idleWarnTick != null) {
+    clearInterval(idleWarnTick);
+    idleWarnTick = null;
+  }
+  idleWarnEndsAt = 0;
+  const panel = $('panel-idle-warn');
+  if (panel) {
+    panel.hidden = true;
+    panel.classList.remove('visible');
+  }
+}
+
+// ends_at = unix ms; seconds_left = fallback if ends_at missing/stale.
+function showIdleWarn(endsAt, secondsLeft) {
+  const now = Date.now();
+  let end = Number(endsAt) || 0;
+  if (end < now - 2000) {
+    // Missing or clearly bad clock — fall back to remaining seconds
+    const sec = Math.max(0, Number(secondsLeft) || 0);
+    end = now + sec * 1000;
+  }
+  idleWarnEndsAt = end;
+  const panel = $('panel-idle-warn');
+  if (panel) {
+    panel.hidden = false;
+    panel.classList.add('visible');
+  }
+  paintIdleWarnCountdown();
+  if (idleWarnTick != null) clearInterval(idleWarnTick);
+  idleWarnTick = setInterval(paintIdleWarnCountdown, 250);
+  setStatus('Table idle — Stay or it will close');
+}
+
+function sendIdleStay() {
+  send({ action: 'idlestay' });
+  setStatus('Staying…');
 }
 
 /** @type {ReturnType<typeof setTimeout> | null} */
@@ -1063,10 +1148,10 @@ function isPlayAgainReady(name) {
  *   asStrip?: boolean, placeInline?: boolean
  * }} [opts]
  *   Office chrome always follows absSeat (this-hand title). place = finish 1..n pill.
- *   noRank = hide chip/wash (seat-draw lobby slots).
+ *   noRank = hide wash (seat-draw lobby slots).
  *   faceTokens = end-of-hand face-up fan (opponent loser).
  *   handoff = show “Robot take over?” (other humans only).
- *   asStrip = local 1-row chrome (Name [n] Role); placeInline = pill before name.
+ *   asStrip = local 1-row chrome (Name [crown] Role); placeInline = pill before name.
  */
 function buildSeatToken(name, absSeat, n, rem, opts = {}) {
   const el = document.createElement('div');
@@ -1107,7 +1192,7 @@ function buildSeatToken(name, absSeat, n, rem, opts = {}) {
     return pill;
   };
 
-  // Strip: [place] Name [chip] Role — one row, out of hand→felt path
+  // Strip: [place] Name Role — one row, out of hand→felt path
   if (asStrip) {
     if (place) el.appendChild(makePlacePill());
     const nm = document.createElement('span');
@@ -1116,19 +1201,7 @@ function buildSeatToken(name, absSeat, n, rem, opts = {}) {
     el.appendChild(nm);
     const meta = document.createElement('span');
     meta.className = 'smeta srole';
-    if (rank != null) {
-      const chip = document.createElement('span');
-      chip.className = 'rank-chip';
-      if (rank === 1) chip.classList.add('gold');
-      else if (rank === 2) chip.classList.add('silver');
-      chip.textContent = String(rank);
-      chip.title = `Office ${rank}`;
-      meta.appendChild(chip);
-    }
-    const role = document.createElement('span');
-    role.className = 'role-name';
-    role.textContent = rank != null ? placeLabels(n, rank) : placeLabels(n, absSeat);
-    meta.appendChild(role);
+    appendOffice(meta, n, rank, absSeat);
     el.appendChild(meta);
     if (opts.paused) {
       const b = document.createElement('span');
@@ -1144,22 +1217,10 @@ function buildSeatToken(name, absSeat, n, rem, opts = {}) {
   nm.textContent = name;
   el.appendChild(nm);
 
-  // Rank chip + role (this-hand office)
+  // Role (this-hand office); crown on 1, gold/silver wash on 1–2
   const meta = document.createElement('div');
   meta.className = 'smeta srole';
-  if (rank != null) {
-    const chip = document.createElement('span');
-    chip.className = 'rank-chip';
-    if (rank === 1) chip.classList.add('gold');
-    else if (rank === 2) chip.classList.add('silver');
-    chip.textContent = String(rank);
-    chip.title = `Office ${rank}`;
-    meta.appendChild(chip);
-  }
-  const role = document.createElement('span');
-  role.className = 'role-name';
-  role.textContent = rank != null ? placeLabels(n, rank) : placeLabels(n, absSeat);
-  meta.appendChild(role);
+  appendOffice(meta, n, rank, absSeat);
   el.appendChild(meta);
 
   if (!isYou) {
@@ -3846,7 +3907,7 @@ function onSetChipPointerDown(ev, el, tokens, { canPlay = true, parkable = false
 // Targets that own selection / actions — empty-space clear skips these.
 function isSelectionUiTarget(el) {
   return !!el?.closest?.(
-    '.card, .set-chip, .play-actions, .park-zone, .hand-bay, button, a, input, select, label, .overlay-panel, #gear-wrap, .ex-seat-float, .game-over-hold, .seat-token, .drag-ghost',
+    '.card, .set-chip, .play-actions, .park-zone, .hand-bay, button, a, input, select, label, .overlay-panel, #gear-wrap, .ex-seat-float, .game-over-hold, #panel-idle-warn, .seat-token, .drag-ghost',
   );
 }
 
@@ -4866,11 +4927,26 @@ function onServerEvent(ev) {
     // optional: could log
     return;
   }
+  if (a === 'idlewarning') {
+    showIdleWarn(ev.ends_at, ev.seconds_left);
+    return;
+  }
+  if (a === 'idlewarningcancel') {
+    hideIdleWarn();
+    const why = ev.reason || '';
+    if (why === 'stay') setStatus('Timer reset — still here');
+    else if (why === 'activity') setStatus('');
+    else setStatus('');
+    return;
+  }
   if (a === 'shutdown') {
     // Dead session — do not rejoin this table/seat on next play page load.
+    const wasIdleWarn =
+      idleWarnEndsAt > 0 || $('panel-idle-warn')?.classList.contains('visible');
+    hideIdleWarn();
     sessionStorage.removeItem(SS.table);
     sessionStorage.removeItem(SS.seat);
-    setStatus('Session ended');
+    setStatus(wasIdleWarn ? 'Table closed for inactivity' : 'Session ended');
     setTimeout(goLobby, 1200);
   }
 }
@@ -5199,6 +5275,7 @@ function wireControls() {
     intentionalClose = true;
     seatCeremonyGen += 1;
     seatCeremonyActive = false;
+    hideIdleWarn();
     cancelGameOverHold();
     gameOverSkipHold = false;
     gameOverSummaryOpen = false;
@@ -5216,6 +5293,8 @@ function wireControls() {
   };
   $('btn-leave').addEventListener('click', leave);
   $('btn-leave-end').addEventListener('click', leave);
+  $('btn-idle-stay')?.addEventListener('click', () => sendIdleStay());
+  $('btn-idle-leave')?.addEventListener('click', leave);
 
   $('btn-scores')?.addEventListener('click', (e) => {
     e.stopPropagation();

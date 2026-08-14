@@ -994,7 +994,7 @@ function tableHasSeatedHumans(t) {
 }
 
 // Any live session (Playing) — includes empty/paused until Stop or idle kill.
-// Drives in-progress card chrome (chip, stripes, seat contrast).
+// Drives in-progress card chrome (chip, darker card, seat contrast).
 function tableIsInProgress(t) {
   return t.status === STATUS_PLAYING;
 }

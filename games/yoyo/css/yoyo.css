@@ -447,7 +447,7 @@
 .lobby-page .table-card.private.playing {
   box-shadow: 0 0 0 2px rgba(191, 54, 12, 0.4), 0 2px 10px rgba(0, 0, 0, 0.1);
 }
-/* Live tables: slightly cooler base so stripes + chip read clearly */
+/* Live tables: slightly cooler / darker base (no hatch); yellow chip carries the label */
 .lobby-page .table-card.in-progress {
   background: #6b9e78;
   border-color: #c62828;
@@ -457,18 +457,6 @@
   background: #7a9e7a;
   border-color: #bf360c;
   box-shadow: 0 0 0 2px rgba(191, 54, 12, 0.4), 0 2px 10px rgba(0, 0, 0, 0.12);
-}
-.lobby-page .table-card.in-progress::before {
-  opacity: 0.55;
-  background-image:
-    repeating-linear-gradient(
-      -28deg,
-      transparent 0,
-      transparent 14px,
-      rgba(0, 0, 0, 0.16) 14px,
-      rgba(0, 0, 0, 0.16) 15px
-    ),
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='90' viewBox='0 0 220 90'><text x='8' y='58' fill='rgba(255,255,255,0.55)' font-family='system-ui,Segoe UI,sans-serif' font-size='15' font-weight='700' letter-spacing='0.06em' transform='rotate(-28 8 58)'>IN PROGRESS</text></svg>");
 }
 .lobby-page .table-live-badge {
   background: #ffeb3b;
@@ -594,8 +582,7 @@
   font-weight: 700;
 }
 
-/* Darkblue invite-style pills: Create private + profile gate actions */
-.lobby-page #btn-create,
+/* Darkblue invite-style pills: profile gate actions */
 .lobby-page #btn-another-name,
 .lobby-page #btn-gate-manage {
   background: var(--invite);
@@ -603,16 +590,31 @@
   color: #fff;
   border-radius: 15px;
 }
-.lobby-page #btn-create:hover:not(:disabled),
 .lobby-page #btn-another-name:hover:not(:disabled),
 .lobby-page #btn-gate-manage:hover:not(:disabled) {
   background: var(--invite-hi);
   border-color: #0d47a1;
   color: #fff;
 }
+/* Create private: pale fill + ~2/3 height — Sit on a table is still the primary */
+.lobby-page #btn-create {
+  background: #dce3f5;
+  border: 1px solid var(--invite);
+  color: var(--invite);
+  border-radius: 15px;
+  padding: 0.18em 0.65em;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.lobby-page #btn-create:hover:not(:disabled) {
+  background: #c5d0ef;
+  border-color: var(--invite-hi);
+  color: var(--invite-hi);
+}
 .lobby-page #btn-create:disabled {
   opacity: 0.45;
-  color: #fff;
+  color: var(--invite);
 }
 
 /* Popovers (opts / invite): bisque — match .seat-slot.human */

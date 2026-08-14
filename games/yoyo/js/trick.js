@@ -125,7 +125,7 @@ function resolveOutPlace(finishOrder, seat, remaining, n) {
   return 0;
 }
 
-// OUT pill centered on seat stack ray (glass on-stack vs solid free slot).
+// OUT pill centered on seat stack ray (outlined type on-stack vs solid free slot).
 const OUT_K = 0.32;
 
 // Oval PASS pill (not a button).
@@ -260,7 +260,7 @@ function markOutBurst(pillEl, seat, { place = 0, host, x, y } = {}) {
   }, ttl);
 }
 
-// OUT pill (place ranking lives on seat place-pill). Glass class added when on-stack.
+// OUT pill (place ranking lives on seat place-pill). on-stack = no plate.
 function makeOutPill(seat) {
   const el = document.createElement('div');
   el.className = 'felt-pill out-pill';
@@ -416,7 +416,7 @@ export function renderPlayStacks(layerEl, plays, layout, felt = {}) {
   for (let seat = 1; seat <= n; seat++) {
     const rem = remaining[seat - 1] ?? -1;
     if (rem === 0) {
-      // Center on stack ray; glass when a card is under the pill, solid when free slot
+      // Center on stack ray; outlined type when a card is under the pill, solid when free slot
       const pill = makeOutPill(seat);
       if (played.has(seat)) pill.classList.add('on-stack');
       placeAtSeat(pill, seat, layout, 35, OUT_K);

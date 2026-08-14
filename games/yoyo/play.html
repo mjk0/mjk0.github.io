@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Yoyo — Table</title>
-  <link rel="stylesheet" href="css/yoyo0.css?v=20260811e" />
+  <link rel="stylesheet" href="css/yoyo0.css?v=20260813d" />
 </head>
 <body class="play-page">
   <header class="play-strip">
@@ -105,6 +105,20 @@
       </div>
     </div>
 
+    <!-- Open table occupied-idle warn (server IdleWarning / IdleStay) -->
+    <div class="overlay-panel idle-warn-panel" id="panel-idle-warn" role="alertdialog" aria-labelledby="idle-warn-title" aria-describedby="idle-warn-desc" hidden>
+      <h3 id="idle-warn-title">Table idle</h3>
+      <p id="idle-warn-desc" class="idle-warn-desc">
+        This open table is idle and will close in
+        <strong id="idle-warn-countdown">—</strong>
+        unless someone stays.
+      </p>
+      <div class="actions">
+        <button type="button" class="primary" id="btn-idle-stay">Stay</button>
+        <button type="button" class="danger" id="btn-idle-leave">Leave</button>
+      </div>
+    </div>
+
     <!-- Game summary + play-again votes in one list (E4.1) -->
     <div class="overlay-panel" id="panel-play-again" role="dialog" aria-labelledby="play-again-title">
       <div class="summary-title-row">
@@ -140,6 +154,6 @@
   </div>
 
   <p class="footer-note">Drag to table · set chips · exchange · <a href="index.html">Lobby</a></p>
-  <script type="module" src="js/play.js?v=20260811a"></script>
+  <script type="module" src="js/play.js?v=20260813b"></script>
 </body>
 </html>
