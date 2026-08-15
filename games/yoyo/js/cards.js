@@ -19,8 +19,11 @@ export const CARD_W = 60;
 export const CARD_H = 80;
 export const BACK_ID = 'cbcatsil';
 export const JOKER_ID = 'jk5';
+// Hand / trick / exchange faces vs --ui. You-token is a docked strip now,
+// so faces take a bit more of the open felt than tokens/fans.
+export const CARD_BOOST = 1.1;
 
-// Play-page --ui (1 when not on play). CSS and JS layout share this factor.
+// Play-page --ui (1 when not on play; play page ~0.85–2.4). CSS and JS share this.
 export function uiScale() {
   const el = document.querySelector('.play-page');
   if (!el) return 1;
@@ -31,6 +34,11 @@ export function uiScale() {
 // Scale a design-time px length by --ui (min 1).
 export function pxScale(base) {
   return Math.max(1, Math.round(base * uiScale()));
+}
+
+// Face size: --ui and CARD_BOOST (hand, trick, exchange).
+export function cardPx(base) {
+  return pxScale(base * CARD_BOOST);
 }
 
 // 'ace_high' | 'two_high' — from table/State OPT_TWO_HIGH; default ace high (Yoyo).
@@ -56,10 +64,44 @@ function rankFace(rank) {
   return map[rank];
 }
 
-// Wire token ("H13","c1","JK") → SVG fragment id, or null.
+// Client-only instance suffix for duplicate wire faces (two JKs).
+// Never sent on the socket. Unique tokens stay bare; copies get #0, #1, …
+const INST_SUFFIX = /#\d+$/;
+
+export function wireOf(token) {
+  if (token == null || token === '') return '';
+  return String(token).replace(INST_SUFFIX, '');
+}
+
+/** Stamp #n on tokens that appear more than once (JK,JK → JK#0,JK#1). */
+export function instify(tokens) {
+  const list = tokens || [];
+  const counts = new Map();
+  for (const t of list) counts.set(t, (counts.get(t) || 0) + 1);
+  const seen = new Map();
+  return list.map((t) => {
+    if ((counts.get(t) || 0) < 2) return t;
+    const n = seen.get(t) || 0;
+    seen.set(t, n + 1);
+    return `${t}#${n}`;
+  });
+}
+
+/** Drop one hand token per transit token (match on bare wire). */
+export function subtractWires(handTokens, transitTokens) {
+  const remain = (transitTokens || []).map(wireOf);
+  return (handTokens || []).filter((t) => {
+    const i = remain.indexOf(wireOf(t));
+    if (i < 0) return true;
+    remain.splice(i, 1);
+    return false;
+  });
+}
+
+// Wire token ("H13","c1","JK" or "JK#0") → SVG fragment id, or null.
 export function wireToSymbol(token) {
   if (!token) return null;
-  const t = String(token).trim().toUpperCase();
+  const t = wireOf(token).trim().toUpperCase();
   if (t === 'JK' || t === 'JOKER') return JOKER_ID;
   const m = t.match(/^([CDHS])(\d{1,2})$/);
   if (!m) return null;
@@ -98,14 +140,19 @@ export function cardSvg(symbolId, { w = CARD_W, h = CARD_H, cls = '' } = {}) {
 export function cardEl(token, opts = {}) {
   const el = document.createElement('div');
   el.className = 'card' + (opts.selected ? ' selected' : '') + (opts.cls ? ` ${opts.cls}` : '');
-  const sym = token ? wireToSymbol(token) : BACK_ID;
-  if (token) el.dataset.wire = token;
+  const wire = token ? wireOf(token) : '';
+  const inst = token ? String(token) : '';
+  const sym = wire ? wireToSymbol(wire) : BACK_ID;
+  if (inst) {
+    el.dataset.wire = wire;
+    el.dataset.inst = inst;
+  }
   if (sym) el.dataset.sym = sym;
-  const w = opts.w != null ? opts.w : pxScale(CARD_W);
-  const h = opts.h != null ? opts.h : pxScale(CARD_H);
+  const w = opts.w != null ? opts.w : cardPx(CARD_W);
+  const h = opts.h != null ? opts.h : cardPx(CARD_H);
   el.appendChild(cardSvg(sym || BACK_ID, { ...opts, w, h }));
   if (opts.title) el.title = opts.title;
-  else if (token) el.title = token;
+  else if (wire) el.title = wire;
   return el;
 }
 

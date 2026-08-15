@@ -1,5 +1,5 @@
 // Current-trick parse + seat-offset stack rendering (center table).
-import { cardEl, pxScale } from './cards.js';
+import { cardEl, cardPx } from './cards.js';
 import { displayPlayTokens } from './config.js';
 import { parseHistoryString, displayFace } from './historySuits.js';
 
@@ -342,8 +342,8 @@ export function renderPlayStacks(layerEl, plays, layout, felt = {}) {
   const finishOrder = felt.finishOrder || [];
   const turnCues = felt.turnCues || [];
 
-  const cw = pxScale(48);
-  const ch = pxScale(64);
+  const cw = cardPx(48);
+  const ch = cardPx(64);
   const piles = document.createElement('div');
   piles.className = 'trick-piles';
   const played = new Set();

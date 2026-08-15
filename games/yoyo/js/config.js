@@ -311,7 +311,7 @@ export function handSort() {
 // Rank for display sort (JK high; "!N" suit-error faces; wire C13 / plain 13).
 function tokenRank(t) {
   if (!t) return 0;
-  const s = String(t).trim().toUpperCase();
+  const s = String(t).trim().toUpperCase().replace(/#\d+$/, '');
   if (s === 'JK' || s === 'JOKER') return 14;
   if (s.startsWith('!')) {
     const n = parseInt(s.slice(1), 10);

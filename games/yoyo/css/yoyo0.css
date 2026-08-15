@@ -1646,15 +1646,17 @@ button:focus-visible {
   /* Avoid accidental text selection blocking card drag */
   -webkit-user-select: none;
   user-select: none;
-  /* Fluid table chrome: JS sets --ui from #table-area (clamp ~0.9–1.35) */
+  /* Fluid table chrome: JS sets --ui from felt + hand row (clamp ~0.85–2.4) */
   --ui: 1;
   /* Parked last-trick scale — JS also sets these so CSS/layout stay in sync */
   --trick-park-scale: 0.9;
   --trick-park-summary-scale: 0.9;
-  --card-w: calc(60px * var(--ui));
-  --card-h: calc(80px * var(--ui));
-  --trick-card-w: calc(48px * var(--ui));
-  --trick-card-h: calc(64px * var(--ui));
+  /* Faces a bit larger than tokens now that you-seat is a docked strip */
+  --card-boost: 1.1;
+  --card-w: calc(60px * var(--ui) * var(--card-boost));
+  --card-h: calc(80px * var(--ui) * var(--card-boost));
+  --trick-card-w: calc(48px * var(--ui) * var(--card-boost));
+  --trick-card-h: calc(64px * var(--ui) * var(--card-boost));
   --fan-w: calc(22px * var(--ui));
   --fan-h: calc(30px * var(--ui));
   --fan-face-w: calc(28px * var(--ui));
@@ -1668,6 +1670,18 @@ button:focus-visible {
 .play-page textarea {
   -webkit-user-select: text;
   user-select: text;
+}
+/* E9.4: chrome stays rem. Reset table --ui so strip / overlays / toasts
+   cannot inherit card/token scale. Felt pieces (cards, tokens, stacks) keep --ui. */
+.play-strip,
+.overlay-panel,
+.game-over-hold,
+.footer-note,
+.taken-over-banner,
+.illegal-toast,
+.hand-hint {
+  --ui: 1;
+  --card-boost: 1;
 }
 .play-strip {
   display: flex;
@@ -1716,7 +1730,7 @@ button:focus-visible {
 }
 /* Live standings: rank · name/role · score (no Δ / vote) */
 .finish-board.live-mode li {
-  grid-template-columns: 1.6rem 1fr auto;
+  grid-template-columns: 1.6rem minmax(0, 1fr) auto;
 }
 .finish-board.live-mode li.fin-empty {
   display: block;
@@ -1977,8 +1991,8 @@ button:focus-visible {
   justify-content: flex-start;
   gap: calc(0.4rem * var(--ui, 1));
   min-width: 0;
-  /* ~2× prior cap so Name + [n] + Role fit on one row */
-  max-width: min(72%, 34rem);
+  /* Compact dock: rem cap so a long name cannot eat Play / exchange (E9.5) */
+  max-width: min(36%, 22rem);
   width: max-content;
   padding: calc(0.28rem * var(--ui, 1)) calc(0.65rem * var(--ui, 1));
   z-index: 5;
@@ -1988,7 +2002,7 @@ button:focus-visible {
 }
 .seat-token.you-strip .sname {
   font-size: var(--seat-name-size, 0.9rem);
-  max-width: 15em; /* ~2× prior 7.5em */
+  max-width: 12rem; /* rem, not em — ellipsis before the strip hits Play */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2096,7 +2110,14 @@ button:focus-visible {
 .seat-token.pp-opposite.pp-nudge .place-pill {
   top: -0.35rem;
 }
-.seat-token .sname { font-weight: 600; font-size: var(--seat-name-size, 0.9rem); }
+.seat-token .sname {
+  font-weight: 600;
+  font-size: var(--seat-name-size, 0.9rem);
+  max-width: calc(7.5rem * var(--ui, 1));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .seat-token .smeta { font-size: var(--seat-meta-size, 0.72rem); color: var(--muted); }
 .seat-token .smeta.srole {
   display: flex;
@@ -2899,11 +2920,12 @@ button:focus-visible {
   z-index: 5;
   display: none;
 }
-/* Game summary: lower + narrower; light blue glass + solid gold (user-tuned) */
+/* Game summary: wider on desktop; leave felt for last-trick on narrow */
 #panel-play-again {
   top: 48%;
-  min-width: min(18.5rem, 88vw);
-  max-width: min(20rem, 90vw);
+  box-sizing: border-box;
+  min-width: min(22rem, 86vw);
+  max-width: min(26rem, 86vw);
   background: rgb(0 0 0 / 12%);
   border-color: rgba(201, 162, 39, 1);
   color: #f4f7fa;
@@ -3174,15 +3196,17 @@ button:focus-visible {
   list-style: none;
   margin: 0 0 0.65rem;
   padding: 0;
+  min-width: 0;
 }
 .finish-board li {
   display: grid;
-  grid-template-columns: 1.6rem 1fr auto auto auto;
+  grid-template-columns: 1.6rem minmax(0, 1fr) auto auto auto;
   gap: 0.4rem;
   align-items: center;
   padding: 0.35rem 0.25rem;
   border-bottom: 1px solid #2a3a2a;
   font-size: 0.9rem;
+  min-width: 0;
 }
 .finish-board li.fin-head {
   font-size: 0.72rem;
@@ -3252,16 +3276,29 @@ button:focus-visible {
   border-radius: 6px;
   border-bottom-color: transparent;
 }
-.finish-board .fin-name { font-weight: 600; }
+.finish-board .fin-name {
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+}
 .finish-board .fin-name-line {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.3rem;
+  min-width: 0;
+  max-width: 100%;
+}
+.finish-board .fin-pname {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .finish-board .fin-you-chip {
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
   gap: 0.15rem;
   font-size: 0.62rem;
   font-weight: 800;
@@ -3391,6 +3428,7 @@ button:focus-visible {
 }
 
 .hand-bar {
+  /* Padding / hint stay rem (E9.4). Do not reset --ui here — faces live inside. */
   background: var(--bg-panel);
   border-top: 1px solid var(--border);
   padding: 0.5rem 0.75rem 0.75rem;
@@ -3400,13 +3438,13 @@ button:focus-visible {
 /* High/low transit floats: opposite sides of you-seat (table-area, outside hand bar) */
 .ex-seat-float {
   position: absolute;
-  bottom: 0.55rem;
+  bottom: calc(0.55rem * var(--ui, 1));
   z-index: 6;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.3rem;
-  width: min(10.5rem, 38vw);
+  gap: calc(0.3rem * var(--ui, 1));
+  width: min(calc(10.5rem * var(--ui, 1)), 38vw);
   pointer-events: none;
   /* left/right set in layoutExchangeFloats — seat edge anchors */
 }
@@ -3417,6 +3455,10 @@ button:focus-visible {
 .ex-seat-float #btn-exchange-ack {
   pointer-events: auto;
   width: 100%;
+}
+.ex-seat-float #btn-exchange-ack {
+  font-size: calc(0.9rem * var(--ui, 1));
+  padding: calc(0.35em * var(--ui, 1)) calc(0.85em * var(--ui, 1));
 }
 /* High pile: solid accent rim (symmetry with low drop zone) */
 .ex-high-float .ex-zone {
@@ -3432,9 +3474,9 @@ button:focus-visible {
 }
 .ex-zone {
   box-sizing: border-box;
-  min-height: 4.6rem;
-  padding: 0.35rem;
-  border-radius: 8px;
+  min-height: calc(4.6rem * var(--ui, 1));
+  padding: calc(0.35rem * var(--ui, 1));
+  border-radius: calc(8px * var(--ui, 1));
   border: 1px dashed var(--border-hi);
   background: rgba(20, 28, 20, 0.94);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
@@ -3446,17 +3488,17 @@ button:focus-visible {
   box-shadow: 0 0 0 1px var(--accent-hi), 0 4px 14px rgba(0, 0, 0, 0.4);
 }
 .ex-zone .ex-label {
-  font-size: 0.72rem;
+  font-size: calc(0.72rem * var(--ui, 1));
   color: var(--muted);
-  margin-bottom: 0.3rem;
+  margin-bottom: calc(0.3rem * var(--ui, 1));
   text-align: center;
 }
 .ex-cards {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.15rem;
+  gap: calc(0.15rem * var(--ui, 1));
   justify-content: center;
-  min-height: 2.8rem;
+  min-height: calc(2.8rem * var(--ui, 1));
 }
 /* Pending transit faces */
 .ex-cards .card,
@@ -3545,7 +3587,7 @@ button:focus-visible {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0.45rem;
+  bottom: calc(0.45rem * var(--ui, 1));
   height: 0;
   z-index: 7;
   pointer-events: none;
@@ -3625,15 +3667,15 @@ button:focus-visible {
 }
 .park-zone {
   flex: 1 1 0; /* fill empty space on that side of the hand */
-  min-width: 1.25rem;
+  min-width: calc(1.25rem * var(--ui, 1));
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: calc(8px * var(--ui, 1));
   background: transparent;
   color: transparent;
-  font-size: 0.68rem;
+  font-size: calc(0.68rem * var(--ui, 1));
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -3826,14 +3868,14 @@ button:focus-visible {
   border-radius: 4px;
   touch-action: none;
 }
-.hand .card:hover { transform: translateY(-6px); }
+.hand .card:hover { transform: translateY(calc(-6px * var(--ui, 1))); }
 .hand .card.selected {
-  transform: translateY(-12px);
+  transform: translateY(calc(-12px * var(--ui, 1)));
   box-shadow: 0 0 0 2px var(--accent-hi);
 }
 .hand .card.preview {
   box-shadow: 0 0 0 2px rgba(232, 200, 74, 0.65);
-  transform: translateY(-8px);
+  transform: translateY(calc(-8px * var(--ui, 1)));
 }
 .hand .card.selected.preview {
   box-shadow: 0 0 0 2px var(--accent-hi), 0 0 10px rgba(232, 200, 74, 0.45);
@@ -3873,7 +3915,7 @@ button:focus-visible {
   animation: deal-in 0.28s ease backwards;
 }
 @keyframes deal-in {
-  from { opacity: 0; transform: translateY(-40px) scale(0.85); }
+  from { opacity: 0; transform: translateY(calc(-40px * var(--ui, 1))) scale(0.85); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 .hand-hint {
@@ -4094,10 +4136,11 @@ button:focus-visible {
   .talk-panel {
     min-height: 16rem;
   }
-  .seat-token { min-width: 4.2rem; font-size: 0.85rem; }
-  .hand .card .card-svg { width: 48px; height: 64px; }
-  /* Match free-hand min-height to scaled faces (avoid flex-end gap above slots) */
-  .hand:not(.hand-bay) {
-    min-height: calc(64px + 8px);
+  /* Play faces/tokens follow --ui (E9.3); do not pin 48×64 / 4.2rem here */
+  .play-page #panel-play-again {
+    min-width: 0;
+    width: min(20rem, 82vw);
+    max-width: 82vw;
+    padding: 0.7rem 0.8rem;
   }
 }

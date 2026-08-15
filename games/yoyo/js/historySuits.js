@@ -55,7 +55,7 @@ function isUsed(hs, rank, suit) {
 // Parse wire token → { rank, suit } | { joker: true } | null.
 export function parseWireCard(token) {
   if (!token) return null;
-  const t = String(token).trim().toUpperCase();
+  const t = String(token).trim().toUpperCase().replace(/#\d+$/, '');
   if (t === 'JK' || t === 'JOKER') return { joker: true };
   const m = t.match(/^([CDHS])(\d{1,2})$/);
   if (!m) return null;

@@ -14,12 +14,18 @@ import {
   displayTableName,
 } from './config.js';
 import {
+  CARD_W,
+  CARD_BOOST,
   cardEl,
   parseHand,
+  instify,
+  wireOf,
+  subtractWires,
   backFan,
   faceFan,
   setFaceModeFromOpts,
   pxScale,
+  cardPx,
 } from './cards.js';
 import {
   createHistorySuits,
@@ -143,7 +149,7 @@ let preShiftMySeat = 1;
 let histViewIndex = -1;
 /** When true, chrome follows the newest completed trick as the hand progresses. */
 let histPinnedToLast = true;
-/** @type {Set<string>} selected wire cards */
+/** @type {Set<string>} selected hand instance keys (JK#0 vs JK#1) */
 const selected = new Set();
 /** @type {object|null} seat-draw status */
 let drawStatus = null;
@@ -170,9 +176,12 @@ let drag = null;
  * @type {{ tokens: string[], side: 'left'|'right' }[]}
  */
 let parkedSeqs = [];
+/** Guard: renderHand → updateUiScale may refresh seats/trick without re-entering. */
+let uiScaleRefreshing = false;
 /** @type {object|null} last ExchangePhase event */
 let exchPhase = null;
 /** Optimistic hide of Prez offer cards until ExchangePhase / State catch up */
+/** Optimistic offer cards as hand instance keys (not bare JK). */
 let localOfferCards = /** @type {string[]} */ ([]);
 /** Yoyo pick from surplus offer pile (wire tokens ⊆ president_offer) */
 let yoyoPick = /** @type {string[]} */ ([]);
@@ -505,12 +514,12 @@ function resetSuitsForHand(handStr) {
 
 // ——— Seq5 park bays (E4d.1–E4d.2) ———
 
-// Active hand wires excluding exchange transit.
+// Active hand instance keys excluding exchange transit (multiset).
 function activeHandWires() {
   if (!lastState?.hand) return [];
-  const transit = exchangeTransitSet();
-  const wire = parseHand(lastState.hand);
-  return transit.size ? wire.filter((t) => !transit.has(t)) : wire;
+  const inst = instify(parseHand(lastState.hand));
+  const transit = exchangeTransitWires();
+  return transit.length ? subtractWires(inst, transit) : inst;
 }
 
 // True if two token lists are the same multiset.
@@ -866,7 +875,8 @@ function buildBayCluster(bay, { elig, canAct, dealAnim, animIndex }) {
 // Build one hand card in a slot (chip host + face) so chips wrap with multi-row hands.
 function buildHandCardEl(t, { elig, canAct, dealAnim, animIndex }) {
   const card = cardEl(t);
-  card.dataset.wire = t;
+  card.dataset.wire = wireOf(t);
+  card.dataset.inst = t;
   if (selected.has(t)) card.classList.add('selected');
   if (elig && !elig.live.has(t)) card.classList.add('dead');
   if (dealAnim) {
@@ -1104,7 +1114,9 @@ function renderStandingsBoard() {
         : escapeHtml(placeLabels(n, nextRank));
       li.innerHTML =
         `<span class="fin-rank">${nextRank}</span>` +
-        `<span class="fin-name"><span class="fin-name-line">${escapeHtml(name)}${youChip}</span>` +
+        `<span class="fin-name"><span class="fin-name-line">` +
+        `<span class="fin-pname" title="${escapeHtml(name)}">${escapeHtml(name)}</span>` +
+        `${youChip}</span>` +
         `<span class="fin-role">${roleHtml}</span></span>` +
         `<span class="fin-avg">${avgStr}</span>`;
       return li;
@@ -1198,6 +1210,7 @@ function buildSeatToken(name, absSeat, n, rem, opts = {}) {
     const nm = document.createElement('span');
     nm.className = 'sname';
     nm.textContent = name;
+    nm.title = name;
     el.appendChild(nm);
     const meta = document.createElement('span');
     meta.className = 'smeta srole';
@@ -1215,6 +1228,7 @@ function buildSeatToken(name, absSeat, n, rem, opts = {}) {
   const nm = document.createElement('div');
   nm.className = 'sname';
   nm.textContent = name;
+  nm.title = name;
   el.appendChild(nm);
 
   // Role (this-hand office); crown on 1, gold/silver wash on 1–2
@@ -1470,14 +1484,14 @@ function applyWinnerParkOffset(piles, winSeat, youSeat, n, scale = TRICK_PARK_SC
   }
 
   const vi = visualIndex(winSeat, n, youSeat || 1);
-  const gap = 10;
+  const gap = pxScale(10);
   // Where the TOP-CENTER of the *scaled* content should land
   let targetTopX;
   let targetTopY;
   if (vi === 0) {
     // You: above hand-bar, centered at 25% from left (clear of bottom-center turn cue)
     const scaledH = bb.height * scale;
-    const padB = 6;
+    const padB = pxScale(6);
     targetTopX = pr.width * 0.25;
     targetTopY = pr.height - padB - scaledH;
     // Keep a bit of air if content is very tall
@@ -1498,8 +1512,8 @@ function applyWinnerParkOffset(piles, winSeat, youSeat, n, scale = TRICK_PARK_SC
     // Top opposite: park is under the mid-ray play arrow — slide left so cards stay clear
     if (n % 2 === 0 && vi === n / 2) {
       const scaledHalfW = (bb.width * scale) / 2;
-      targetTopX -= scaledHalfW + 18; // half stack + arrow/gap
-      const minX = scaledHalfW + 4;
+      targetTopX -= scaledHalfW + pxScale(18); // half stack + arrow/gap
+      const minX = scaledHalfW + pxScale(4);
       if (targetTopX < minX) targetTopX = minX;
     }
   }
@@ -1537,10 +1551,9 @@ function withSummaryPanelMeasure(fn) {
 }
 
 /**
- * Summary last-trick dock: left of Game summary (not winner seat).
- * Uses a stable footprint estimate (no unpark/remeasure thrash) + simple
- * % translate vs felt center — matches the pre-scale-math placement that
- * looked correct on first paint. Y drops below upper seat tokens when needed.
+ * Summary last-trick dock: left of Game summary when that column is wide
+ * enough; otherwise under the panel (tall/narrow). Stable footprint — no
+ * unpark/remeasure. Left-dock Y drops below upper seat tokens when needed.
  */
 function applySummaryDockOffset(piles) {
   const layer = piles.parentElement;
@@ -1552,44 +1565,76 @@ function applySummaryDockOffset(piles) {
     const lr = layer.getBoundingClientRect();
     if (lr.width < 8 || lr.height < 8 || pr.width < 8) return false;
 
-    // Fixed docked footprint (scaled last-trick ≈ this size) — do not unpark to measure
-    const halfW = Math.round(72 * (TRICK_PARK_SUMMARY_SCALE / 0.5));
-    const halfH = Math.round(52 * (TRICK_PARK_SUMMARY_SCALE / 0.5));
-    const gapPanel = 18;
-    const gapSeat = 12;
+    const gapPanel = pxScale(18);
+    const gapSeat = pxScale(12);
+    const inset = pxScale(4);
+    const dockPad = pxScale(10);
 
-    // Horizontal: keep entire dock left of panel
-    let targetCX = pr.left - lr.left - gapPanel - halfW;
-    const maxRight = pr.left - lr.left - gapPanel;
-    if (targetCX + halfW > maxRight) targetCX = maxRight - halfW;
-    if (targetCX < halfW + 4) targetCX = halfW + 4;
+    const leftRoom = pr.left - lr.left;
+    const belowRoom = lr.bottom - pr.bottom;
+    let scale = TRICK_PARK_SUMMARY_SCALE;
+    let halfW = Math.round(cardPx(72) * (scale / 0.5));
+    let halfH = Math.round(cardPx(52) * (scale / 0.5));
+    const needW = halfW * 2 + gapPanel + inset;
+    const needH = halfH * 2 + gapPanel + inset;
+    const useBelow =
+      leftRoom < needW && (belowRoom >= needH * 0.65 || belowRoom > leftRoom);
 
-    // Vertical: fin-head row, else upper third of panel
-    const head = panelEl.querySelector('.fin-head');
-    const hr = head?.getBoundingClientRect();
-    let targetCY =
-      hr && hr.height > 0
-        ? hr.top - lr.top + hr.height * 0.5
-        : pr.top - lr.top + Math.min(80, pr.height * 0.22);
-
-    // Drop below any upper seat token that intersects the dock column
-    const dockLeft = targetCX - halfW - 10;
-    const dockRight = targetCX + halfW + 10;
-    let seatClearY = 0;
-    for (const seat of document.querySelectorAll('#seats-layer .seat-token')) {
-      const tr = seat.getBoundingClientRect();
-      const sl = tr.left - lr.left;
-      const sr = tr.right - lr.left;
-      const st = tr.top - lr.top;
-      if (sr < dockLeft || sl > dockRight) continue;
-      if (st > lr.height * 0.58) continue;
-      seatClearY = Math.max(seatClearY, tr.bottom - lr.top);
-    }
-    if (seatClearY > 0) {
-      targetCY = Math.max(targetCY, seatClearY + gapSeat + halfH);
+    if (useBelow && belowRoom > 0 && belowRoom < needH) {
+      // 2 * halfH = 4 * cardPx(52) * scale  (halfH uses scale/0.5)
+      const fit = (belowRoom - gapPanel - inset) / (4 * cardPx(52));
+      scale = Math.max(0.55, Math.min(scale, fit));
+      halfW = Math.round(cardPx(72) * (scale / 0.5));
+      halfH = Math.round(cardPx(52) * (scale / 0.5));
     }
 
-    // Simple translate vs felt center (same model as original dock; stable with scale)
+    let targetCX;
+    let targetCY;
+    if (useBelow) {
+      piles.style.setProperty('--trick-park-summary-scale', String(scale));
+      targetCX = pr.left - lr.left + pr.width * 0.5;
+      const stripL = youStripLeftInArea(lr);
+      if (stripL != null && targetCX + halfW > stripL - gapPanel) {
+        targetCX = stripL - gapPanel - halfW;
+      }
+      targetCX = Math.min(
+        lr.width - halfW - inset,
+        Math.max(halfW + inset, targetCX),
+      );
+      targetCY = pr.bottom - lr.top + gapPanel + halfH;
+      const maxCY = lr.height - halfH - inset;
+      if (targetCY > maxCY) targetCY = maxCY;
+    } else {
+      piles.style.removeProperty('--trick-park-summary-scale');
+      targetCX = pr.left - lr.left - gapPanel - halfW;
+      const maxRight = pr.left - lr.left - gapPanel;
+      if (targetCX + halfW > maxRight) targetCX = maxRight - halfW;
+      if (targetCX < halfW + inset) targetCX = halfW + inset;
+
+      const head = panelEl.querySelector('.fin-head');
+      const hr = head?.getBoundingClientRect();
+      targetCY =
+        hr && hr.height > 0
+          ? hr.top - lr.top + hr.height * 0.5
+          : pr.top - lr.top + Math.min(pxScale(80), pr.height * 0.22);
+
+      const dockLeft = targetCX - halfW - dockPad;
+      const dockRight = targetCX + halfW + dockPad;
+      let seatClearY = 0;
+      for (const seat of document.querySelectorAll('#seats-layer .seat-token')) {
+        const tr = seat.getBoundingClientRect();
+        const sl = tr.left - lr.left;
+        const sr = tr.right - lr.left;
+        const st = tr.top - lr.top;
+        if (sr < dockLeft || sl > dockRight) continue;
+        if (st > lr.height * 0.58) continue;
+        seatClearY = Math.max(seatClearY, tr.bottom - lr.top);
+      }
+      if (seatClearY > 0) {
+        targetCY = Math.max(targetCY, seatClearY + gapSeat + halfH);
+      }
+    }
+
     const xPct = ((targetCX - lr.width * 0.5) / lr.width) * 100;
     const yPct = ((targetCY - lr.height * 0.48) / lr.height) * 100;
     piles.style.setProperty('--park-x', `${xPct.toFixed(1)}%`);
@@ -2301,6 +2346,7 @@ function applyState(ev) {
     exchSettleSnap = null;
   }
   renderStrip();
+  updateUiScale();
   if (!animating && !seatCeremonyActive) renderSeatsFromState();
   if (!seatCeremonyActive) {
     // Fly taken/returned before trays unmount (still in DOM until overlay render)
@@ -2365,18 +2411,18 @@ function offerMax() {
   return Number(exchPhase?.max_offer) || 3;
 }
 
-// Server pile + optimistic local adds not yet echoed.
+// Server pile + optimistic local adds not yet echoed (inst keys if two JKs).
 function offerPileTokens() {
   const server = parseHand(exchPhase?.president_offer || '');
-  const seen = new Set(server);
   const out = server.slice();
+  const remain = server.slice();
   for (const t of localOfferCards) {
-    if (!seen.has(t)) {
-      out.push(t);
-      seen.add(t);
-    }
+    const w = wireOf(t);
+    const i = remain.indexOf(w);
+    if (i >= 0) remain.splice(i, 1);
+    else out.push(w);
   }
-  return out;
+  return instify(out);
 }
 
 // Remaining slots in offer pile (dual-human ⇒ max_offer; else need).
@@ -2419,15 +2465,14 @@ function canPresidentWithdraw() {
 }
 
 function sendWithdrawExchange(wires) {
-  const list = (wires || []).filter(Boolean);
+  const list = (wires || []).map(wireOf).filter(Boolean);
   if (!list.length || !canPresidentWithdraw()) return false;
   const cards = list.join(',');
   lastSentPlay = cards;
   dbgPlay('send withdraw', { sent: cards });
   send({ action: 'withdrawexchange', cards });
   // Optimistic: drop from local offer hide list; server pile updates via ExchangePhase
-  const rm = new Set(list);
-  localOfferCards = localOfferCards.filter((t) => !rm.has(t));
+  localOfferCards = subtractWires(localOfferCards, list);
   return true;
 }
 
@@ -2446,8 +2491,14 @@ function offerHasSurplus() {
 
 // Drop picks that left the pile (Prez withdraw / phase refresh).
 function pruneYoyoPick() {
-  const pile = new Set(offerServerPile());
-  yoyoPick = yoyoPick.filter((t) => pile.has(t));
+  const remain = offerPileTokens().slice();
+  yoyoPick = yoyoPick.filter((t) => {
+    let i = remain.indexOf(t);
+    if (i < 0) i = remain.findIndex((p) => wireOf(p) === wireOf(t));
+    if (i < 0) return false;
+    remain.splice(i, 1);
+    return true;
+  });
 }
 
 function yoyoPickReady() {
@@ -2464,7 +2515,7 @@ function yoyoAckEnabled() {
 
 function toggleYoyoPick(wire) {
   if (!yoyoCanResolve()) return;
-  const pile = offerServerPile();
+  const pile = offerPileTokens();
   if (!pile.includes(wire)) return;
   const i = yoyoPick.indexOf(wire);
   if (i >= 0) yoyoPick.splice(i, 1);
@@ -2485,14 +2536,21 @@ function sendYoyoResolve(chosen) {
   if (!yoyoCanResolve()) return false;
   const need = offerNeed();
   const pile = offerServerPile();
-  let cards = chosen || yoyoPick.slice();
+  let cards = (chosen || yoyoPick).map(wireOf);
   if (pile.length === need && (!cards.length || cards.length === need)) {
     // Exact offer — Ack (ignore selection)
     lastSentPlay = pile.join(',');
     send({ action: 'exchangeack' });
   } else {
     if (cards.length !== need) return false;
-    if (!cards.every((t) => pile.includes(t))) return false;
+    const remain = pile.slice();
+    const inPile = cards.every((t) => {
+      const i = remain.indexOf(wireOf(t));
+      if (i < 0) return false;
+      remain.splice(i, 1);
+      return true;
+    });
+    if (!inPile) return false;
     // Prefer chosen order when drag supplied it
     if (chosen?.length) yoyoPick = chosen.slice();
     lastSentPlay = cards.join(',');
@@ -2554,8 +2612,11 @@ function captureOfferCardRects() {
   /** @type {Record<string, DOMRect>} */
   const rects = {};
   $('ex-right-cards')?.querySelectorAll('.card[data-wire]')?.forEach((el) => {
+    const inst = el.dataset.inst || el.dataset.wire;
     const w = el.dataset.wire;
-    if (w) rects[w] = el.getBoundingClientRect();
+    const box = el.getBoundingClientRect();
+    if (inst) rects[inst] = box;
+    if (w && !rects[w]) rects[w] = box;
   });
   return rects;
 }
@@ -2684,32 +2745,58 @@ function playExchangeSettleAnim(snap, st, chosen) {
 }
 
 // Wire tokens currently in exchange transit (still often present in State.hand).
-function exchangeTransitSet() {
-  const s = new Set(localOfferCards);
-  if (!exchangeActive() || !exchPhase) return s;
-  for (const t of parseHand(exchPhase.yoyo_give || '')) s.add(t);
-  for (const t of parseHand(exchPhase.president_offer || '')) s.add(t);
-  return s;
+// Multiset: one JK in the pile hides one joker, not both.
+function exchangeTransitWires() {
+  const serverOffer = parseHand(exchPhase?.president_offer || '');
+  const yGive =
+    exchangeActive() && exchPhase ? parseHand(exchPhase.yoyo_give || '') : [];
+  const extra = [];
+  const remain = serverOffer.slice();
+  for (const t of localOfferCards) {
+    const w = wireOf(t);
+    const i = remain.indexOf(w);
+    if (i >= 0) remain.splice(i, 1);
+    else extra.push(w);
+  }
+  return [...serverOffer, ...yGive, ...extra];
 }
 
 // Gaps left/right of bottom-center play corridor (Pass/Play + exchange floats).
-// Does not use the docked you-strip — strip sits off the hand→felt path.
+// You-strip is docked lower-right; Play / right float clamp to its left edge.
 function youSeatGaps(containerRect) {
   const cx = containerRect.width * 0.5;
-  const half = Math.min(72, Math.max(44, containerRect.width * 0.07));
+  const half = Math.min(
+    pxScale(72),
+    Math.max(pxScale(44), containerRect.width * 0.07),
+  );
   return { youL: cx - half, youR: cx + half };
 }
 
+// You-strip left edge in table-area coords, or null if not laid out.
+function youStripLeftInArea(areaRect) {
+  const strip = document.querySelector('#seats-layer .seat-token.you-strip');
+  if (!strip || strip.hidden) return null;
+  const sr = strip.getBoundingClientRect();
+  if (sr.width < 8) return null;
+  return sr.left - areaRect.left;
+}
+
 // Anchor float to seat edge: side 'right' ⇒ left edge at youR+gap; 'left' ⇒ right edge at youL−gap.
-function positionSeatFloat(el, side, areaW, youL, youR, gap = 8) {
+function positionSeatFloat(el, side, areaW, youL, youR, gap) {
   if (!el || el.hidden) return;
-  const w = el.offsetWidth || 168;
+  const g = gap != null ? gap : pxScale(8);
+  const inset = pxScale(4);
+  const w = el.offsetWidth || pxScale(168);
+  const area = $('table-area');
+  const areaR = area?.getBoundingClientRect();
   if (side === 'right') {
-    const left = Math.min(areaW - w - 4, Math.max(4, youR + gap));
-    el.style.left = `${left}px`;
+    let left = Math.min(areaW - w - inset, Math.max(inset, youR + g));
+    const cut = areaR ? youStripLeftInArea(areaR) : null;
+    if (cut != null) left = Math.min(left, cut - w - g);
+    el.style.left = `${Math.max(inset, left)}px`;
     el.style.right = 'auto';
   } else {
-    const right = Math.max(4, areaW - (youL - gap));
+    const right = Math.max(inset, areaW - (youL - g));
     el.style.left = 'auto';
     el.style.right = `${right}px`;
   }
@@ -2749,7 +2836,7 @@ function layoutPlayActions() {
     layoutExchangeFloats();
     const railR = lowRail.getBoundingClientRect();
     const cx = railR.left - r.left + railR.width / 2;
-    const bottom = Math.max(0, r.bottom - railR.top + 6);
+    const bottom = Math.max(0, r.bottom - railR.top + pxScale(6));
     play.style.left = `${cx}px`;
     play.style.bottom = `${bottom}px`;
     play.style.zIndex = '8';
@@ -2758,8 +2845,13 @@ function layoutPlayActions() {
 
   play.style.bottom = '0';
   const g = youSeatGaps(r);
-  const passX = Math.max(36, g.youL - 28);
-  const playX = Math.min(r.width - 36, g.youR + 28);
+  const edge = pxScale(36);
+  const inset = pxScale(28);
+  const passX = Math.max(edge, g.youL - inset);
+  let maxPlay = r.width - edge;
+  const cut = youStripLeftInArea(r);
+  if (cut != null) maxPlay = Math.min(maxPlay, cut - edge);
+  const playX = Math.min(maxPlay, g.youR + inset);
   pass.style.left = `${passX}px`;
   play.style.left = `${playX}px`;
 }
@@ -2774,7 +2866,7 @@ function exTransitCard(
   if (withdrawable) cls += ' ex-withdrawable';
   if (picked) cls += ' selected';
   if (arrive && !reducedMotion) cls += ' ex-arrive';
-  const el = cardEl(t, { w: pxScale(40), h: pxScale(54), cls });
+  const el = cardEl(t, { w: cardPx(40), h: cardPx(54), cls });
   // SVG child can steal hits on some Chromium builds — faces stay the target
   el.querySelector('svg')?.style.setProperty('pointer-events', 'none');
   if (pickable) {
@@ -3006,15 +3098,16 @@ function renderExchangeOverlays() {
   const pOffer = displayPlayTokens(offerPileTokens());
   // Drop locals that server has accepted
   if (exchPhase.president_offer) {
-    const srv = new Set(parseHand(exchPhase.president_offer));
-    localOfferCards = localOfferCards.filter((t) => !srv.has(t));
+    localOfferCards = subtractWires(
+      localOfferCards,
+      parseHand(exchPhase.president_offer),
+    );
   }
 
   // New offer faces → brief pop-in (Ex3d)
   const offerCsv = exchPhase.president_offer || '';
   if (offerCsv !== prevOfferCsv) {
-    const prev = new Set(parseHand(prevOfferCsv));
-    exchArriveWires = new Set(pOffer.filter((t) => !prev.has(t)));
+    exchArriveWires = new Set(subtractWires(pOffer, parseHand(prevOfferCsv)));
     prevOfferCsv = offerCsv;
   } else {
     exchArriveWires = new Set();
@@ -3092,6 +3185,17 @@ function renderExchangeOverlays() {
 }
 
 function renderHand() {
+  // Parks add bay chrome; recompute --ui before baking face sizes.
+  if (updateUiScale() && !uiScaleRefreshing) {
+    uiScaleRefreshing = true;
+    try {
+      if (!animating && !seatCeremonyActive) renderSeatsFromState();
+      renderTrick();
+      renderExchangeOverlays();
+    } finally {
+      uiScaleRefreshing = false;
+    }
+  }
   const hand = $('hand');
   const leftHost = $('hand-bays-left');
   const rightHost = $('hand-bays-right');
@@ -3189,7 +3293,7 @@ function renderHand() {
 function currentResponseEligibility(handTokens) {
   const st = lastState;
   if (!st || st.step !== STEP.PLAY || st.next !== mySeat) return null;
-  const hand = handTokens || (st.hand ? parseHand(st.hand) : []);
+  const hand = handTokens || activeHandWires();
   return responseEligibility(hand, st.legal || []);
 }
 
@@ -3206,7 +3310,8 @@ function clearSetChips() {
 // Sync .selected classes + play chrome to `selected`.
 function refreshSelectionUi() {
   $('hand-wrap')?.querySelectorAll('.card').forEach((c) => {
-    c.classList.toggle('selected', selected.has(c.dataset.wire));
+    const inst = c.dataset.inst || c.dataset.wire;
+    c.classList.toggle('selected', selected.has(inst));
   });
   updatePlayButtons();
   updateHandDim();
@@ -3226,6 +3331,16 @@ function selectionMatchesTokens(tokens) {
   return tokens.every((t) => selected.has(t));
 }
 
+function isJokerToken(t) {
+  return !!parseWireCard(t)?.joker;
+}
+
+function dropJokersFromSelection() {
+  for (const t of [...selected]) {
+    if (isJokerToken(t)) selected.delete(t);
+  }
+}
+
 // Toggle one card on click; respects response/exchange caps.
 function toggleCardSelection(wire) {
   const elig = currentResponseEligibility();
@@ -3233,6 +3348,13 @@ function toggleCardSelection(wire) {
   if (selected.has(wire)) {
     selected.delete(wire);
   } else {
+    // Trick play: joker is a singleton. Exchange may offer both JKs.
+    const trick =
+      lastState?.step === STEP.LEAD || lastState?.step === STEP.PLAY;
+    if (trick) {
+      if (isJokerToken(wire)) selected.clear();
+      else dropJokersFromSelection();
+    }
     if (lastState?.step === STEP.PLAY) {
       const lock = responseLockedSize(lastState.legal, currentLeadSize());
       if (lock === 1) selected.clear();
@@ -3254,6 +3376,12 @@ function ensureCardSelectedForDrag(wire) {
   if (selected.has(wire)) return;
   const elig = currentResponseEligibility();
   if (elig && !elig.live.has(wire)) return;
+  const trick =
+    lastState?.step === STEP.LEAD || lastState?.step === STEP.PLAY;
+  if (trick) {
+    if (isJokerToken(wire)) selected.clear();
+    else dropJokersFromSelection();
+  }
   if (lastState?.step === STEP.PLAY) {
     const lock = responseLockedSize(lastState.legal, currentLeadSize());
     if (lock === 1) selected.clear();
@@ -3283,7 +3411,8 @@ function clearHandPreview() {
 function setHandPreview(tokens) {
   const set = new Set(tokens || []);
   $('hand-wrap')?.querySelectorAll('.card').forEach((el) => {
-    el.classList.toggle('preview', set.has(el.dataset.wire));
+    const inst = el.dataset.inst || el.dataset.wire;
+    el.classList.toggle('preview', set.has(inst) || set.has(el.dataset.wire));
   });
 }
 
@@ -3340,9 +3469,7 @@ function renderSetChips() {
   const myResp = myTurn && step === STEP.PLAY;
 
   // Display order on active hand only (exclude exchange transit)
-  const transit = exchangeTransitSet();
-  const active = parseHand(st.hand).filter((t) => !transit.has(t));
-  const tokens = displayHandTokens(active);
+  const tokens = displayHandTokens(activeHandWires());
   const opts = st.opts || 0;
   // Parked seq faces are reserved — free-row sets ignore them entirely
   const reserved = parkedTokenSet();
@@ -3496,9 +3623,9 @@ function updateHandDim() {
   const hide = drag?.hideTokens;
   const elig = currentResponseEligibility();
   wrap.querySelectorAll('.card').forEach((el) => {
-    const w = el.dataset.wire;
-    const dead = !!(elig && w && !elig.live.has(w));
-    const source = !!(hide && w && hide.has(w));
+    const inst = el.dataset.inst || el.dataset.wire;
+    const dead = !!(elig && inst && !elig.live.has(inst));
+    const source = !!(hide && inst && hide.has(inst));
     el.classList.toggle('dead', dead);
     el.classList.toggle('drag-source', source);
     el.classList.toggle('dim', dragging && !source && !!hide?.size);
@@ -3654,7 +3781,8 @@ function updatePlayButtons() {
 // Submit current selection (Play button or drop onto table / exchange zone).
 function trySubmitPlay(dropTarget = 'table') {
   if (!selected.size) return false;
-  const list = [...selected];
+  const insts = [...selected];
+  const list = insts.map(wireOf);
   const offering = canPresidentOffer();
 
   if (offering || dropTarget === 'ex-right') {
@@ -3679,7 +3807,7 @@ function trySubmitPlay(dropTarget = 'table') {
     dbgPlay('send offer', { sent: cards, selected: list, pile: offerPileTokens().length });
     send({ action: 'offerexchange', cards });
     // Optimistic hide until ExchangePhase echoes pile
-    for (const t of list) {
+    for (const t of insts) {
       if (!localOfferCards.includes(t)) localOfferCards.push(t);
     }
     selected.clear();
@@ -3924,7 +4052,7 @@ function buildDragGhost(tokenList) {
   // Same High→Low / Low→High order as hand (not Set insertion order)
   const list = displayPlayTokens(tokenList?.length ? tokenList : [...selected]);
   for (const t of list.slice(0, 6)) {
-    g.appendChild(cardEl(t, { w: pxScale(44), h: pxScale(58) }));
+    g.appendChild(cardEl(t, { w: cardPx(44), h: cardPx(58) }));
   }
   if (list.length > 6) {
     const more = document.createElement('span');
@@ -3987,7 +4115,7 @@ function clientValidatePlay(wireList) {
   if (parsed.some((c) => !c)) return 'bad card selection';
 
   const jokers = parsed.filter((c) => c.joker);
-  if (jokers.length && jokers.length !== parsed.length) {
+  if (jokers.length && (jokers.length !== parsed.length || jokers.length > 1)) {
     return 'joker must be played alone';
   }
   if (jokers.length === 1) return null; // joker alone always legal on turn
@@ -4798,8 +4926,10 @@ function onServerEvent(ev) {
     exchPhase = ev;
     // Clear optimistic locals that server now lists in the pile
     if (ev.president_offer) {
-      const srv = new Set(parseHand(ev.president_offer));
-      localOfferCards = localOfferCards.filter((t) => !srv.has(t));
+      localOfferCards = subtractWires(
+        localOfferCards,
+        parseHand(ev.president_offer),
+      );
     }
     if (ev.stage === 'await_president' && !parseHand(ev.president_offer || '').length) {
       localOfferCards = [];
@@ -5025,7 +5155,9 @@ function renderHandOverBoard() {
         : '';
       li.innerHTML =
         `<span class="fin-rank">${nextRank}</span>` +
-        `<span class="fin-name"><span class="fin-name-line">${escapeHtml(name)}${youChip}</span>` +
+        `<span class="fin-name"><span class="fin-name-line">` +
+        `<span class="fin-pname" title="${escapeHtml(name)}">${escapeHtml(name)}</span>` +
+        `${youChip}</span>` +
         `<span class="fin-role">${roleTransitionHtml(n, oldRank, nextRank)}</span></span>` +
         `<span class="fin-avg">${avgStr}</span>` +
         `<span class="fin-delta ${delta.cls}">${delta.text}</span>` +
@@ -5147,19 +5279,100 @@ function setHandSortFromGear(sort) {
   if (!$('history-pop')?.hidden) renderHistoryPopover();
 }
 
-// Fit play chrome to felt size: --ui drives card/token CSS + pxScale() layout.
-// Baseline ~1000×620 table-area; clamp so Chromebooks stay readable without ballooning.
+// Fit play chrome to felt + hand row. --ui drives card/token CSS + pxScale().
+// Design board 1000×560 (you-token is a docked strip, not bottom-center felt).
+// Hand row is the real ceiling (18 cards / parked seq5). Faces use CARD_BOOST.
+const UI_SCALE_FLOOR = 0.85;
+const UI_SCALE_CEIL = 2.4;
+const UI_FELT_W = 1000;
+const UI_FELT_H = 560;
+
+function remPx() {
+  const v = parseFloat(getComputedStyle(document.documentElement).fontSize);
+  return Number.isFinite(v) && v > 0 ? v : 16;
+}
+
+// Stable n for the hand ceiling: deal size (hl), not remaining — cards must
+// not grow as the hand shrinks mid-trick.
+function handFitCount() {
+  if (!lastState) return 0;
+  const live = parseHand(lastState.hand).length;
+  const hl = lastState.hl | 0;
+  return Math.max(live, hl);
+}
+
+// Hand-row chrome at --ui=1. Gaps/pads stay rem; SEQ5 park mins scale with --ui.
+function handFitChrome() {
+  const n = handFitCount();
+  const rem = remPx();
+  let unscaled = 8;
+  if (n > 0) {
+    unscaled += Math.max(0, n - 1) * (0.2 * rem) + 0.25 * rem * 2;
+  }
+  const leftN = parkedSeqs.filter((b) => b.side === 'left').length;
+  const rightN = parkedSeqs.filter((b) => b.side === 'right').length;
+  const bayN = leftN + rightN;
+  if (bayN) {
+    unscaled += bayN * (0.4 * rem * 2);
+    let clusters = 1;
+    if (leftN) clusters += 1;
+    if (rightN) clusters += 1;
+    unscaled += Math.max(0, clusters - 1) * (0.4 * rem);
+    unscaled += Math.max(0, leftN - 1) * (0.35 * rem);
+    unscaled += Math.max(0, rightN - 1) * (0.35 * rem);
+  }
+  const scaledAt1 =
+    lastState && hasOpt(lastState.opts || 0, OPT.SEQ5) ? 2 * (1.25 * rem) : 0;
+  return { unscaled, scaledAt1 };
+}
+
+function handFitScale(availW) {
+  const n = handFitCount();
+  if (n <= 0 || availW <= 0) return Infinity;
+  const { unscaled, scaledAt1 } = handFitChrome();
+  const denom = n * CARD_W * CARD_BOOST + scaledAt1;
+  if (denom <= 0) return Infinity;
+  if (availW <= unscaled + denom * UI_SCALE_FLOOR) {
+    return UI_SCALE_FLOOR;
+  }
+  return (availW - unscaled) / denom;
+}
+
 function updateUiScale() {
   const page = document.querySelector('.play-page');
   const area = $('table-area');
   if (!page || !area) return false;
-  const r = area.getBoundingClientRect();
-  if (r.width < 40 || r.height < 40) return false;
-  const raw = Math.min(r.width / 1000, r.height / 620);
-  const ui = Math.round(Math.min(1.35, Math.max(0.9, raw)) * 100) / 100;
+  const r0 = area.getBoundingClientRect();
+  if (r0.width < 40 || r0.height < 40) return false;
+
+  const strip = document.querySelector('.hand-clusters') || $('hand-bar');
+  const availW = strip ? strip.clientWidth : r0.width;
+  const uiHand = handFitScale(availW);
+
   const prev = page.style.getPropertyValue('--ui');
-  if (prev === String(ui)) return false;
-  page.style.setProperty('--ui', String(ui));
+  let ui = parseFloat(prev);
+  if (!Number.isFinite(ui) || ui < UI_SCALE_FLOOR) ui = 1;
+
+  for (let i = 0; i < 3; i++) {
+    page.style.setProperty('--ui', String(ui));
+    const r = area.getBoundingClientRect();
+    if (r.width < 40 || r.height < 40) break;
+    const felt = Math.min(r.width / UI_FELT_W, r.height / UI_FELT_H);
+    const next =
+      Math.round(
+        Math.min(UI_SCALE_CEIL, Math.max(UI_SCALE_FLOOR, Math.min(felt, uiHand))) *
+          100,
+      ) / 100;
+    if (Math.abs(next - ui) < 0.005) {
+      ui = next;
+      break;
+    }
+    ui = next;
+  }
+
+  const out = String(ui);
+  if (prev === out) return false;
+  page.style.setProperty('--ui', out);
   return true;
 }
 
