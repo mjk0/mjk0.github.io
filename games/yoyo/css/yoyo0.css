@@ -3820,30 +3820,34 @@ button:focus-visible {
   opacity: 0.4;
   cursor: not-allowed;
 }
-/* Planning chips: off-turn inventory or illegal-on-response (hover only) */
+/* Planning chips: gold rim = playable; cool rim = not now. Never fade —
+   testers need inventory (5 is still the park handle). */
 .set-chip.preview-only {
-  opacity: 0.55;
   cursor: default;
-  border-color: #5a6a5a;
-  background: #2a3a2a;
-  color: var(--muted);
+  border-color: var(--rank-silver);
+  background: var(--bg-elev);
+  color: var(--ink);
   touch-action: auto;
 }
-/* Muted seq chips still drag-to-park */
+/* Park-only 5: same gold body as playable + cool halo (won't play, will park) */
 .set-chip.preview-only.seq-parkable {
   cursor: grab;
   touch-action: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--rank-silver);
 }
 .set-chip.preview-only:hover {
-  opacity: 0.85;
-  border-color: var(--muted);
-  background: #324232;
+  border-color: var(--rank-silver-hi);
+  background: #3a5a3a;
   color: var(--ink);
 }
+.set-chip.preview-only.seq-parkable:hover {
+  border-color: var(--accent-hi);
+}
 .set-chip.preview-only.active {
-  background: #2a3a2a;
-  color: var(--muted);
-  border-color: #5a6a5a;
+  background: var(--bg-elev);
+  color: var(--ink);
+  border-color: var(--rank-silver);
 }
 .hand {
   display: flex;

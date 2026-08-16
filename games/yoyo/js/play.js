@@ -3505,7 +3505,7 @@ function renderSetChips() {
     units = formable.map((u) => ({ ...u, interactive: false }));
   }
 
-  // E4d.3: park/free cluster anchors; inject missing park chips; muted seq still parkable
+  // E4d.3: park/free cluster anchors; inject missing park chips; park-only seq still parkable
   const legalRankKeys = new Set(
     legalUnits
       .filter((u) => u.kind === 'seq' || u.size === 5)
@@ -3598,7 +3598,7 @@ function renderSetChips() {
       });
     }
     if (u.interactive || isSeq) {
-      // Seq chips always parkable (incl. muted); play only when interactive
+      // Seq chips always parkable (incl. park-only); play only when interactive
       btn.addEventListener('pointerdown', (ev) =>
         onSetChipPointerDown(ev, btn, u.tokens, {
           canPlay: !!u.interactive,
@@ -3744,11 +3744,11 @@ function updatePlayButtons() {
         : 'Click cards · set chips (2–5) · drag to table or Play · empty click clears';
     } else if (passOnly) {
       hint.textContent =
-        'No legal play — Pass only · muted chips = sets still in hand (hover)';
+        'No legal play — Pass only · cool-rim chips = sets still in hand (hover)';
     } else if (resp) {
       hint.textContent = hasOpt(st.opts || 0, OPT.SEQ5)
-        ? 'Live cards · chips · drag 5-chip to empty side to park · muted = structure'
-        : 'Click live cards · bright chips playable · drag or Play · muted = structure only';
+        ? 'Live cards · chips · drag 5-chip to empty side to park · cool rim = structure'
+        : 'Click live cards · gold chips playable · drag or Play · cool rim = structure only';
     } else if (exchangeActive() && exchPhase?.role === 'yoyo' && exchPhase.can_ack) {
       hint.textContent = offerHasSurplus()
         ? `Select ${offerNeed()} from offer · Take or drag to hand · extras return to ${placeLabels(st?.n || 4, 1)}`
