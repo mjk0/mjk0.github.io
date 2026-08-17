@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auction 45s — Lobby</title>
+  <link rel="stylesheet" href="css/a45s_web.css">
+</head>
+<body>
+  <div class="wrap">
+    <h1>Auction 45s</h1>
+    <p class="sub">Sit, then Start a hand against robots in empty seats.</p>
+
+    <div id="gate">
+      <div id="continues" class="chips"></div>
+      <label for="username">Name</label>
+      <input id="username" type="text" autocomplete="username" maxlength="32">
+      <label for="email">Email <span class="sub">(optional — locks the name)</span></label>
+      <input id="email" type="email" autocomplete="email">
+      <div class="row">
+        <button id="enter" type="button">Enter lobby</button>
+        <button id="manage" class="ghost" type="button">Manage profiles</button>
+      </div>
+    </div>
+
+    <div id="in" hidden>
+      <p>Signed in as <strong id="who"></strong></p>
+      <p class="sub">Seats E W vs N S. Empty seats become robots at Start.</p>
+      <div id="seats" class="chips"></div>
+      <div class="row">
+        <button id="start" type="button">Start hand</button>
+        <button id="leave" class="ghost" type="button">Stand up</button>
+        <button id="signout" class="ghost" type="button">Sign out</button>
+      </div>
+    </div>
+
+    <p id="status" class="status"></p>
+  </div>
+  <script src="js/a45s_web.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const A = A45sWeb;
+    const DIRS = ['East', 'South', 'West', 'North'];
+    let ws = null;
+    let me = '';
+    let table = { seats: [null, null, null, null], started: false };
+
+    function setStatus(msg, kind) {
+      const el = $('status');
+      el.textContent = msg || '';
+      el.className = 'status' + (kind ? ' ' + kind : '');
+    }
+
+    function renderChips() {
+      const box = $('continues');
+      box.innerHTML = '';
+      A.loadProfiles().forEach((p) => {
+        const b = document.createElement('button');
+        b.className = 'chip';
+        b.type = 'button';
+        b.textContent = p.email ? `${p.username} · ${p.email}` : p.username;
+        b.addEventListener('click', () => loginAs(p.username, p.email || ''));
+        box.appendChild(b);
+      });
+    }
+
+    function renderSeats() {
+      const box = $('seats');
+      box.innerHTML = '';
+      DIRS.forEach((dir, i) => {
+        const who = table.seats[i];
+        const b = document.createElement('button');
+        b.className = 'chip';
+        b.type = 'button';
+        b.textContent = who ? `${dir}: ${who}` : `${dir}: sit`;
+        if (!table.started && !who) {
+          b.addEventListener('click', () => A.send(ws, { action: 'sitat', seat: i }));
+        }
+        box.appendChild(b);
+      });
+      $('start').disabled = table.started;
+    }
+
+    function showIn(name) {
+      me = name;
+      $('gate').hidden = true;
+      $('in').hidden = false;
+      $('who').textContent = name;
+      renderSeats();
+    }
+
+    function showGate() {
+      $('gate').hidden = false;
+      $('in').hidden = true;
+      renderChips();
+    }
+
+    function loginAs(username, email) {
+      $('username').value = username;
+      $('email').value = email || '';
+      startLogin(username, email || '');
+    }
+
+    function startLogin(username, email) {
+      setStatus('connecting…');
+      if (ws) { try { ws.close(); } catch (_) {} }
+      ws = A.connect('lobby', onMsg, onClose);
+      ws.onopen = () => {
+        A.send(ws, { action: 'login', username, email: email || '' });
+      };
+    }
+
+    function persistSeat() {
+      const sess = A.getSession() || {};
+      const seat = table.seats.findIndex((n) => n && n.toLowerCase() === me.toLowerCase());
+      A.setSession({
+        username: sess.username || me,
+        uuid: sess.uuid,
+        email: $('email').value.trim() || sess.email || '',
+        seat: seat >= 0 ? seat : sess.seat,
+      });
+    }
+
+    function onMsg(j) {
+      if (j.action === 'welcome') {
+        A.setSession({ username: j.username, uuid: j.uuid, email: $('email').value.trim() });
+        A.upsertProfile(j.username, $('email').value.trim());
+        showIn(j.username);
+        setStatus(j.is_dev ? 'welcome (dev)' : 'welcome', 'ok');
+        return;
+      }
+      if (j.action === 'tables') {
+        table.seats = j.seats;
+        table.started = j.started;
+        persistSeat();
+        renderSeats();
+        const seat = table.seats.findIndex((n) => n && n.toLowerCase() === me.toLowerCase());
+        if (table.started && seat >= 0) {
+          const sess = A.getSession() || {};
+          sess.seat = seat;
+          A.setSession(sess);
+          location.href = 'table.html';
+        }
+        return;
+      }
+      if (j.action === 'started') {
+        persistSeat();
+        const sess = A.getSession() || {};
+        sess.seat = j.seat;
+        A.setSession(sess);
+        location.href = 'table.html';
+        return;
+      }
+      if (j.action === 'err') {
+        if (j.err === 'duplicate_login') {
+          setStatus('signed in elsewhere', 'err');
+          A.setSession(null);
+          showGate();
+          return;
+        }
+        if (j.err === 'username_taken') {
+          setStatus('That name is locked. Enter the matching email.', 'err');
+          return;
+        }
+        setStatus(j.err || 'error', 'err');
+      }
+    }
+
+    function onClose() {
+      if (me && !$('in').hidden) {
+        setStatus('signed in elsewhere — sign in again to take this browser back', 'err');
+      }
+      showGate();
+    }
+
+    $('enter').addEventListener('click', () => {
+      const name = $('username').value.trim();
+      if (!name) { setStatus('name required', 'err'); return; }
+      startLogin(name, $('email').value.trim());
+    });
+    $('start').addEventListener('click', () => A.send(ws, { action: 'start' }));
+    $('leave').addEventListener('click', () => A.send(ws, { action: 'leave' }));
+    $('signout').addEventListener('click', () => {
+      A.setSession(null);
+      if (ws) ws.close();
+      showGate();
+      setStatus('');
+    });
+    $('manage').addEventListener('click', () => {
+      const name = prompt('Forget which saved name?');
+      if (name) { A.forgetProfile(name); renderChips(); }
+    });
+
+    const sess = A.getSession();
+    if (sess && sess.username) {
+      loginAs(sess.username, sess.email || '');
+    } else {
+      const last = A.lastProfile();
+      if (last) loginAs(last.username, last.email || '');
+      else showGate();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auction 45s — Table</title>
+  <link rel="stylesheet" href="css/a45s_web.css">
+</head>
+<body>
+  <div class="wrap" style="max-width:40rem">
+    <nav class="bar"><a href="lobby.html">← Lobby</a></nav>
+    <h1>Table</h1>
+    <p id="players" class="sub"></p>
+    <p id="meta" class="sub"></p>
+    <p>Hand: <span id="hand"></span></p>
+    <p>Kitty: <span id="kitty"></span></p>
+    <p>Trick: <span id="trick"></span></p>
+    <div id="acts" class="row"></div>
+    <div id="keeps" class="chips"></div>
+    <div id="trumps" class="chips"></div>
+    <p id="status" class="status"></p>
+  </div>
+  <script src="js/a45s_web.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const A = A45sWeb;
+    const DIRS = ['E', 'S', 'W', 'N'];
+    const SUITS = ['clubs', 'diamonds', 'hearts', 'spades'];
+    const sess = A.getSession();
+    let keep = new Set();
+    let trump = 'clubs';
+    let ws = null;
+
+    function setStatus(msg, kind) {
+      const el = $('status');
+      el.textContent = msg || '';
+      el.className = 'status' + (kind ? ' ' + kind : '');
+    }
+
+    function cardBtns(csv, click) {
+      const box = document.createElement('span');
+      (csv || '').split(',').filter(Boolean).forEach((c) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'chip';
+        b.textContent = c;
+        b.addEventListener('click', () => click(c));
+        box.appendChild(b);
+      });
+      return box;
+    }
+
+    function renderState(s) {
+      $('meta').textContent =
+        `phase ${s.phase}` +
+        (s.why ? ` · ${s.why}` : '') +
+        ` · dealer ${DIRS[s.dealer]}` +
+        (s.declarer != null ? ` · decl ${DIRS[s.declarer]} ${s.contract_bid || ''}` : '') +
+        (s.trump != null ? ` ${SUITS[s.trump]}` : '') +
+        ` · EW ${s.score[0]} / NS ${s.score[1]}`;
+      $('hand').replaceChildren(cardBtns(s.hand, () => {}));
+      $('kitty').textContent = s.kitty || '—';
+      $('trick').textContent = (s.current_trick || [])
+        .map((t) => `${DIRS[t.seat]}:${t.card}`).join(' ') || '—';
+
+      const acts = $('acts');
+      acts.innerHTML = '';
+      $('keeps').innerHTML = '';
+      $('trumps').innerHTML = '';
+
+      if (s.why === 'bid' && s.legal_bids && s.legal_bids.length) {
+        s.legal_bids.forEach((b) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = b < 15 ? 'Pass' : String(b);
+          btn.addEventListener('click', () => A.send(ws, { action: 'bid', bid: b }));
+          acts.appendChild(btn);
+        });
+      }
+
+      if ((s.why === 'trumpselect' || s.why === 'discard') && s.legal_cards) {
+        const pool = s.legal_cards.split(',').filter(Boolean);
+        if (keep.size === 0) pool.forEach((c) => keep.add(c));
+        pool.forEach((c) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'chip';
+          btn.textContent = (keep.has(c) ? '✓ ' : '') + c;
+          btn.addEventListener('click', () => {
+            if (keep.has(c)) keep.delete(c); else keep.add(c);
+            renderState(s);
+          });
+          $('keeps').appendChild(btn);
+        });
+        if (s.why === 'trumpselect') {
+          SUITS.forEach((name) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'chip';
+            btn.textContent = (trump === name ? '✓ ' : '') + name;
+            btn.addEventListener('click', () => { trump = name; renderState(s); });
+            $('trumps').appendChild(btn);
+          });
+        }
+        const go = document.createElement('button');
+        go.type = 'button';
+        go.textContent = 'Keep selected';
+        go.addEventListener('click', () => {
+          const msg = { action: 'selecthand', cards: [...keep].join(',') };
+          if (s.why === 'trumpselect') msg.trump = trump;
+          A.send(ws, msg);
+          keep = new Set();
+        });
+        acts.appendChild(go);
+      }
+
+      if (s.why === 'play' && s.legal_cards) {
+        s.legal_cards.split(',').filter(Boolean).forEach((c) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = 'Play ' + c;
+          btn.addEventListener('click', () => A.send(ws, { action: 'play', card: c }));
+          acts.appendChild(btn);
+        });
+      }
+
+      if (s.phase === 'handend') {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = 'Next hand';
+        btn.addEventListener('click', () => A.send(ws, { action: 'nexthand' }));
+        acts.appendChild(btn);
+      }
+    }
+
+    if (!sess || !sess.uuid || sess.seat == null) {
+      $('players').textContent = 'Sit and Start from the lobby first.';
+      setStatus('No lobby session / seat.', 'err');
+    } else {
+      ws = A.connect('game', (j) => {
+        if (j.action === 'loggedin') {
+          setStatus('joining seat ' + DIRS[sess.seat], 'ok');
+          A.send(ws, { action: 'joinseat', seat: sess.seat });
+          return;
+        }
+        if (j.action === 'joined') {
+          setStatus('at ' + DIRS[j.seat], 'ok');
+          return;
+        }
+        if (j.action === 'players') {
+          $('players').textContent = j.seats.map((n, i) => `${DIRS[i]} ${n}`).join(' · ');
+          return;
+        }
+        if (j.action === 'state') {
+          renderState(j);
+          return;
+        }
+        if (j.action === 'summary') {
+          setStatus(
+            `Hand EW ${j.pts_ew} / NS ${j.pts_ns} · tot ${j.tot_ew}–${j.tot_ns}` +
+              (j.series_over ? ' · game over' : ''),
+            'ok'
+          );
+          return;
+        }
+        if (j.action === 'err') {
+          setStatus(j.err === 'duplicate_login' ? 'signed in elsewhere' : (j.err || 'error'), 'err');
+        }
+      }, () => setStatus('game socket closed', 'err'));
+      ws.onopen = () => {
+        A.send(ws, {
+          action: 'login',
+          username: sess.username,
+          email: sess.email || '',
+          uuid: sess.uuid,
+        });
+      };
+    }
+  </script>
+</body>
+</html>
