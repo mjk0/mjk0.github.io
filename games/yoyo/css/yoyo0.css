@@ -3425,6 +3425,7 @@ button:focus-visible {
   .trick-piles { transition: none; }
   .trick-piles.park-motion .play-stack { transition: none; }
   .trick-piles.win-flash .play-stack.winner { animation: none; }
+  .park-flick-side { transition: none; }
 }
 
 .hand-bar {
@@ -3634,8 +3635,11 @@ button:focus-visible {
 }
 /* Free/bay shrink-wrap; L/R park zones absorb empty width when visible (E4d).
    justify-content:center keeps the hand mass centered when park zones are
-   hidden (no SEQ5) or empty — otherwise 1-card hands hug the left edge. */
+   hidden (no SEQ5) or empty — otherwise 1-card hands hug the left edge.
+   Do not grow .park-zone min-width — leftover gutters stay slim; flick +
+   overlay wash is the real park target (E4d flick). */
 .hand-clusters {
+  position: relative;
   display: flex;
   align-items: stretch;
   justify-content: center;
@@ -3702,6 +3706,53 @@ button:focus-visible {
 }
 .park-zone.hot .park-zone-label {
   opacity: 1;
+}
+/* Flick overlay: half-bar wash + chevrons while a 5-chip drag is live.
+   pointer-events none — drop is axis/zone hit-test, not this layer. */
+.park-flick {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  pointer-events: none;
+  z-index: 5;
+}
+.park-flick[hidden] {
+  display: none;
+}
+.park-flick-side {
+  flex: 1 1 50%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  color: rgba(232, 200, 74, 0.42);
+  background: transparent;
+  transition: background 0.12s, color 0.12s, opacity 0.12s;
+}
+.park-flick-side[data-park="left"] {
+  justify-content: flex-start;
+  padding-left: 0.55rem;
+}
+.park-flick-side[data-park="right"] {
+  justify-content: flex-end;
+  padding-right: 0.55rem;
+}
+.park-flick-label {
+  font-size: calc(0.82rem * var(--ui, 1));
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+.park-flick-side.hot {
+  background: rgba(201, 162, 39, 0.22);
+  color: var(--accent-hi);
+}
+.park-flick:has(.park-flick-side.hot) .park-flick-side:not(.hot) {
+  opacity: 0.35;
+}
+/* Chevrons replace the leftover-gutter "Park" label while flicking */
+.hand-clusters.park-drag .park-zone-label {
+  opacity: 0;
 }
 .hand.hand-bay {
   position: relative;

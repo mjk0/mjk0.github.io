@@ -746,6 +746,51 @@ function hitParkZone(clientX, clientY) {
   return null;
 }
 
+function hitTableArea(clientX, clientY) {
+  const area = $('table-area');
+  if (!area || clientX == null || clientY == null) return false;
+  const r = area.getBoundingClientRect();
+  return clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
+}
+
+/** ~half a card — click-jitter (6px drag start) must not park. */
+const PARK_FLICK_PX = 48;
+
+// Sideways 5-chip flick parks; felt + upward/vertical-dominant stays play.
+function parkFlickIntent(startX, startY, x, y) {
+  if (x == null || y == null || startX == null || startY == null) {
+    return { parkSide: null, tableWins: false };
+  }
+  const dx = x - startX;
+  const dy = y - startY;
+  const adx = Math.abs(dx);
+  const ady = Math.abs(dy);
+  const upward = dy < 0;
+  const sideways = adx > PARK_FLICK_PX && adx > ady;
+  return {
+    parkSide: sideways ? (dx < 0 ? 'left' : 'right') : null,
+    tableWins: upward || ady >= adx,
+  };
+}
+
+// Drop side for a 5-chip, or null when table/play should win (or no flick).
+function resolveParkDrop(clientX, clientY, startX, startY) {
+  const intent = parkFlickIntent(startX, startY, clientX, clientY);
+  if (hitTableArea(clientX, clientY) && intent.tableWins) return null;
+  return hitParkZone(clientX, clientY) || intent.parkSide;
+}
+
+function setParkIntentSide(side) {
+  for (const id of ['park-zone-left', 'park-zone-right']) {
+    const el = $(id);
+    if (!el) continue;
+    el.classList.toggle('hot', !!side && el.dataset.park === side);
+  }
+  document.querySelectorAll('.park-flick-side').forEach((el) => {
+    el.classList.toggle('hot', !!side && el.dataset.park === side);
+  });
+}
+
 // Point inside any parked bay element?
 function hitAnyBay(clientX, clientY) {
   for (const bay of document.querySelectorAll('.hand-bay')) {
@@ -3571,14 +3616,14 @@ function renderSetChips() {
     if (u.interactive) {
       btn.title = isSeq
         ? fromPark
-          ? 'Select seq · drag to table to play · drop on free or × to unpark'
-          : 'Select seq · drag to table to play · drop on empty side to park'
+          ? 'Select seq · drag up to play · flick other way to move · drop on free or × to unpark'
+          : 'Select seq · drag up to play · flick left or right to park'
         : `Select ${u.size}-of-a-kind (or drag to table)`;
     } else {
       btn.title = isSeq
         ? fromPark
-          ? 'Parked seq · drag to free or × to unpark'
-          : 'Sequence of 5 · drag to empty side to park (planning)'
+          ? 'Parked seq · flick other way to move · drop on free or × to unpark'
+          : 'Sequence of 5 · flick left or right to park (planning)'
         : `${u.size}-of-a-kind (preview — not playable now)`;
       if (!isSeq) btn.tabIndex = -1;
     }
@@ -3740,14 +3785,14 @@ function updatePlayButtons() {
           : 'Click a card · drag to pile beside seat (or Offer)';
     } else if (lead) {
       hint.textContent = hasOpt(st.opts || 0, OPT.SEQ5)
-        ? 'Click cards · chips · drag 5-chip to empty side to park · table or Play'
+        ? 'Click cards · chips · flick 5 left or right to park · up to play'
         : 'Click cards · set chips (2–5) · drag to table or Play · empty click clears';
     } else if (passOnly) {
       hint.textContent =
         'No legal play — Pass only · cool-rim chips = sets still in hand (hover)';
     } else if (resp) {
       hint.textContent = hasOpt(st.opts || 0, OPT.SEQ5)
-        ? 'Live cards · chips · drag 5-chip to empty side to park · cool rim = structure'
+        ? 'Live cards · chips · flick 5 left or right to park · cool rim = structure'
         : 'Click live cards · gold chips playable · drag or Play · cool rim = structure only';
     } else if (exchangeActive() && exchPhase?.role === 'yoyo' && exchPhase.can_ack) {
       hint.textContent = offerHasSurplus()
@@ -3859,11 +3904,9 @@ function beginPlayDrag(ev, el, onDragStart, opts = {}) {
 
   const setParkHot = (on) => {
     $('hand-clusters')?.classList.toggle('park-drag', on);
-    if (!on) {
-      for (const id of ['park-zone-left', 'park-zone-right']) {
-        $(id)?.classList.remove('hot');
-      }
-    }
+    const flick = $('park-flick');
+    if (flick) flick.hidden = !on;
+    if (!on) setParkIntentSide(null);
   };
 
   // Strip listeners + ghost/chrome; leaves drop payload on caller.
@@ -3884,6 +3927,8 @@ function beginPlayDrag(ev, el, onDragStart, opts = {}) {
           parkTokens: drag.parkTokens,
           fromPark: drag.fromPark,
           canPlay: drag.canPlay,
+          startX: drag.startX,
+          startY: drag.startY,
         }
       : null;
     if (drag?.ghost) drag.ghost.remove();
@@ -3911,11 +3956,11 @@ function beginPlayDrag(ev, el, onDragStart, opts = {}) {
     const snap = scrubDrag();
     if (cancel || !snap?.moved) return;
 
-    // Seq chip: park / unpark zones before table play
+    // Seq chip: sideways flick / zone parks; felt + up stays play
     if (snap.parkTokens?.length === 5) {
-      const zone = hitParkZone(clientX, clientY);
-      if (zone) {
-        tryParkSeq(snap.parkTokens, zone);
+      const side = resolveParkDrop(clientX, clientY, snap.startX, snap.startY);
+      if (side) {
+        tryParkSeq(snap.parkTokens, side);
         return;
       }
       if (snap.fromPark && hitFreeHand(clientX, clientY)) {
@@ -3979,14 +4024,14 @@ function beginPlayDrag(ev, el, onDragStart, opts = {}) {
       drag.ghost.style.left = `${e.clientX}px`;
       drag.ghost.style.top = `${e.clientY}px`;
     }
-    // Highlight park zone under pointer while dragging a seq chip
+    // Highlight intended park side: leftover zone or axis-dominant flick
     if (drag.moved && drag.parkTokens?.length === 5) {
-      const z = hitParkZone(e.clientX, e.clientY);
-      for (const id of ['park-zone-left', 'park-zone-right']) {
-        const zone = $(id);
-        if (!zone) continue;
-        zone.classList.toggle('hot', !!z && zone.dataset.park === z);
-      }
+      const intent = parkFlickIntent(drag.startX, drag.startY, e.clientX, e.clientY);
+      const playWins = hitTableArea(e.clientX, e.clientY) && intent.tableWins;
+      const side = playWins
+        ? null
+        : hitParkZone(e.clientX, e.clientY) || intent.parkSide;
+      setParkIntentSide(side);
     }
   };
 

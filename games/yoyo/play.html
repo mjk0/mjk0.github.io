@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Yoyo — Table</title>
-  <link rel="stylesheet" href="css/yoyo0.css?v=20260815a" />
+  <link rel="stylesheet" href="css/yoyo0.css?v=20260818a" />
 </head>
 <body class="play-page">
   <header class="play-strip">
@@ -137,7 +137,7 @@
   <div class="hand-bar" id="hand-bar">
     <div class="hand-wrap" id="hand-wrap">
       <div class="hand-clusters" id="hand-clusters">
-        <div class="park-zone" id="park-zone-left" data-park="left" hidden title="Drop sequence chip anywhere on this side to park left" aria-label="Park sequence left">
+        <div class="park-zone" id="park-zone-left" data-park="left" hidden title="Flick 5 left to park · or drop here" aria-label="Park sequence left">
           <span class="park-zone-label">Park</span>
         </div>
         <div class="hand-main" id="hand-main">
@@ -145,15 +145,19 @@
           <div class="hand hand-free" id="hand" aria-label="Your hand"></div>
           <div class="hand-bays hand-bays-right" id="hand-bays-right" aria-label="Parked sequences right"></div>
         </div>
-        <div class="park-zone" id="park-zone-right" data-park="right" hidden title="Drop sequence chip anywhere on this side to park right" aria-label="Park sequence right">
+        <div class="park-zone" id="park-zone-right" data-park="right" hidden title="Flick 5 right to park · or drop here" aria-label="Park sequence right">
           <span class="park-zone-label">Park</span>
         </div>
+      </div>
+      <div class="park-flick" id="park-flick" hidden aria-hidden="true">
+        <span class="park-flick-side" data-park="left"><span class="park-flick-label">← Park</span></span>
+        <span class="park-flick-side" data-park="right"><span class="park-flick-label">Park →</span></span>
       </div>
     </div>
     <p class="hand-hint" id="hand-hint">Click cards to select · drag to table or Play</p>
   </div>
 
   <p class="footer-note">Drag to table · set chips · exchange · <a href="index.html">Lobby</a></p>
-  <script type="module" src="js/play.js?v=20260815a"></script>
+  <script type="module" src="js/play.js?v=20260818a"></script>
 </body>
 </html>
