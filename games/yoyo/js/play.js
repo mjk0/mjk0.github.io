@@ -1071,6 +1071,28 @@ function renderStrip() {
   if (!$('standings-pop')?.hidden) renderStandingsBoard();
 }
 
+// Keep History / Score popovers inside the visual viewport (iPhone wrap:
+// History sits mid-strip, so right:0 on the wrap would push ‹ off the left).
+function clampStripPopover(pop) {
+  if (!pop || pop.hidden) return;
+  pop.style.transform = '';
+  const r = pop.getBoundingClientRect();
+  const pad = 8;
+  const vv = window.visualViewport;
+  const leftEdge = (vv ? vv.offsetLeft : 0) + pad;
+  const rightEdge = (vv ? vv.offsetLeft + vv.width : window.innerWidth) - pad;
+  let dx = 0;
+  if (r.left < leftEdge) dx = leftEdge - r.left;
+  if (r.right + dx > rightEdge) dx = rightEdge - r.right;
+  if (r.left + dx < leftEdge) dx = leftEdge - r.left;
+  pop.style.transform = dx ? `translateX(${Math.round(dx)}px)` : '';
+}
+
+function clampOpenStripPopovers() {
+  clampStripPopover($('history-pop'));
+  clampStripPopover($('standings-pop'));
+}
+
 // Open/close Score standings popover (mutually exclusive with History).
 function setStandingsOpen(open) {
   const pop = $('standings-pop');
@@ -1078,7 +1100,12 @@ function setStandingsOpen(open) {
   if (open) setHistoryOpen(false);
   pop.hidden = !open;
   $('btn-scores')?.setAttribute('aria-expanded', open ? 'true' : 'false');
-  if (open) renderStandingsBoard();
+  if (open) {
+    renderStandingsBoard();
+    requestAnimationFrame(() => clampStripPopover(pop));
+  } else {
+    pop.style.transform = '';
+  }
 }
 
 // Live standings: mid-hand = seat office; end-of-hand = next office + old→new (no vote).
@@ -2173,6 +2200,8 @@ function setHistoryOpen(open) {
   if (open) setStandingsOpen(false);
   pop.hidden = !open;
   $('btn-history')?.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open) requestAnimationFrame(() => clampStripPopover(pop));
+  else pop.style.transform = '';
 }
 
 function updateHistoryChrome() {
@@ -2219,6 +2248,7 @@ function renderHistoryPopover() {
     if (title) title.textContent = 'History';
     if (prev) prev.disabled = true;
     if (next) next.disabled = true;
+    requestAnimationFrame(() => clampStripPopover($('history-pop')));
     return;
   }
 
@@ -2230,6 +2260,7 @@ function renderHistoryPopover() {
 
   if (!data) {
     body.replaceChildren();
+    requestAnimationFrame(() => clampStripPopover($('history-pop')));
     return;
   }
 
@@ -2277,6 +2308,7 @@ function renderHistoryPopover() {
     frag.appendChild(el);
   }
   body.replaceChildren(frag);
+  requestAnimationFrame(() => clampStripPopover($('history-pop')));
 }
 
 function stepHistory(delta) {
@@ -5441,7 +5473,9 @@ function wireControls() {
     layoutPlayActions();
     renderSetChips();
     refreshSummaryDockIfNeeded();
+    clampOpenStripPopovers();
   });
+  window.visualViewport?.addEventListener('resize', () => clampOpenStripPopovers());
   // Clear any residual selection so it can't steal the first drag gesture
   const clearPageSel = () => {
     const s = window.getSelection?.();

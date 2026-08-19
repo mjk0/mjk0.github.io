@@ -23,13 +23,19 @@
   let seenTalk = false;
   let optsOpen = '';
   let inviteOpen = '';
-  let myPrefs = { robots: 'random', friends: [] };
+  let myPrefs = { robots: 'random', replay: false, friends: [] };
 
   function normalizePrefs(p) {
+    const pack = p && (p.robots === 'classic' || p.robots === 'clown') ? 'classic' : 'random';
     return {
-      robots: p && p.robots === 'classic' ? 'classic' : 'random',
+      robots: pack,
+      replay: !!(p && p.replay),
       friends: Array.isArray(p && p.friends) ? p.friends.filter((n) => String(n || '').trim()) : [],
     };
+  }
+
+  function replayChipSvg() {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>';
   }
 
   function esc(s) {
@@ -481,7 +487,7 @@
     pop.appendChild(lab);
     [
       { v: 'random', title: 'Random', hint: 'B.Curly, B.Yoda, …' },
-      { v: 'classic', title: 'Classic', hint: 'B.Ratfink, B.Homer, B.Turd, B.Donut' },
+      { v: 'classic', title: 'Clown', hint: 'B.Ratfink, B.Homer, B.Turd, B.Donut' },
     ].forEach((opt) => {
       const row = document.createElement('label');
       row.className = 'opts-radio';
@@ -500,6 +506,23 @@
       row.appendChild(txt);
       pop.appendChild(row);
     });
+    const lab2 = document.createElement('div');
+    lab2.className = 'opts-label opts-label-gap';
+    lab2.textContent = 'Deal';
+    pop.appendChild(lab2);
+    const row = document.createElement('label');
+    row.className = 'opts-check';
+    const inp = document.createElement('input');
+    inp.type = 'checkbox';
+    inp.checked = !!t.replay;
+    inp.addEventListener('change', () => {
+      A.send(ws, { action: 'setreplay', table: t.id, on: inp.checked });
+    });
+    const txt = document.createElement('span');
+    txt.innerHTML = `Replay this deal<span class="hint">Same cards, bidding starts over</span>`;
+    row.appendChild(inp);
+    row.appendChild(txt);
+    pop.appendChild(row);
     return pop;
   }
 
@@ -721,7 +744,9 @@
     const nameWrap = document.createElement('span');
     nameWrap.className = 'table-name-wrap';
     nameWrap.appendChild(title);
-    if (!t.started && (seatedHere || (t.private && sameName(t.id, me)))) {
+    const owner = t.private && sameName(t.id, me);
+    // Waiting options: open if seated; private owner even if not sitting.
+    if (!t.started && (owner || seatedHere)) {
       nameWrap.appendChild(gearBtn(t));
     }
     hdr.appendChild(nameWrap);
@@ -740,9 +765,18 @@
     }
     if (t.robots === 'classic') {
       const chip = document.createElement('span');
-      chip.className = 'table-classic-badge';
-      chip.textContent = 'Classic';
-      chip.title = 'Classic robot names (B.Ratfink…)';
+      chip.className = 'table-opt-chip';
+      chip.textContent = '🤡';
+      chip.title = 'Clown names (B.Ratfink…)';
+      chip.setAttribute('aria-label', 'Clown names');
+      hdr.appendChild(chip);
+    }
+    if (t.replay) {
+      const chip = document.createElement('span');
+      chip.className = 'table-opt-chip';
+      chip.innerHTML = replayChipSvg();
+      chip.title = 'Replay this deal';
+      chip.setAttribute('aria-label', 'Replay this deal');
       hdr.appendChild(chip);
     }
     const cluster = document.createElement('div');
@@ -756,7 +790,7 @@
         const start = document.createElement('button');
         start.type = 'button';
         start.className = 'start-btn start-ready';
-        start.textContent = 'Start';
+        start.textContent = '▶ Start';
         start.addEventListener('click', () => A.send(ws, { action: 'start', table: t.id }));
         cluster.appendChild(start);
       } else if (authenticated) {
@@ -768,7 +802,19 @@
         cluster.appendChild(idle);
       }
     }
-    if (t.private && sameName(t.id, me)) {
+    if (owner && t.started) {
+      const stop = document.createElement('button');
+      stop.type = 'button';
+      stop.className = 'stop-btn';
+      stop.textContent = '■ Stop';
+      stop.title = 'End game and open a fresh table (same options & invites)';
+      stop.setAttribute('aria-label', stop.title);
+      stop.addEventListener('click', () => {
+        A.send(ws, { action: 'stop', table: t.id });
+      });
+      cluster.appendChild(stop);
+    }
+    if (owner) {
       const del = document.createElement('button');
       del.type = 'button';
       del.className = 'icon-btn trash-btn';
@@ -778,7 +824,7 @@
       del.setAttribute('aria-label', del.title);
       del.addEventListener('click', () => {
         if (occupied && !confirm('Delete this game? Players will be sent to the lobby.')) return;
-        A.send(ws, t.started ? { action: 'gkill', table: t.id } : { action: 'stop' });
+        A.send(ws, { action: 'gkill', table: t.id });
       });
       cluster.appendChild(del);
     }

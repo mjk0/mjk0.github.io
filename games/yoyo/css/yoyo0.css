@@ -1790,8 +1790,9 @@ button:focus-visible {
   position: absolute;
   right: 0;
   top: calc(100% + 0.35rem);
-  min-width: min(18rem, 92vw);
-  max-width: min(22rem, 94vw);
+  /* Fit the visual viewport; JS translateX then keeps ‹ on-screen (iPhone wrap). */
+  min-width: min(18rem, calc(100vw - 1rem));
+  max-width: min(22rem, calc(100vw - 1rem));
   max-height: min(70vh, 28rem);
   overflow: auto;
   background: rgba(18, 28, 20, 0.97);

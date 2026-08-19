@@ -4,48 +4,79 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Auction 45s — Table</title>
-  <link rel="stylesheet" href="css/a45s_web.css">
+  <link rel="stylesheet" href="css/a45s_web.css?v=20260819b">
 </head>
 <body class="felt-page">
   <div class="felt">
     <header class="felt-head">
-      <a href="lobby.html">← Lobby</a>
       <span class="score-chip ew">White <strong id="sc-ew">0</strong></span>
       <span class="score-chip ns">Red <strong id="sc-ns">0</strong></span>
+      <span id="contract-chip" class="contract-chip" hidden>
+        <span id="contract-who"></span>
+        <span id="contract-suit" class="contract-suit"></span>
+        <span id="contract-bid"></span>
+      </span>
       <span id="meta" class="sub" style="margin:0"></span>
       <button id="rank-btn" class="ghost" type="button">Card rank</button>
       <button id="hist-btn" class="ghost" type="button">Scores</button>
-      <button id="replay" class="ghost" type="button">Replay this deal</button>
-      <button id="leavegame" class="ghost" type="button">Leave table</button>
+      <button id="replay" class="ghost" type="button" hidden>Replay this deal</button>
+      <button id="leavegame" class="ghost" type="button">Leave</button>
     </header>
 
     <div class="felt-opp seatbox" data-slot="2"></div>
-    <div class="felt-left seatbox" data-slot="1"></div>
-    <div class="felt-center">
-      <div id="trick" class="trick" aria-label="Current trick"></div>
-      <div class="side-col" style="margin-top:0.4rem">
+    <div class="felt-left-col">
+      <div id="kitty-box" class="kitty-box" hidden>
         <div id="kitty" class="kitty"></div>
         <span class="side-label">Kitty</span>
+      </div>
+      <div class="felt-left seatbox" data-slot="1"></div>
+    </div>
+    <div class="felt-center">
+      <div id="keep-panel" class="keep-panel" hidden>
+        <p id="keep-headline" class="keep-headline"></p>
+        <p id="keep-copy" class="keep-copy"></p>
+        <div id="keep-trumps" class="trump-pick"></div>
+      </div>
+      <div id="trick" class="trick" aria-label="Current trick"></div>
+      <div class="side-col" style="margin-top:0.4rem">
         <div id="piles" class="piles"></div>
         <span class="side-label">Past tricks</span>
       </div>
-      <table id="bids" class="bid-table" hidden></table>
     </div>
     <div class="felt-right seatbox" data-slot="3"></div>
 
     <div class="felt-you">
-      <div id="you-hand" class="hand-row"></div>
+      <div id="bid-acts" class="bid-self" hidden></div>
+      <div class="you-hand-wrap">
+        <button id="hand-sort" class="hand-sort" type="button" hidden>Sort</button>
+        <div id="you-hand" class="hand-row"></div>
+        <div id="you-bid-oval" class="bid-oval" hidden></div>
+      </div>
       <div id="you-bar" class="namebar" style="max-width:22rem;margin:0.3rem auto 0"></div>
     </div>
 
     <div class="felt-acts">
       <div id="acts" class="acts-bar"></div>
-      <div id="trumps" class="trump-pick"></div>
     </div>
     <div class="felt-foot">
       <p id="paused" class="sub" style="margin:0.2rem 0"></p>
       <p id="status" class="status" style="margin:0.2rem 0"></p>
       <div id="hist" class="hist-pop" hidden></div>
+    </div>
+  </div>
+
+  <div id="panel-idle-warn" class="inspect idle-warn" hidden>
+    <div class="panel" role="alertdialog" aria-labelledby="idle-warn-title" aria-describedby="idle-warn-desc">
+      <p id="idle-warn-title" class="sub">Table idle</p>
+      <p id="idle-warn-desc" class="idle-warn-desc">
+        This open table is idle and will close in
+        <strong id="idle-warn-countdown">—</strong>
+        unless someone stays.
+      </p>
+      <div class="row">
+        <button type="button" id="btn-idle-stay">Stay</button>
+        <button type="button" id="btn-idle-leave">Leave</button>
+      </div>
     </div>
   </div>
 
@@ -67,7 +98,7 @@
     </div>
   </div>
 
-  <script src="js/a45s_web.js"></script>
+  <script src="js/a45s_web.js?v=20260818w"></script>
   <script>
     const $ = (id) => document.getElementById(id);
     const A = A45sWeb;
@@ -75,9 +106,14 @@
     const DIRL = ['East', 'South', 'West', 'North'];
     const SUITS = ['clubs', 'diamonds', 'hearts', 'spades'];
     const sess = A.getSession();
+    let idleWarnEndsAt = 0;
+    let idleWarnTick = null;
     let keep = new Set();
     let keepPool = '';
-    let trump = 0;
+    let trump = null;
+    let handOrder = [];
+    let handMerged = false;
+    const SUIT_KEY = ['cl', 'di', 'he', 'sp'];
     let ws = null;
     let paused = {};
     let leaving = false;
@@ -100,8 +136,84 @@
       return (seat & 1) === 0 ? 'ew' : 'ns';
     }
 
-    function bidLabel(b) {
-      return b < 15 ? 'pass' : String(b);
+    function currentHigh(st) {
+      let high = 0;
+      (st.bid_history || []).forEach((b) => { if (b >= 15 && b > high) high = b; });
+      return high;
+    }
+
+    function isActor(st, seat) {
+      return (st.actors || []).indexOf(seat) >= 0;
+    }
+
+    function inKeepPhase(st) {
+      return st.why === 'trumpselect' || st.why === 'discard';
+    }
+
+    // Pass, current high, and ? on the next bidder. Silent / outbid seats stay blank.
+    function bidMarkFor(st, seat) {
+      if (st.phase !== 'bidding') return null;
+      const hist = st.bid_history || [];
+      const from = st.bid_from != null ? st.bid_from : 0;
+      const last = [null, null, null, null];
+      let high = 0, highSeat = null;
+      hist.forEach((b, k) => {
+        const s = (from + k) & 3;
+        last[s] = b;
+        if (b >= 15 && b >= high) { high = b; highSeat = s; }
+      });
+      if ((st.actors || [])[0] === seat) return { kind: 'wait' };
+      if (last[seat] != null && last[seat] < 15) return { kind: 'pass' };
+      if (highSeat === seat) return { kind: 'bid', amount: high };
+      return null;
+    }
+
+    // Suit + amount on the declarer once trump is named. Auction ovals are gone.
+    function contractMarkFor(st, seat) {
+      if (st.declarer == null || st.declarer !== seat) return null;
+      if (st.trump == null) return null;
+      return { kind: 'contract', amount: st.contract_bid || 0, trump: st.trump };
+    }
+
+    function seatMarkFor(st, seat) {
+      return bidMarkFor(st, seat) || contractMarkFor(st, seat);
+    }
+
+    function paintOval(el, mark) {
+      if (!el) return;
+      if (!mark) {
+        el.hidden = true;
+        el.textContent = '';
+        el.className = 'bid-oval';
+        return;
+      }
+      el.hidden = false;
+      if (mark.kind === 'wait') {
+        el.className = 'bid-oval wait';
+        el.textContent = '?';
+      } else if (mark.kind === 'pass') {
+        el.className = 'bid-oval pass';
+        el.textContent = 'pass';
+      } else if (mark.kind === 'contract') {
+        const amt = mark.amount >= 30 ? 30 : mark.amount;
+        el.className = 'bid-oval contract b' + amt;
+        el.textContent = '';
+        el.appendChild(A.suitSvg(mark.trump, 'oval-suit'));
+        const num = document.createElement('span');
+        num.textContent = String(mark.amount);
+        el.appendChild(num);
+      } else {
+        const amt = mark.amount >= 30 ? 30 : mark.amount;
+        el.className = 'bid-oval b' + amt;
+        el.textContent = String(mark.amount);
+      }
+    }
+
+    function makeOval(mark) {
+      if (!mark) return null;
+      const el = document.createElement('div');
+      paintOval(el, mark);
+      return el;
     }
 
     function fillNamebar(el, seat, actor) {
@@ -127,7 +239,12 @@
       if (!box) return;
       box.innerHTML = '';
       const count = (st.hand_counts && st.hand_counts[seat]) || 0;
-      box.appendChild(fanForCount(count));
+      const wrap = document.createElement('div');
+      wrap.className = 'fan-wrap';
+      wrap.appendChild(fanForCount(count));
+      const ov = makeOval(seatMarkFor(st, seat));
+      if (ov) wrap.appendChild(ov);
+      box.appendChild(wrap);
       const bar = document.createElement('div');
       const actor = (st.actors || []).indexOf(seat) >= 0;
       fillNamebar(bar, seat, actor);
@@ -160,18 +277,22 @@
 
     function renderKitty(st) {
       const box = $('kitty');
+      const pocket = $('kitty-box');
       box.innerHTML = '';
-      const faces = (st.kitty || '').split(',').filter(Boolean);
-      if (faces.length) {
-        faces.forEach((c) => box.appendChild(A.cardSvg(c)));
-      } else if (st.phase === 'bidding' || st.phase === 'tsselect') {
-        for (let i = 0; i < 4; i++) box.appendChild(A.cardSvg('cbcatsil'));
+      // Silhouettes only while bidding. Declarer sees faces in-hand; others see it leave.
+      if (st.phase !== 'bidding') {
+        pocket.hidden = true;
+        return;
       }
+      pocket.hidden = false;
+      for (let i = 0; i < 4; i++) box.appendChild(A.cardSvg('cbcatsil'));
     }
 
     function renderPiles(st) {
       const box = $('piles');
       box.innerHTML = '';
+      const side = box.closest('.side-col');
+      if (side) side.hidden = !(st.past_tricks && st.past_tricks.length);
       (st.past_tricks || []).forEach((tr, i) => {
         const pile = A.cardSvg((tr.winner & 1) === 0 ? 'cshoriz' : 'csvert', 'pile ' + teamClass(tr.winner));
         pile.title = 'Trick ' + (i + 1) + ' won by ' + DIRL[tr.winner];
@@ -196,62 +317,77 @@
       $('inspect').hidden = false;
     }
 
-    function renderBids(st) {
-      const tbl = $('bids');
-      if (st.phase !== 'bidding' || !st.bid_history) {
-        tbl.hidden = true;
-        return;
+    function paintHandCard(c, st, legal, picking) {
+      const svg = A.cardSvg(c);
+      if (st.why === 'play' && legal.has(c)) {
+        svg.classList.add('legal');
+        svg.addEventListener('click', () => A.send(ws, { action: 'play', card: c }));
+      } else if (picking && legal.has(c)) {
+        svg.classList.add('legal');
+        if (keep.has(c)) svg.classList.add('pick');
+        else svg.classList.add('dim');
+        svg.addEventListener('click', () => {
+          if (keep.has(c)) keep.delete(c);
+          else keep.add(c);
+          renderState(st);
+        });
+      } else if (st.why === 'play') {
+        svg.classList.add('dim');
       }
-      tbl.hidden = false;
-      tbl.innerHTML = '';
-      const from = st.bid_from != null ? st.bid_from : 0;
-      const h = tbl.insertRow();
-      DIRS.forEach((d, i) => {
-        const th = document.createElement('th');
-        th.className = teamClass(i);
-        th.textContent = d;
-        h.appendChild(th);
-      });
-      const cells = [[], [], [], []];
-      (st.bid_history || []).forEach((b, k) => {
-        cells[(from + k) & 3].push(bidLabel(b));
-      });
-      const max = Math.max(1, ...cells.map((c) => c.length));
-      for (let r = 0; r < max; r++) {
-        const tr = tbl.insertRow();
-        for (let s = 0; s < 4; s++) {
-          const td = tr.insertCell();
-          td.className = teamClass(s);
-          td.textContent = cells[s][r] || '';
-        }
+      return svg;
+    }
+
+    function trumpKey(st) {
+      if (trump != null) return SUIT_KEY[trump];
+      if (st && st.trump != null) return SUIT_KEY[st.trump];
+      return null;
+    }
+
+    function applyTrumpPick(st, i) {
+      trump = i;
+      const key = SUIT_KEY[i];
+      handOrder = A.sortCards(displayCards(st), key);
+      handMerged = true;
+      keep = new Set(handOrder.filter((c) => A.isTrumpCard(c, key)));
+      renderState(st);
+    }
+
+    function defaultKeepFor(st) {
+      const cards = displayCards(st);
+      const key = trumpKey(st);
+      if (!key) return new Set();
+      return new Set(cards.filter((c) => A.isTrumpCard(c, key)));
+    }
+
+    function splitHandKitty(st) {
+      const hand = (st.hand || '').split(',').filter(Boolean);
+      const kit = st.why === 'trumpselect'
+        ? (st.kitty || '').split(',').filter(Boolean)
+        : [];
+      return { hand, kit };
+    }
+
+    function displayCards(st) {
+      const { hand, kit } = splitHandKitty(st);
+      if (kit.length) {
+        if (handOrder.length) return handOrder;
+        return A.sortCards(hand, null).concat(A.sortCards(kit, null));
       }
+      const key = st.trump != null ? SUIT_KEY[st.trump] : null;
+      return A.sortCards(hand, key);
     }
 
     function renderYou(st) {
       const row = $('you-hand');
       row.innerHTML = '';
-      const cards = (st.hand || '').split(',').filter(Boolean);
+      const { kit } = splitHandKitty(st);
+      const cards = displayCards(st);
       const legal = new Set((st.legal_cards || '').split(',').filter(Boolean));
-      const picking = st.why === 'trumpselect' || st.why === 'discard';
-      cards.forEach((c) => {
-        const svg = A.cardSvg(c);
-        if (st.why === 'play' && legal.has(c)) {
-          svg.classList.add('legal');
-          svg.addEventListener('click', () => A.send(ws, { action: 'play', card: c }));
-        } else if (picking && legal.has(c)) {
-          svg.classList.add('legal');
-          if (keep.has(c)) svg.classList.add('pick');
-          else svg.classList.add('dim');
-          svg.addEventListener('click', () => {
-            if (keep.has(c)) keep.delete(c);
-            else keep.add(c);
-            renderState(st);
-          });
-        } else if (picking || st.why === 'play') {
-          svg.classList.add('dim');
-        }
-        row.appendChild(svg);
-      });
+      const picking = isActor(st, me) && inKeepPhase(st) && legal.size > 0;
+      row.classList.toggle('with-kitty', kit.length > 0);
+      cards.forEach((c) => row.appendChild(paintHandCard(c, st, legal, picking)));
+      $('hand-sort').hidden = !(st.why === 'trumpselect' && st.declarer === me && kit.length && !handMerged);
+      paintOval($('you-bid-oval'), seatMarkFor(st, me));
       fillNamebar($('you-bar'), me, (st.actors || []).indexOf(me) >= 0);
       if (st.dealer === me) {
         const cr = A.cardSvg('crown', 'crown');
@@ -260,35 +396,114 @@
       }
     }
 
+    function bidBtnSpec(b, high, isDealer) {
+      if (b < 15) return { text: 'Pass', cls: 'pass' };
+      const amtCls = 'b' + (b >= 30 ? 30 : b);
+      const dbl = b >= 30 ? '/' + (b * 2) : '';
+      if (b === high && isDealer && high >= 15) {
+        return { text: 'Hold ' + b + dbl, cls: amtCls + ' hold' };
+      }
+      return { text: b + dbl, cls: amtCls };
+    }
+
+    function renderContractChip(st) {
+      const chip = $('contract-chip');
+      if (st.declarer == null) {
+        chip.hidden = true;
+        return;
+      }
+      chip.hidden = false;
+      $('contract-who').textContent = DIRL[st.declarer];
+      const suitEl = $('contract-suit');
+      suitEl.innerHTML = '';
+      if (st.trump != null) {
+        suitEl.appendChild(A.suitSvg(st.trump, 'suit'));
+      } else {
+        suitEl.appendChild(A.suitSvg(4, 'suit sil'));
+      }
+      $('contract-bid').textContent = String(st.contract_bid || '');
+    }
+
+    function renderKeepPanel(st) {
+      const panel = $('keep-panel');
+      const trick = $('trick');
+      const headline = $('keep-headline');
+      const copy = $('keep-copy');
+      const chips = $('keep-trumps');
+      chips.innerHTML = '';
+      headline.textContent = '';
+      copy.textContent = '';
+      if (!inKeepPhase(st)) {
+        panel.hidden = true;
+        trick.hidden = false;
+        return;
+      }
+      panel.hidden = false;
+      trick.hidden = true;
+      const named = st.trump != null ? st.trump : trump;
+      const iAmDecl = st.declarer === me;
+      const iAct = isActor(st, me);
+
+      if (st.why === 'trumpselect' && iAmDecl) {
+        if (named == null) {
+          headline.textContent = 'Name trump, then keep five.';
+        } else {
+          headline.appendChild(document.createTextNode('Trump is '));
+          headline.appendChild(A.suitSvg(named, 'suit'));
+        }
+        [0, 1, 2, 3].forEach((i) => {
+          const ic = A.suitSvg(i);
+          if (trump === i) ic.classList.add('on');
+          else if (trump == null) ic.classList.add('pulse');
+          ic.setAttribute('title', SUITS[i]);
+          ic.addEventListener('click', () => applyTrumpPick(st, i));
+          chips.appendChild(ic);
+        });
+      } else if (st.why === 'trumpselect') {
+        headline.textContent = 'Waiting for ' + DIRL[st.declarer] + ' to name trump…';
+      } else {
+        if (st.trump != null) {
+          headline.appendChild(document.createTextNode('Trump is '));
+          headline.appendChild(A.suitSvg(st.trump, 'suit'));
+        }
+        copy.textContent = iAct
+          ? 'Trump cards start kept. Click to change, then confirm.'
+          : 'Waiting for others to discard…';
+      }
+    }
+
     function renderActs(st) {
       const acts = $('acts');
-      const trumps = $('trumps');
+      const bidActs = $('bid-acts');
       acts.innerHTML = '';
-      trumps.innerHTML = '';
+      bidActs.innerHTML = '';
+      bidActs.hidden = true;
 
       if (st.why === 'bid' && st.legal_bids && st.legal_bids.length) {
+        const high = currentHigh(st);
         st.legal_bids.forEach((b) => {
+          const spec = bidBtnSpec(b, high, st.dealer === me);
           const btn = document.createElement('button');
           btn.type = 'button';
-          btn.textContent = b < 15 ? 'Pass' : 'Bid ' + b;
+          btn.className = spec.cls;
+          btn.textContent = spec.text;
           btn.addEventListener('click', () => A.send(ws, { action: 'bid', bid: b }));
-          acts.appendChild(btn);
+          bidActs.appendChild(btn);
         });
+        bidActs.hidden = false;
       }
 
-      if (st.why === 'trumpselect' || st.why === 'discard') {
-        if (st.why === 'trumpselect') {
-          [0, 1, 2, 3].forEach((i) => {
-            const ic = A.suitSvg(i);
-            if (trump === i) ic.classList.add('on');
-            ic.title = SUITS[i];
-            ic.addEventListener('click', () => { trump = i; renderState(st); });
-            trumps.appendChild(ic);
-          });
-        }
+      if (inKeepPhase(st) && isActor(st, me)) {
         const go = document.createElement('button');
         go.type = 'button';
-        go.textContent = st.why === 'trumpselect' ? 'Name trump & keep' : 'Keep selected';
+        const over = keep.size > 5;
+        const needTrump = st.why === 'trumpselect' && trump == null;
+        go.disabled = over || needTrump;
+        go.textContent = over
+          ? 'Keep at most 5'
+          : needTrump
+            ? 'Select trump'
+            : (st.why === 'trumpselect' ? 'Name trump & keep' : 'Keep selected');
         go.addEventListener('click', () => {
           const msg = { action: 'selecthand', cards: [...keep].join(',') };
           if (st.why === 'trumpselect') msg.trump = SUITS[trump];
@@ -321,21 +536,16 @@
       me = s.seat;
       $('sc-ew').textContent = s.score[0];
       $('sc-ns').textContent = s.score[1];
-      let meta = DIRL[s.dealer] + ' deals';
-      if (s.declarer != null) {
-        meta += ' · ' + DIRL[s.declarer] + ' ' + (s.contract_bid || '');
-        if (s.trump != null) meta += ' ' + SUITS[s.trump];
-      }
-      if (s.why) meta += ' · ' + s.why;
-      $('meta').textContent = meta;
+      $('meta').textContent = DIRL[s.dealer] + ' deals';
+      renderContractChip(s);
 
       renderSeatBox(2, (me + 2) & 3, s);
       renderSeatBox(1, (me + 1) & 3, s);
       renderSeatBox(3, (me + 3) & 3, s);
+      renderKeepPanel(s);
       renderTrick(s);
       renderKitty(s);
       renderPiles(s);
-      renderBids(s);
       renderYou(s);
       renderActs(s);
     }
@@ -360,6 +570,42 @@
         p.textContent = `Game ${i + 1}  ${g[0]}–${g[1]}`;
         box.appendChild(p);
       });
+    }
+
+    function formatIdleCountdown(sec) {
+      const s = Math.max(0, sec | 0);
+      const m = Math.floor(s / 60);
+      const r = s % 60;
+      return m > 0 ? `${m}:${String(r).padStart(2, '0')}` : `${s}s`;
+    }
+    function paintIdleWarnCountdown() {
+      const el = $('idle-warn-countdown');
+      if (!el || !idleWarnEndsAt) return;
+      const left = Math.max(0, Math.ceil((idleWarnEndsAt - Date.now()) / 1000));
+      el.textContent = formatIdleCountdown(left);
+    }
+    function hideIdleWarn() {
+      if (idleWarnTick != null) {
+        clearInterval(idleWarnTick);
+        idleWarnTick = null;
+      }
+      idleWarnEndsAt = 0;
+      const panel = $('panel-idle-warn');
+      if (panel) panel.hidden = true;
+    }
+    function showIdleWarn(endsAt, secondsLeft) {
+      const now = Date.now();
+      let end = Number(endsAt) || 0;
+      if (end < now - 2000) {
+        const sec = Math.max(0, Number(secondsLeft) || 0);
+        end = now + sec * 1000;
+      }
+      idleWarnEndsAt = end;
+      $('panel-idle-warn').hidden = false;
+      paintIdleWarnCountdown();
+      if (idleWarnTick != null) clearInterval(idleWarnTick);
+      idleWarnTick = setInterval(paintIdleWarnCountdown, 250);
+      setStatus('Table idle — Stay or it will close');
     }
 
     function persistJoined(j) {
@@ -388,6 +634,13 @@
       histOpen = !histOpen;
       $('hist').hidden = !histOpen;
     });
+    $('hand-sort').addEventListener('click', () => {
+      if (!lastState) return;
+      const key = trump == null ? null : SUIT_KEY[trump];
+      handOrder = A.sortCards(displayCards(lastState), key);
+      handMerged = true;
+      renderState(lastState);
+    });
 
     if (!sess || !sess.uuid || !sess.username) {
       setStatus('No lobby session — open the lobby to sit.', 'err');
@@ -404,6 +657,7 @@
         if (j.action === 'joined') {
           persistJoined(j);
           setStatus('at ' + DIRL[j.seat], 'ok');
+          $('replay').hidden = !j.replay;
           return;
         }
         if (j.action === 'players') {
@@ -440,8 +694,20 @@
           if (pool !== keepPool) {
             keep = new Set();
             keepPool = pool;
-            if (j.why === 'trumpselect' || j.why === 'discard') {
-              pool.split(',').filter(Boolean).forEach((c) => keep.add(c));
+            handMerged = false;
+            trump = null;
+            const hand = (j.hand || '').split(',').filter(Boolean);
+            const kit = (j.kitty || '').split(',').filter(Boolean);
+            if (j.why === 'trumpselect') {
+              handOrder = A.sortCards(hand, null).concat(A.sortCards(kit, null));
+              // Orig five start selected until a suit is named (then trump + A♥).
+              if (j.declarer === me) hand.forEach((c) => keep.add(c));
+            } else if (j.why === 'discard') {
+              handOrder = [];
+              if (j.trump != null) trump = j.trump;
+              keep = defaultKeepFor(j);
+            } else {
+              handOrder = [];
             }
           }
           renderState(j);
@@ -453,6 +719,14 @@
               (j.series_over ? ' · game over' : ''),
             'ok'
           );
+          return;
+        }
+        if (j.action === 'idlewarning') {
+          showIdleWarn(j.ends_at, j.seconds_left);
+          return;
+        }
+        if (j.action === 'idlewarningcancel') {
+          hideIdleWarn();
           return;
         }
         if (j.action === 'shutdown') {
@@ -487,6 +761,11 @@
         });
       };
       $('replay').addEventListener('click', () => A.send(ws, { action: 'replaydeal' }));
+      $('btn-idle-stay').addEventListener('click', () => {
+        A.send(ws, { action: 'idlestay' });
+        setStatus('Staying…');
+      });
+      $('btn-idle-leave').addEventListener('click', () => $('leavegame').click());
       $('leavegame').addEventListener('click', () => {
         leaving = true;
         const s = A.getSession() || {};

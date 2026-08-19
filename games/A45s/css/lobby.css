@@ -489,10 +489,9 @@ html:has(.lobby-page), html:has(.doc-page) {
   text-transform: uppercase;
   padding: 0.12em 0.45em;
   border-radius: 4px;
-  /* Opaque pale salmon — translucent red washed out on in-progress green. */
-  background: #fbe9e7;
-  border: 1px solid #e64a19;
-  color: #bf360c;
+  background: #efebe9;
+  border: 1px solid #bcaaa4;
+  color: #6d4c41;
 }
 .status-cluster {
   margin-left: auto;
@@ -504,6 +503,7 @@ html:has(.lobby-page), html:has(.doc-page) {
 .status-cluster .status { font-size: 0.75rem; color: var(--muted); }
 .status-cluster .status.live { color: #2e7d32; font-weight: 700; }
 .status-cluster .start-btn,
+.status-cluster .stop-btn,
 .status-cluster .icon-btn {
   font-size: 0.78rem;
   padding: 0.2em 0.55em;
@@ -543,17 +543,35 @@ html:has(.lobby-page), html:has(.doc-page) {
   border-color: #1a1810;
   color: #1a1810;
 }
-.table-classic-badge {
+.lobby-page .table-card .status-cluster .stop-btn {
+  background: #fff3e0;
+  border-color: #ffb74d;
+  color: #e65100;
+}
+.lobby-page .table-card .status-cluster .stop-btn:hover {
+  background: #ffe0b2;
+  border-color: #fb8c00;
+}
+.table-opt-chip {
   flex-shrink: 0;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 0.12em 0.45em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  padding: 0;
   border-radius: 4px;
   background: #4a4538;
   border: 1px solid #7a7048;
   color: #c8bc88;
+  font-size: 0.92rem;
+  line-height: 1;
+}
+.table-opt-chip svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  fill: currentColor;
+  display: block;
 }
 .table-gear { position: relative; display: inline-flex; }
 .lobby-page .table-card .gear-btn {
@@ -598,11 +616,24 @@ html:has(.lobby-page), html:has(.doc-page) {
   font-size: 0.82rem;
   cursor: pointer;
 }
-.opts-popover .opts-radio .hint {
+.opts-popover .opts-radio .hint,
+.opts-popover .opts-check .hint {
   display: block;
   font-size: 0.72rem;
   color: var(--muted);
   font-weight: 400;
+}
+.opts-popover .opts-label-gap {
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--border-hi);
+}
+.opts-popover .opts-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  cursor: pointer;
 }
 
 .seat-pairs {

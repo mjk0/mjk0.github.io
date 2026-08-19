@@ -89,6 +89,37 @@
 
   const SUIT_ID = { C: 'cl', D: 'di', H: 'he', S: 'sp' };
 
+  // Same tables as Node A45s.js `A45s.suitOrder` / `comparator`.
+  const SUIT_ORDER = {
+    none: ['het', 'clt', 'dit', 'spt'],
+    cl: ['clt', 'din', 'spn', 'hen'],
+    di: ['dit', 'cln', 'hen', 'spn'],
+    he: ['het', 'cln', 'din', 'spn'],
+    sp: ['spt', 'din', 'cln', 'hen'],
+    clt: ['5_cl', 'j_cl', 'a_he', 'a_cl', 'k_cl', 'q_cl', '2_cl', '3_cl', '4_cl', '6_cl', '7_cl', '8_cl', '9_cl', 't_cl'],
+    cln: ['k_cl', 'q_cl', 'j_cl', 'a_cl', '2_cl', '3_cl', '4_cl', '5_cl', '6_cl', '7_cl', '8_cl', '9_cl', 't_cl'],
+    dit: ['5_di', 'j_di', 'a_he', 'a_di', 'k_di', 'q_di', 't_di', '9_di', '8_di', '7_di', '6_di', '4_di', '3_di', '2_di'],
+    din: ['k_di', 'q_di', 'j_di', 't_di', '9_di', '8_di', '7_di', '6_di', '5_di', '4_di', '3_di', '2_di', 'a_di'],
+    spt: ['5_sp', 'j_sp', 'a_he', 'a_sp', 'k_sp', 'q_sp', '2_sp', '3_sp', '4_sp', '6_sp', '7_sp', '8_sp', '9_sp', 't_sp'],
+    spn: ['k_sp', 'q_sp', 'j_sp', 'a_sp', '2_sp', '3_sp', '4_sp', '5_sp', '6_sp', '7_sp', '8_sp', '9_sp', 't_sp'],
+    het: ['5_he', 'j_he', 'a_he', 'k_he', 'q_he', 't_he', '9_he', '8_he', '7_he', '6_he', '4_he', '3_he', '2_he'],
+    hen: ['k_he', 'q_he', 'j_he', 't_he', '9_he', '8_he', '7_he', '6_he', '5_he', '4_he', '3_he', '2_he'],
+  };
+  const SORT_ORDER = {};
+  ['none', 'cl', 'di', 'he', 'sp'].forEach((trumpSuit) => {
+    const so = {};
+    let ord = 52;
+    SUIT_ORDER[trumpSuit].forEach((suit) => {
+      SUIT_ORDER[suit].forEach((c) => {
+        // Pre-trump: Ace of hearts lives with hearts only, not every suit-as-trump list.
+        if (c !== 'a_he' || trumpSuit !== 'none' || suit === 'het') so[c] = ord--;
+      });
+    });
+    so.cback = ord;
+    so.cbcatsil = ord;
+    SORT_ORDER[trumpSuit] = so;
+  });
+
   /** Wire token `H5` / `CA` → cards0.svg id `5_he` / `a_cl`. */
   function tokenToSvg(token) {
     if (!token) return 'cblank';
@@ -124,6 +155,18 @@
     return svg;
   }
 
+  // Node `A45s.comparator(trumpSuit)`: null = each suit as trump, H/C/D/S.
+  function sortCards(cards, trumpSuit) {
+    const so = SORT_ORDER[trumpSuit || 'none'];
+    return cards.slice().sort((a, b) => (so[tokenToSvg(b)] || 0) - (so[tokenToSvg(a)] || 0));
+  }
+
+  function isTrumpCard(token, trumpSuit) {
+    if (!trumpSuit) return false;
+    const id = tokenToSvg(token);
+    return id === 'a_he' || id.endsWith('_' + trumpSuit);
+  }
+
   global.A45sWeb = {
     wsUrl,
     loadProfiles,
@@ -139,5 +182,7 @@
     tokenToSvg,
     cardSvg,
     suitSvg,
+    sortCards,
+    isTrumpCard,
   };
 })(window);
