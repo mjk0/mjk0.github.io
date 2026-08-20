@@ -433,3 +433,42 @@ export function responseEligibility(handTokens, legal) {
   const passOnly = live.size === 0 && (hasPass || list.length > 0);
   return { passOnly, live };
 }
+
+/**
+ * Same-rank subset lead vs free surplus (parked seq tokens ignored).
+ * Null unless selection is a natural same-rank set with k < n free of that rank.
+ * @returns {{ rank: number, k: number, n: number, extraTokens: string[], fullTokens: string[] }|null}
+ */
+export function subsetLeadInfo(handTokens, selectedTokens, reservedTokens = null) {
+  const sel = selectedTokens || [];
+  if (sel.length < 1 || sel.length > 4) return null;
+  const reserved =
+    reservedTokens instanceof Set
+      ? reservedTokens
+      : new Set(reservedTokens || []);
+  let rank = 0;
+  for (const t of sel) {
+    const c = parseWireCard(t);
+    if (!c || c.joker || reserved.has(t)) return null;
+    if (!rank) rank = c.rank;
+    else if (c.rank !== rank) return null;
+  }
+  const free = [];
+  for (const t of handTokens || []) {
+    const c = parseWireCard(t);
+    if (!c || c.joker || c.rank !== rank || reserved.has(t)) continue;
+    free.push(t);
+  }
+  const k = sel.length;
+  const n = free.length;
+  if (k >= n || n < 2) return null;
+  const freeSet = new Set(free);
+  if (!sel.every((t) => freeSet.has(t))) return null;
+  return {
+    rank,
+    k,
+    n,
+    extraTokens: free.filter((t) => !sel.includes(t)),
+    fullTokens: free,
+  };
+}

@@ -64,6 +64,14 @@ function rankFace(rank) {
   return map[rank];
 }
 
+/** Face label for copy (8, 10, J, Q, K, A) using current table face mode. */
+export function rankFaceLabel(rank) {
+  const f = rankFace(rank);
+  if (!f) return String(rank);
+  if (f === 't') return '10';
+  return f.toUpperCase();
+}
+
 // Client-only instance suffix for duplicate wire faces (two JKs).
 // Never sent on the socket. Unique tokens stay bare; copies get #0, #1, …
 const INST_SUFFIX = /#\d+$/;

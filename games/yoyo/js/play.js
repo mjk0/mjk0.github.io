@@ -6,9 +6,10 @@ import {
   loadIdentity,
   SS,
   cachePrefs,
-  loadPrefsCache,
   applyHandSortLocal,
+  applyWarnSubsetLeadLocal,
   handSort,
+  warnSubsetLead,
   displayHandTokens,
   displayPlayTokens,
   displayTableName,
@@ -47,12 +48,14 @@ import {
   completedTrickCount,
   miniPlayStack,
   seatArcAngle,
+  seatArcOffset,
 } from './trick.js';
 import {
   offerCount,
   responseLockedSize,
   enumerateSetUnits,
   responseEligibility,
+  subsetLeadInfo,
 } from './legal.js';
 import { OPT, hasOpt, optsPills } from './opts.js';
 import { placeLabel, normalizeRankPack, DEFAULT_RANK_PACK } from './ranks.js';
@@ -176,6 +179,10 @@ let drag = null;
  * @type {{ tokens: string[], side: 'left'|'right' }[]}
  */
 let parkedSeqs = [];
+/** Armed subset-lead confirm: Lead k vs Lead n (PLAN_ui §4.2.3). */
+let subsetLeadPending = /** @type {ReturnType<typeof subsetLeadInfo>} */ (null);
+/** Last built felt-prompt key — skip rebuild (and focus steal) while unchanged. */
+let subsetPromptKey = '';
 /** Guard: renderHand → updateUiScale may refresh seats/trick without re-entering. */
 let uiScaleRefreshing = false;
 /** @type {object|null} last ExchangePhase event */
@@ -923,6 +930,7 @@ function buildHandCardEl(t, { elig, canAct, dealAnim, animIndex }) {
   card.dataset.wire = wireOf(t);
   card.dataset.inst = t;
   if (selected.has(t)) card.classList.add('selected');
+  if (subsetLeadPending?.extraTokens?.includes(t)) card.classList.add('subset-extra');
   if (elig && !elig.live.has(t)) card.classList.add('dead');
   if (dealAnim) {
     card.classList.add('deal-in');
@@ -1854,6 +1862,8 @@ function buildPlayTurnCue() {
   const seat = st.next | 0;
   if (seat < 1) return null;
   if (mySeat && seat === mySeat && isMyAction()) {
+    // Subset confirm owns Choose+arrow; hide the seat cue so only one arrow shows
+    if (step === STEP.LEAD && subsetLeadPending) return null;
     return {
       seat,
       mine: true,
@@ -2028,16 +2038,21 @@ function renderTrick() {
     if (stack) stack.classList.add('winner');
   }
   const piles = layer.querySelector('.trick-piles');
-  if (!piles) return;
+  if (!piles) {
+    layoutSubsetLeadPrompt();
+    return;
+  }
   if (!wantPark) {
     piles.classList.remove('parked', 'win-flash', 'park-motion', 'summary-dock');
     clearTrickParkOffset(piles);
+    layoutSubsetLeadPrompt();
     return;
   }
   applyParkToPiles(piles, winSeat, you, n, {
     animate: animatePark,
     summaryDock: atEnd && gameOverSummaryOpen,
   });
+  layoutSubsetLeadPrompt();
 }
 
 // Hold duration (local only).
@@ -3384,11 +3399,162 @@ function clearSetChips() {
   clearHandPreview();
 }
 
+function leadSizeLabel(size) {
+  return size === 2 ? 'Lead pair' : `Lead ${size}`;
+}
+
+function currentSubsetLeadInfo() {
+  if (!lastState || lastState.step !== STEP.LEAD || lastState.next !== mySeat) {
+    return null;
+  }
+  if (!warnSubsetLead() || !selected.size) return null;
+  return subsetLeadInfo(activeHandWires(), [...selected], parkedTokenSet());
+}
+
+function syncSubsetLeadPending() {
+  if (!subsetLeadPending) return;
+  const info = currentSubsetLeadInfo();
+  if (!info || info.rank !== subsetLeadPending.rank || info.k !== subsetLeadPending.k) {
+    subsetLeadPending = null;
+  } else {
+    subsetLeadPending = info;
+  }
+}
+
+function applySubsetExtraChrome() {
+  const extra = new Set(subsetLeadPending?.extraTokens || []);
+  $('hand-wrap')?.querySelectorAll('.card').forEach((c) => {
+    const inst = c.dataset.inst || c.dataset.wire;
+    c.classList.toggle('subset-extra', extra.has(inst));
+  });
+}
+
+function layoutSubsetLeadPrompt() {
+  const el = $('subset-lead-prompt');
+  const area = $('table-area');
+  if (!el || el.hidden || !lastState || !area) return;
+  const n = lastState.n || 4;
+  const you = mySeat || 1;
+  const off = seatArcOffset(visualIndex(you, n, you), n, 0.32);
+  el.style.left = `${off.x}%`;
+  el.style.top = `${off.y}%`;
+  el.style.transform = 'translate(-50%, -50%)';
+  const ar = area.getBoundingClientRect();
+  const er = el.getBoundingClientRect();
+  const pad = pxScale(8);
+  let maxBottom = ar.bottom - pad;
+  const hand = $('hand-bar');
+  if (hand) {
+    const hr = hand.getBoundingClientRect();
+    if (hr.top > ar.top) maxBottom = Math.min(maxBottom, hr.top - pad);
+  }
+  const youEl = document.querySelector('#table-area .seat-token.you');
+  if (youEl) {
+    const yr = youEl.getBoundingClientRect();
+    if (!(er.right < yr.left || er.left > yr.right)) {
+      maxBottom = Math.min(maxBottom, yr.top - pad);
+    }
+  }
+  const overflow = er.bottom - maxBottom;
+  if (overflow > 1) {
+    el.style.transform = `translate(-50%, calc(-50% - ${Math.round(overflow)}px))`;
+  }
+}
+
+function confirmSubsetLead(kind) {
+  if (!subsetLeadPending) return;
+  if (kind === 'n') {
+    const full = subsetLeadPending.fullTokens;
+    subsetLeadPending = null;
+    selectUnitTokens(full);
+    trySubmitPlay('table', { confirmSubset: true });
+    return;
+  }
+  subsetLeadPending = null;
+  trySubmitPlay('table', { confirmSubset: true });
+}
+
+function makeSubsetLeadTile(tokens, label, primary) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'subset-lead-tile' + (primary ? ' primary' : '');
+  btn.setAttribute('aria-label', label);
+  const stack = miniPlayStack(tokens, { cw: cardPx(34), ch: cardPx(46) });
+  stack.classList.add('subset-lead-stack');
+  const lab = document.createElement('span');
+  lab.className = 'subset-lead-lab';
+  lab.textContent = label;
+  btn.append(stack, lab);
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    confirmSubsetLead(primary ? 'n' : 'k');
+  });
+  return btn;
+}
+
+function renderSubsetLeadPrompt() {
+  const host = $('subset-lead-prompt');
+  if (!host) return;
+  const info = subsetLeadPending;
+  if (!info) {
+    const had = !!subsetPromptKey;
+    subsetPromptKey = '';
+    host.hidden = true;
+    host.replaceChildren();
+    host.classList.remove('arm');
+    if (had) renderTrick(); // restore Your Lead
+    return;
+  }
+  const kToks = [...selected];
+  const key = `${info.rank}:${info.k}:${info.n}:${kToks.join(',')}:${cardPx(34)}:${handSort()}`;
+  if (key === subsetPromptKey && !host.hidden) {
+    layoutSubsetLeadPrompt();
+    return;
+  }
+  const first = !subsetPromptKey;
+  subsetPromptKey = key;
+  const head = document.createElement('div');
+  head.className = 'subset-lead-head';
+  const lab = document.createElement('div');
+  lab.className = 'subset-lead-choose';
+  lab.textContent = 'Choose a lead';
+  const arrow = document.createElement('div');
+  arrow.className = 'subset-lead-arrow';
+  arrow.setAttribute('aria-hidden', 'true');
+  const stem = document.createElement('div');
+  stem.className = 'subset-lead-arrow-stem';
+  const ahead = document.createElement('div');
+  ahead.className = 'subset-lead-arrow-head';
+  arrow.append(stem, ahead);
+  head.append(lab, arrow);
+  const row = document.createElement('div');
+  row.className = 'subset-lead-row';
+  row.append(
+    makeSubsetLeadTile(kToks, leadSizeLabel(info.k), false),
+    makeSubsetLeadTile(info.fullTokens, leadSizeLabel(info.n), true),
+  );
+  host.replaceChildren(head, row);
+  host.hidden = false;
+  layoutSubsetLeadPrompt();
+  if (first) {
+    renderTrick(); // drop seat turn cue
+    if (!reducedMotion) {
+      host.classList.remove('arm');
+      void host.offsetWidth;
+      host.classList.add('arm');
+    }
+  }
+  host.querySelector('.subset-lead-tile.primary')?.focus();
+}
+
 // Sync .selected classes + play chrome to `selected`.
 function refreshSelectionUi() {
+  syncSubsetLeadPending();
+  const extra = new Set(subsetLeadPending?.extraTokens || []);
   $('hand-wrap')?.querySelectorAll('.card').forEach((c) => {
     const inst = c.dataset.inst || c.dataset.wire;
     c.classList.toggle('selected', selected.has(inst));
+    c.classList.toggle('subset-extra', extra.has(inst));
   });
   updatePlayButtons();
   updateHandDim();
@@ -3714,6 +3880,7 @@ function updateExchangeChrome() {
 }
 
 function updatePlayButtons() {
+  syncSubsetLeadPending();
   const st = lastState;
   const atGameEnd =
     !!(st && st.step >= STEP.SUMMARY) ||
@@ -3725,9 +3892,15 @@ function updatePlayButtons() {
   const resp = st && st.step === STEP.PLAY && st.next === mySeat;
   const elig = resp ? currentResponseEligibility() : null;
   const passOnly = !!(elig && elig.passOnly);
+  const subset = !!(lead && subsetLeadPending);
 
   const btnPlay = $('btn-play');
   const btnPass = $('btn-pass');
+  if (btnPlay) btnPlay.title = '';
+  if (btnPass) {
+    btnPass.textContent = 'Pass';
+    btnPass.title = '';
+  }
   // Seat theater: no hand controls until fanfare ends
   if (seatCeremonyActive) {
     if (btnPlay) {
@@ -3740,6 +3913,7 @@ function updatePlayButtons() {
     }
     const hint = $('hand-hint');
     if (hint) hint.textContent = 'Drawing seats…';
+    renderSubsetLeadPrompt();
     return;
   }
   if (atGameEnd) {
@@ -3782,6 +3956,16 @@ function updatePlayButtons() {
       btnPass.hidden = true;
       btnPass.disabled = true;
     }
+  } else if (subset) {
+    // Felt tiles are the click targets; hide Pass/Play so the catch isn't split
+    btnPlay.textContent = 'Play';
+    btnPlay.hidden = true;
+    btnPlay.disabled = true;
+    btnPlay.classList.remove('no-play');
+    if (btnPass) {
+      btnPass.hidden = true;
+      btnPass.disabled = true;
+    }
   } else {
     // Our turn: Play always; Pass only when responding (not lead)
     btnPlay.textContent = 'Play';
@@ -3794,6 +3978,8 @@ function updatePlayButtons() {
     }
   }
 
+  applySubsetExtraChrome();
+  renderSubsetLeadPrompt();
   updateExchangeChrome();
   updateHandDim();
   requestAnimationFrame(layoutPlayActions);
@@ -3815,6 +4001,8 @@ function updatePlayButtons() {
         : room > 1
           ? `Select ${room} cards · drag to pile or Offer`
           : 'Click a card · drag to pile beside seat (or Offer)';
+    } else if (lead && subsetLeadPending) {
+      hint.textContent = 'Choose a lead on the table';
     } else if (lead) {
       hint.textContent = hasOpt(st.opts || 0, OPT.SEQ5)
         ? 'Click cards · chips · flick 5 left or right to park · up to play'
@@ -3856,7 +4044,7 @@ function updatePlayButtons() {
 }
 
 // Submit current selection (Play button or drop onto table / exchange zone).
-function trySubmitPlay(dropTarget = 'table') {
+function trySubmitPlay(dropTarget = 'table', opts = {}) {
   if (!selected.size) return false;
   const insts = [...selected];
   const list = insts.map(wireOf);
@@ -3900,6 +4088,22 @@ function trySubmitPlay(dropTarget = 'table') {
     rejectPlay(bad);
     return false;
   }
+  const st = lastState;
+  if (
+    !opts.confirmSubset &&
+    st &&
+    st.step === STEP.LEAD &&
+    st.next === mySeat &&
+    warnSubsetLead()
+  ) {
+    const info = subsetLeadInfo(activeHandWires(), insts, parkedTokenSet());
+    if (info) {
+      subsetLeadPending = info;
+      refreshSelectionUi();
+      return true;
+    }
+  }
+  subsetLeadPending = null;
   const cards = list.join(',');
   lastSentPlay = cards;
   dbgPlay('send', { sent: cards, selected: list });
@@ -4112,7 +4316,7 @@ function onSetChipPointerDown(ev, el, tokens, { canPlay = true, parkable = false
 // Targets that own selection / actions — empty-space clear skips these.
 function isSelectionUiTarget(el) {
   return !!el?.closest?.(
-    '.card, .set-chip, .play-actions, .park-zone, .hand-bay, button, a, input, select, label, .overlay-panel, #gear-wrap, .ex-seat-float, .game-over-hold, #panel-idle-warn, .seat-token, .drag-ghost',
+    '.card, .set-chip, .play-actions, .park-zone, .hand-bay, button, a, input, select, label, .overlay-panel, #gear-wrap, .ex-seat-float, .game-over-hold, #panel-idle-warn, .seat-token, .drag-ghost, #subset-lead-prompt',
   );
 }
 
@@ -5028,6 +5232,7 @@ function onServerEvent(ev) {
   if (a === 'prefs') {
     if (ev.prefs) cachePrefs(ev.prefs, loadIdentity().username);
     syncGearUi();
+    if (!warnSubsetLead() && subsetLeadPending) subsetLeadPending = null;
     renderHand();
     renderExchangeOverlays();
     return;
@@ -5339,6 +5544,21 @@ function syncGearUi() {
   const asc = $('gear-hand-asc');
   if (desc) desc.checked = sort === 'desc';
   if (asc) asc.checked = sort === 'asc';
+  const warn = $('gear-warn-subset');
+  if (warn) warn.checked = warnSubsetLead();
+}
+
+function setWarnSubsetFromGear(on) {
+  if (!applyWarnSubsetLeadLocal(on)) {
+    syncGearUi();
+    return;
+  }
+  syncGearUi();
+  send({ action: 'setprefs', prefs: { warn_subset_lead: !!on } });
+  if (!on && subsetLeadPending) {
+    subsetLeadPending = null;
+    refreshSelectionUi();
+  }
 }
 
 // Hand sort toggle: keep park membership; re-order faces inside free + each bay.
@@ -5471,6 +5691,7 @@ function wireControls() {
     if (scaled) refreshUiScaleLayout();
     layoutExchangeFloats();
     layoutPlayActions();
+    layoutSubsetLeadPrompt();
     renderSetChips();
     refreshSummaryDockIfNeeded();
     clampOpenStripPopovers();
@@ -5516,6 +5737,15 @@ function wireControls() {
   });
   $('gear-hand-asc')?.addEventListener('change', () => {
     if ($('gear-hand-asc').checked) setHandSortFromGear('asc'); // Low → High
+  });
+  $('gear-warn-subset')?.addEventListener('change', () => {
+    setWarnSubsetFromGear(!!$('gear-warn-subset').checked);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || !subsetLeadPending) return;
+    if (!$('gear-menu')?.hidden) return;
+    e.preventDefault();
+    clearSelection();
   });
 
   $('btn-play').addEventListener('click', () => {

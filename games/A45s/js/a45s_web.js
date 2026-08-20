@@ -167,6 +167,59 @@
     return id === 'a_he' || id.endsWith('_' + trumpSuit);
   }
 
+  // Wire token `H5` or svg id `5_he`.
+  function asId(card) {
+    if (!card) return '';
+    return /^[CDHS]/.test(card) ? tokenToSvg(card) : card;
+  }
+
+  function suitOf(card) {
+    const id = asId(card);
+    const i = id.lastIndexOf('_');
+    return i >= 0 ? id.slice(i + 1) : '';
+  }
+
+  function rankList(suitKey, asTrump) {
+    const list = SUIT_ORDER[(suitKey || '') + (asTrump ? 't' : 'n')];
+    return list ? list.slice() : [];
+  }
+
+  // 0 = best. Missing card → 99 (does not beat).
+  function rankPos(card, suitKey, asTrump) {
+    const list = SUIT_ORDER[(suitKey || '') + (asTrump ? 't' : 'n')];
+    if (!list) return 99;
+    const i = list.indexOf(asId(card));
+    return i < 0 ? 99 : i;
+  }
+
+  function isTrumpId(id, trumpKey) {
+    return !!trumpKey && (id === 'a_he' || id.endsWith('_' + trumpKey));
+  }
+
+  // True if `a` currently beats `b` (trump always beats off; else lead-suit only).
+  function cardBeats(a, b, trumpKey, leadToken) {
+    const aId = asId(a), bId = asId(b);
+    const aTr = isTrumpId(aId, trumpKey), bTr = isTrumpId(bId, trumpKey);
+    if (aTr !== bTr) return aTr;
+    if (aTr) return rankPos(aId, trumpKey, true) < rankPos(bId, trumpKey, true);
+    const leadSuit = suitOf(leadToken);
+    if (!leadSuit) return false;
+    const aOff = suitOf(aId) === leadSuit, bOff = suitOf(bId) === leadSuit;
+    if (aOff !== bOff) return aOff;
+    if (!aOff) return false;
+    return rankPos(aId, leadSuit, false) < rankPos(bId, leadSuit, false);
+  }
+
+  function trickWinner(cards, trumpKey) {
+    if (!cards || !cards.length) return null;
+    const lead = cards[0].card;
+    let best = cards[0];
+    for (let i = 1; i < cards.length; i++) {
+      if (cardBeats(cards[i].card, best.card, trumpKey, lead)) best = cards[i];
+    }
+    return best;
+  }
+
   global.A45sWeb = {
     wsUrl,
     loadProfiles,
@@ -184,5 +237,9 @@
     suitSvg,
     sortCards,
     isTrumpCard,
+    suitOf,
+    rankList,
+    cardBeats,
+    trickWinner,
   };
 })(window);

@@ -125,25 +125,32 @@ body.felt-page .wrap { display: none; }
   font-size: 1em;
   padding: 0.4em 0.85em;
 }
+.felt .inspect-step {
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  box-sizing: border-box;
+}
 .felt-head {
   grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.45em 0.8em;
+  gap: 0.4em 0.8em;
   font-size: 1em;
+  position: relative;
+  z-index: 3;
 }
-#replay {
-  display: inline-flex;
+.head-left,
+.head-right {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.4em 0.55em;
 }
-#replay svg {
-  width: 1em;
-  height: 1em;
-  fill: currentColor;
-  flex-shrink: 0;
-}
+.head-right { margin-left: auto; }
+.head-deals { margin: 0; }
 .fill-btn {
   min-width: 2.1em;
   font-weight: bold;
@@ -155,16 +162,72 @@ body.felt-page .wrap { display: none; }
   border-color: #fff;
 }
 .fill-btn[hidden] { display: none !important; }
+.gear-wrap { position: relative; display: inline-flex; }
+.rank-gear {
+  min-width: 2.1em;
+  font-size: 1.15em;
+  line-height: 1;
+}
+.rank-gear.open {
+  background: burlywood;
+  color: #111;
+  border-color: #fff;
+}
+.gear-pop {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 5;
+  min-width: 10.5em;
+  background: #16532c;
+  color: var(--ink);
+  padding: 0.5em 0.75em;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.22);
+  box-shadow: 0 0.35em 0.8em rgba(0,0,0,0.35);
+  white-space: nowrap;
+}
+.gear-pop[hidden] { display: none !important; }
+.gear-check {
+  display: flex;
+  align-items: center;
+  gap: 0.45em;
+  cursor: pointer;
+  font-size: 0.95em;
+  user-select: none;
+}
+.gear-check input {
+  width: 1.1em;
+  height: 1.1em;
+  margin: 0;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
 .score-chip {
   display: inline-flex;
   align-items: baseline;
-  gap: 0.35em;
-  padding: 0.15em 0.45em;
-  border-radius: 4px;
+  gap: 0.3em;
+  padding: 0.18em 0.5em;
+  border-radius: 6px;
   font-weight: bold;
+  font-family: inherit;
+  font-size: clamp(1.15em, min(3.2vh, 2.8vw), 1.7em);
+  line-height: 1.15;
+  border: 0;
+  cursor: pointer;
+}
+.felt .score-chip { padding: 0.18em 0.5em; }
+.score-chip strong {
+  font-size: 1.12em;
+  font-variant-numeric: tabular-nums;
 }
 .score-chip.ew { background: #fff; color: #111; }
 .score-chip.ns { background: #8b1e1e; color: #fff; }
+.score-chip:focus-visible,
+.score-chip[aria-expanded="true"] {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 .felt-opp { grid-column: 2; grid-row: 2; justify-self: center; }
 .felt-pocket {
   display: flex;
@@ -195,6 +258,8 @@ body.felt-page .wrap { display: none; }
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  overflow: visible;
 }
 .felt-right {
   grid-column: 3;
@@ -382,19 +447,14 @@ body.felt-page .wrap { display: none; }
 .trick .s3 { right: 2%; top: 32%; }     /* right */
 .trick .empty { opacity: 0.15; }
 .trick .slot.lead { z-index: 2; }
-.inspect-trick .slot.winner .inspect-who {
-  outline: 2px solid gold;
-  outline-offset: 1px;
-  color: #f4efe4;
-  font-weight: bold;
-  padding: 0.05rem 0.32rem;
-  border-radius: 3px;
+#trick.inspect-trick {
+  margin: 0.15em auto 0;
 }
 .lead-chip {
   position: absolute;
-  top: -0.4em;
   left: 50%;
-  transform: translateX(-50%);
+  top: 0;
+  transform: translate(-50%, -100%);
   background: burlywood;
   color: #111;
   font-size: 0.7em;
@@ -408,30 +468,34 @@ body.felt-page .wrap { display: none; }
   white-space: nowrap;
 }
 .inspect-trick {
-  width: clamp(9.2rem, 24vmin, 28vmin);
-  height: clamp(11.8rem, 31vmin, 36vmin);
-  margin: 0.2em auto 0.35em;
+  width: clamp(10rem, 26vmin, 30vmin);
+  height: clamp(8.8rem, 23vmin, 27vmin);
+  margin: 0.45em auto 0.55em;
+  overflow: visible;
 }
-.inspect-trick .s0 { bottom: 1.15em; }
-.inspect-trick .s1,
-.inspect-trick .s3 { top: 35%; }
-.inspect-trick .s2 { top: 1.35em; }
-.inspect-trick .inspect-who {
-  margin-top: 0.12em;
-  max-width: 100%;
-}
-.inspect-trick .s2 .inspect-who {
-  position: absolute;
-  top: -1.15em;
-  left: 50%;
-  transform: translateX(-50%);
-  margin: 0;
-}
-.inspect-trick .s2 .lead-chip {
+/* Outer edge of the compass — touches the card, does not cover it. */
+.inspect-trick .s0 .lead-chip {
   top: auto;
-  bottom: -0.4em;
+  bottom: 0;
+  transform: translate(-50%, 100%);
 }
-#inspect .panel { text-align: center; min-width: 14em; padding: 0.55em 0.7em 0.7em; }
+.inspect-trick .s1 .lead-chip {
+  left: 0;
+  top: 50%;
+  transform: translate(-100%, -50%);
+}
+.inspect-trick .s3 .lead-chip {
+  left: auto;
+  right: 0;
+  top: 50%;
+  transform: translate(100%, -50%);
+}
+#inspect .panel {
+  text-align: center;
+  min-width: 14em;
+  padding: 0.7em 1.7em 1.15em;
+  overflow: visible;
+}
 #inspect .row { justify-content: center; margin-top: 0.35em; }
 .inspect-nav {
   display: flex;
@@ -440,6 +504,7 @@ body.felt-page .wrap { display: none; }
   gap: 0.35em;
   margin-bottom: 0.15em;
 }
+.inspect-nav[hidden] { display: none !important; }
 .inspect-nav .sub {
   margin: 0;
   min-width: 7.2em;
@@ -471,6 +536,10 @@ body.felt-page .wrap { display: none; }
 .inspect-trick .lead-chip {
   font-size: 0.62em;
   padding: 0.02em 0.28em;
+}
+.inspect-trick .s2 .lead-chip {
+  top: 0;
+  transform: translate(-50%, -100%);
 }
 
 .felt-pocket .side-label {
@@ -514,14 +583,10 @@ body.felt-page .wrap { display: none; }
 .side-cards .pile.ew use { fill: #ddd; }
 .side-cards .pile.ns use { fill: #c45; }
 .side-cards .pile:hover { filter: brightness(1.3); }
-.inspect-who {
-  font-size: 0.75em;
-  color: var(--muted);
-  max-width: 4.6em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: center;
+.side-cards .pile.selected {
+  outline: 2px solid gold;
+  outline-offset: 2px;
+  z-index: 3;
 }
 
 .bid-table {
@@ -615,6 +680,7 @@ body.felt-page .wrap { display: none; }
   max-width: 100%;
   margin: 0 auto;
 }
+.you-hand-wrap[hidden] { display: none !important; }
 /* Keep a 5-card footprint so own +N stays over slot 5 after a card is played. */
 .you-hand-wrap.has-fill {
   min-width: calc(5 * var(--card-w) + 4 * 0.2em);
@@ -623,6 +689,109 @@ body.felt-page .wrap { display: none; }
   justify-content: flex-start;
   min-width: 100%;
 }
+
+.rank-strip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.25em;
+  margin: 0 auto 0.35em;
+  width: fit-content;
+  max-width: 100%;
+  background: rgba(0, 0, 0, 0.32);
+  border-radius: 8px;
+  padding: 0.22em 0.2em 0.22em 0.4em;
+  overflow-x: auto;
+  position: relative;
+  z-index: 4;
+}
+/* Own +N sits above card 5; leave a gap so it does not cover the strip. */
+.rank-strip.clear-fill { margin-bottom: 1.45em; }
+.rank-strip[hidden] { display: none !important; }
+.rank-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.16em;
+  /* Always two row slots so the strip doesn't jump when the off-suit row fills in. */
+  min-height: calc(2 * 1.45em + 0.16em);
+}
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: 0.28em;
+  min-height: 1.45em;
+}
+.rank-row.spacer {
+  visibility: hidden;
+  pointer-events: none;
+}
+.rank-row.quiet .rank-cell { opacity: 0.28; }
+.rank-row.quiet .rank-cell.held { opacity: 0.9; }
+.rank-row.quiet .rank-cell.played { opacity: 0.22; }
+.rank-row.quiet .rank-cell.winner,
+.rank-row.quiet .rank-cell.beats { opacity: 1; }
+.rank-suit {
+  width: 1.15em;
+  height: 1.15em;
+  flex-shrink: 0;
+}
+.rank-suit svg { width: 100%; height: 100%; display: block; }
+.rank-run {
+  display: flex;
+  align-items: center;
+  gap: 0.1em;
+}
+.rank-run.pips {
+  padding-left: 0.32em;
+  margin-left: 0.08em;
+  border-left: 1px solid rgba(244, 239, 228, 0.32);
+}
+.rank-run.pips .rank-cell { font-size: 0.82em; }
+.rank-cell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.15em;
+  padding: 0.06em 0.16em;
+  border-radius: 4px;
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  color: var(--ink);
+  opacity: 0.48;
+  flex-shrink: 0;
+}
+.rank-cell.wide { min-width: 1.55em; }
+.rank-cell.red { color: #ff8b8b; }
+.rank-cell.held {
+  opacity: 1;
+  background: rgba(244, 239, 228, 0.16);
+}
+/* Gold solid = current high on the trick; blue dotted = in your hand and beats it. */
+.rank-cell.beats {
+  opacity: 1;
+  background: rgba(61, 138, 220, 0.42);
+  outline: 2px dotted #8ec0f5;
+  outline-offset: 0;
+}
+.rank-cell.winner {
+  opacity: 1;
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+  background: rgba(232, 197, 107, 0.28);
+}
+.rank-cell.played { opacity: 0.32; }
+.felt .rank-hide {
+  background: transparent;
+  color: var(--muted);
+  border: 0;
+  padding: 0.05em 0.28em;
+  font-size: 1.2em;
+  line-height: 1;
+  min-width: 1.2em;
+  flex-shrink: 0;
+}
+.felt .rank-hide:hover { color: var(--ink); }
 
 /* Fill-in +N: glides in from table center onto each fan (own: above card-5 slot). */
 .fill-plus {
@@ -673,9 +842,168 @@ body.felt-page .wrap { display: none; }
   from { opacity: 0; transform: translate(-50%, calc(-100% - 0.2em - 1.6em)); }
   to { opacity: 1; transform: translate(-50%, calc(-100% - 0.2em)); }
 }
+/* Namebar stays centered; Replay docks to its left (out of flow). */
+.you-name-row {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0.3em auto 0;
+  overflow: visible;
+}
 #you-bar {
   max-width: 22em;
-  margin: 0.3em auto 0;
+  margin: 0;
+}
+.felt .you-name-row #replay {
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.22em;
+  margin-right: 0.4em;
+  padding: 0.08em 0.4em;
+  font-size: 0.72em;
+  line-height: 1;
+  white-space: nowrap;
+  height: auto;
+}
+.you-name-row #replay svg {
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+.you-name-row #replay[hidden] { display: none !important; }
+
+/* Hand-end scorecard occupies the vacant hand slot (old playEndInner). */
+.scorecard {
+  margin: 0.1em auto 0;
+  width: fit-content;
+  max-width: 100%;
+  padding: 3px; /* room for the outer "you" column ring */
+  overflow: visible; /* winner nod scales the header past the cell */
+}
+.scorecard[hidden] { display: none !important; }
+.scorecard-inner {
+  background: bisque;
+  color: #111;
+  border-radius: 9px;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 0.1em 0;
+  font-size: clamp(0.95rem, min(2.6vh, 2.4vw), 2.2vh);
+}
+.scorecard-inner col.scorecard-team { width: 5.5em; }
+.scorecard-inner th,
+.scorecard-inner td {
+  padding: 0.22em 0.55em;
+  text-align: center;
+  min-width: 2.4em;
+  overflow: visible;
+}
+.scorecard-inner .pair-ew,
+.scorecard-inner .pair-ns,
+.scorecard-inner td.team-ew,
+.scorecard-inner td.team-ns {
+  width: 5.5em;
+  min-width: 5.5em;
+  font-variant-numeric: tabular-nums;
+}
+.scorecard-inner td:first-child {
+  text-align: left;
+  font-weight: normal;
+  color: #333;
+}
+.scorecard-inner .pair-ew {
+  background: #fff;
+  color: #111;
+  border-radius: 9px 9px 0 0;
+}
+.scorecard-inner .pair-ns {
+  background: #8b1e1e;
+  color: #fff;
+  border-radius: 9px 9px 0 0;
+}
+.scorecard-inner .series-row { background: burlywood; }
+.scorecard-inner .bordleft { border-left: 1px dashed #111; }
+.scorecard-inner .bordbot { border-bottom: 2px solid #111; }
+/* Soft "this is your team" column — not gold (that's active/winner). */
+.scorecard-inner {
+  --you-line: #4a9ae8;
+}
+.you-chip {
+  display: block;
+  width: max-content;
+  margin: 0 auto 0.18em;
+  font-size: 0.58em;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  background: #3d8adc;
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.14em 0.5em;
+}
+.you-chip[hidden] { display: none !important; }
+.scorecard-inner th.mine,
+.scorecard-inner td.mine {
+  position: relative;
+  z-index: 1;
+}
+.scorecard-inner th.mine {
+  box-shadow:
+    0 -2px 0 0 var(--you-line),
+    -2px 0 0 0 var(--you-line),
+    2px 0 0 0 var(--you-line);
+}
+.scorecard-inner td.mine {
+  box-shadow:
+    -2px 0 0 0 var(--you-line),
+    2px 0 0 0 var(--you-line);
+}
+.scorecard-inner tr:last-child td.mine {
+  box-shadow:
+    -2px 0 0 0 var(--you-line),
+    2px 0 0 0 var(--you-line),
+    0 2px 0 0 var(--you-line);
+}
+/* Tada the label/number only — cell borders and the You-column ring stay still. */
+.scorecard-dance {
+  display: inline-block;
+  transform-origin: 50% 50%;
+}
+.scorecard-dance.winner { animation: tada 1s infinite; }
+.scorecard-inner td .scorecard-dance.winner { text-shadow: 0 0 4px #fff; }
+@keyframes tada {
+  from { transform: scale3d(1, 1, 1); }
+  10%, 20% { transform: scale3d(0.9, 0.9, 0.9) rotate3d(0, 0, 1, -3deg); }
+  30%, 50%, 70%, 90% { transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, 3deg); }
+  40%, 60%, 80% { transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, -3deg); }
+  to { transform: scale3d(1, 1, 1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scorecard-dance.winner { animation: none; }
+}
+.scorecard-go {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35em;
+}
+.scorecard-go button {
+  font-size: 0.95em;
+  padding: 0.3em 0.7em;
+}
+#next-hand {
+  font-size: 1.22em;
+  font-weight: bold;
+  padding: 0.5em 1.15em;
+  box-shadow: 0 0.15em 0.35em rgba(0, 0, 0, 0.32);
 }
 #you-bid-oval {
   right: -2.9em;
@@ -754,16 +1082,24 @@ body.felt-page .wrap { display: none; }
   min-width: 14em;
   font-size: clamp(0.88rem, 2.05vmin, 1.65rem);
 }
-.rank-panel { max-width: 26em; }
-.rank-line { margin: 0.35em 0; font-size: 0.95em; }
 .hist-pop {
-  max-height: 10rem;
+  position: absolute;
+  left: 0;
+  top: calc(100% + 4px);
+  z-index: 4;
+  min-width: 14em;
+  max-width: min(22em, 100%);
+  max-height: 14rem;
   overflow-y: auto;
-  background: rgba(0,0,0,0.28);
-  padding: 0.4rem 0.6rem;
+  background: #16532c;
+  color: var(--ink);
+  padding: 0.45em 0.7em;
   border-radius: 6px;
-  font-size: 0.85rem;
+  border: 1px solid rgba(255,255,255,0.22);
+  font-size: 0.9em;
+  box-shadow: 0 0.35em 0.8em rgba(0,0,0,0.35);
 }
+.hist-pop p { margin: 0.2em 0; }
 .hist-pop[hidden], .inspect[hidden] { display: none; }
 .idle-warn { z-index: 8; }
 .idle-warn .panel {
@@ -785,7 +1121,7 @@ body.felt-page .wrap { display: none; }
     --trick-w: 12rem;
     --trick-h: 11rem;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto auto auto auto auto auto auto;
+    grid-template-rows: auto auto auto auto 1fr auto auto auto;
     padding: 0.3rem;
   }
   .felt-head { grid-column: 1 / -1; }
@@ -815,7 +1151,9 @@ body.felt-page .wrap { display: none; }
     padding: 0.3em 0.5em;
   }
   .you-hand-wrap { padding-bottom: 1.7em; }
+  .rank-cell { min-width: 1em; padding: 0.04em 0.1em; }
+  .rank-run.pips .rank-cell { font-size: 0.75em; }
   .hand-sort { right: 0.15em; top: -0.2em; }
   #you-bid-oval { right: 0.1em; top: auto; bottom: 0; }
-  .inspect-trick { width: 10.2rem; height: 13.6rem; }
+  .inspect-trick { width: 10.2rem; height: 9.1rem; }
 }

@@ -13,7 +13,9 @@ import {
   migrateLegacyProfiles,
   cachePrefs,
   applyHandSortLocal,
+  applyWarnSubsetLeadLocal,
   handSort,
+  warnSubsetLead,
   loadPrefsCache,
   displayTableName,
   SS,
@@ -421,6 +423,8 @@ function syncDisplayPanel() {
   const asc = $('pref-hand-asc');
   if (desc) desc.checked = sort === 'desc';
   if (asc) asc.checked = sort === 'asc';
+  const warn = $('pref-warn-subset');
+  if (warn) warn.checked = warnSubsetLead();
 }
 
 function setHandSortFromUi(sort) {
@@ -431,6 +435,15 @@ function setHandSortFromUi(sort) {
   syncDisplayPanel();
   // Only send when changed (applyHandSortLocal already checked).
   send({ action: 'setprefs', prefs: { hand_sort: sort === 'asc' ? 'asc' : 'desc' } });
+}
+
+function setWarnSubsetFromUi(on) {
+  if (!applyWarnSubsetLeadLocal(on)) {
+    syncDisplayPanel();
+    return;
+  }
+  syncDisplayPanel();
+  send({ action: 'setprefs', prefs: { warn_subset_lead: !!on } });
 }
 
 function renderManageList() {
@@ -2622,6 +2635,9 @@ function wireUi() {
   });
   $('pref-hand-asc')?.addEventListener('change', () => {
     if ($('pref-hand-asc').checked) setHandSortFromUi('asc');
+  });
+  $('pref-warn-subset')?.addEventListener('change', () => {
+    setWarnSubsetFromUi(!!$('pref-warn-subset').checked);
   });
 
   const howto = $('howto-panel');

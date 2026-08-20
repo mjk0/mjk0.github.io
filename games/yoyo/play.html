@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Yoyo — Table</title>
-  <link rel="stylesheet" href="css/yoyo0.css?v=20260818b" />
+  <link rel="stylesheet" href="css/yoyo0.css?v=20260820d" />
 </head>
 <body class="play-page">
   <header class="play-strip">
@@ -44,6 +44,11 @@
           <input type="radio" name="gear-hand-sort" id="gear-hand-asc" value="asc" />
           Low → High
         </label>
+        <div class="menu-label">Lead confirm</div>
+        <label class="gear-radio" title="Ask before leading fewer cards than you hold of that rank">
+          <input type="checkbox" id="gear-warn-subset" />
+          Confirm subset leads
+        </label>
       </div>
     </div>
     <button type="button" class="danger" id="btn-leave">Leave game</button>
@@ -60,6 +65,8 @@
     <div id="status-line" class="sr-only" role="status" aria-live="polite"></div>
     <!-- Visible illegal-play cue (fade in/out; retriggerable) -->
     <div id="illegal-toast" class="illegal-toast" hidden aria-hidden="true"></div>
+    <!-- Subset-lead confirm: two choice tiles on the local lead slot (§4.2.3) -->
+    <div id="subset-lead-prompt" class="subset-lead-prompt" hidden></div>
 
     <!-- Pass / Play: flanking local seat above hand bar (E4b) -->
     <div class="play-actions" id="play-actions" aria-label="Play actions">
@@ -158,6 +165,6 @@
   </div>
 
   <p class="footer-note">Drag to table · set chips · exchange · <a href="index.html">Lobby</a></p>
-  <script type="module" src="js/play.js?v=20260818b"></script>
+  <script type="module" src="js/play.js?v=20260820d"></script>
 </body>
 </html>

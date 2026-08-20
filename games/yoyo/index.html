@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Yoyo — Lobby</title>
-  <link rel="stylesheet" href="css/yoyo0.css?v=20260813b" />
+  <link rel="stylesheet" href="css/yoyo0.css?v=20260820a" />
   <link rel="stylesheet" href="css/yoyo.css?v=20260813b" />
 </head>
 <body class="lobby-page">
@@ -118,7 +118,7 @@
         <h2>Display</h2>
         <button type="button" id="btn-display-close" aria-label="Close">✕</button>
       </div>
-      <p class="hint">Saved with your account. Card sort is display-only (server still deals high→low).</p>
+      <p class="hint">Saved with your account. Display-only (server still deals high→low).</p>
       <fieldset class="pref-fieldset">
         <legend>Card sort</legend>
         <label class="pref-radio">
@@ -129,6 +129,14 @@
           <input type="radio" name="hand-sort" id="pref-hand-asc" value="asc" />
           Low → High
         </label>
+      </fieldset>
+      <fieldset class="pref-fieldset">
+        <legend>Lead confirm</legend>
+        <label class="pref-radio">
+          <input type="checkbox" id="pref-warn-subset" />
+          Confirm subset leads
+        </label>
+        <p class="hint">Ask before leading fewer cards than you hold of that rank. Parked seq cards do not count.</p>
       </fieldset>
     </div>
 

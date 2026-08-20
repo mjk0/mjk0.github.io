@@ -4,27 +4,39 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Auction 45s — Table</title>
-  <link rel="stylesheet" href="css/a45s_web.css?v=20260819p">
+  <link rel="stylesheet" href="css/a45s_web.css?v=20260820u">
 </head>
 <body class="felt-page">
   <div class="felt">
     <header class="felt-head">
-      <span class="score-chip ew">White <strong id="sc-ew">0</strong></span>
-      <span class="score-chip ns">Red <strong id="sc-ns">0</strong></span>
-      <span id="contract-chip" class="contract-chip" hidden>
-        <span id="contract-who"></span>
-        <span id="contract-suit" class="contract-suit"></span>
-        <span id="contract-bid"></span>
-      </span>
-      <span id="meta" class="sub" style="margin:0"></span>
-      <button id="rank-btn" class="ghost" type="button">Card rank</button>
-      <button id="fill-btn" class="ghost fill-btn" type="button" hidden title="Show fill-in counts" aria-label="Show fill-in counts" aria-pressed="false">+</button>
-      <button id="hist-btn" class="ghost" type="button">Scores</button>
-      <button id="replay" class="ghost" type="button" hidden title="Replay this deal" aria-label="Replay this deal">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
-        Replay
-      </button>
-      <button id="leavegame" class="ghost" type="button">Leave</button>
+      <div class="head-left">
+        <button type="button" class="score-chip ew" title="Score history" aria-label="White score, open history" aria-expanded="false" aria-controls="hist">
+          White <strong id="sc-ew">0</strong>
+        </button>
+        <button type="button" class="score-chip ns" title="Score history" aria-label="Red score, open history" aria-expanded="false" aria-controls="hist">
+          Red <strong id="sc-ns">0</strong>
+        </button>
+        <span id="contract-chip" class="contract-chip" hidden>
+          <span id="contract-who"></span>
+          <span id="contract-suit" class="contract-suit"></span>
+          <span id="contract-bid"></span>
+        </span>
+        <span id="meta" class="sub head-deals"></span>
+      </div>
+      <div class="head-right">
+        <div class="gear-wrap">
+          <button id="rank-gear" class="ghost rank-gear" type="button" title="Table options" aria-label="Table options" aria-haspopup="true" aria-expanded="false" aria-controls="gear-pop">⚙</button>
+          <div id="gear-pop" class="gear-pop" hidden>
+            <label class="gear-check">
+              <input id="rank-check" type="checkbox" checked>
+              <span>Rank strip</span>
+            </label>
+          </div>
+        </div>
+        <button id="fill-btn" class="ghost fill-btn" type="button" hidden title="Show fill-in counts" aria-label="Show fill-in counts" aria-pressed="false">+</button>
+        <button id="leavegame" class="ghost" type="button">Leave</button>
+      </div>
+      <div id="hist" class="hist-pop" hidden></div>
     </header>
 
     <div id="side-pocket" class="felt-pocket" hidden>
@@ -39,19 +51,76 @@
         <p id="keep-copy" class="keep-copy"></p>
         <div id="keep-trumps" class="trump-pick"></div>
       </div>
+      <div id="trick-nav" class="inspect-nav trick-nav" hidden>
+        <button id="trick-prev" class="inspect-step" type="button" aria-label="Previous trick">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+        </button>
+        <p id="trick-title" class="sub"></p>
+        <button id="trick-next" class="inspect-step" type="button" aria-label="Next trick">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+        </button>
+      </div>
       <div id="trick" class="trick" aria-label="Current trick"></div>
     </div>
     <div class="felt-right seatbox" data-slot="3"><div class="fill-plus from-r" hidden></div></div>
 
     <div class="felt-you">
       <div id="bid-acts" class="bid-self" hidden></div>
+      <div id="rank-strip" class="rank-strip" hidden>
+        <div id="rank-rows" class="rank-rows"></div>
+        <button id="rank-hide" class="rank-hide" type="button" title="Hide rank strip" aria-label="Hide rank strip">×</button>
+      </div>
       <div id="you-hand-wrap" class="you-hand-wrap">
         <button id="hand-sort" class="hand-sort" type="button" hidden>Sort</button>
         <div id="you-hand" class="hand-row"></div>
         <div id="you-fill-plus" class="fill-plus from-s" hidden></div>
         <div id="you-bid-oval" class="bid-oval" hidden></div>
       </div>
-      <div id="you-bar" class="namebar"></div>
+      <div id="scorecard" class="scorecard" hidden>
+        <table class="scorecard-inner">
+          <colgroup>
+            <col>
+            <col class="scorecard-team">
+            <col class="scorecard-team">
+          </colgroup>
+          <tr>
+            <th>
+              <div class="scorecard-go">
+                <button id="next-hand" type="button">Deal again</button>
+              </div>
+            </th>
+            <th class="pair-ew team-ew">
+              <span class="scorecard-dance">
+                <span id="you-ew" class="you-chip" hidden>You</span>
+                White
+              </span>
+            </th>
+            <th class="pair-ns team-ns">
+              <span class="scorecard-dance">
+                <span id="you-ns" class="you-chip" hidden>You</span>
+                Red
+              </span>
+            </th>
+          </tr>
+          <tr>
+            <td>Hand</td>
+            <td id="pts-ew" class="team-ew bordleft bordbot">0</td>
+            <td id="pts-ns" class="team-ns bordbot">0</td>
+          </tr>
+          <tr class="series-row">
+            <td id="score-lbl">Series</td>
+            <td class="team-ew bordleft"><span id="tot-ew" class="scorecard-dance">0</span></td>
+            <td class="team-ns"><span id="tot-ns" class="scorecard-dance">0</span></td>
+          </tr>
+        </table>
+      </div>
+      <div class="you-name-row">
+        <div id="you-bar" class="namebar"></div>
+        <button id="replay" class="ghost" type="button" hidden title="Replay this deal" aria-label="Replay this deal">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+          Replay
+        </button>
+      </div>
     </div>
 
     <div class="felt-acts">
@@ -60,7 +129,6 @@
     <div class="felt-foot">
       <p id="paused" class="sub" style="margin:0.2rem 0"></p>
       <p id="status" class="status" style="margin:0.2rem 0"></p>
-      <div id="hist" class="hist-pop" hidden></div>
     </div>
   </div>
 
@@ -95,17 +163,7 @@
     </div>
   </div>
 
-  <div id="rank-pop" class="inspect" hidden>
-    <div class="panel rank-panel">
-      <p class="sub">Card rank</p>
-      <p class="rank-line"><strong>Trump</strong> 5 · J · A♥ · A · K · Q · then red 10–2 or black 2–10</p>
-      <p class="rank-line"><strong>Off</strong> K · Q · J · then red 10–2 (A♦ last) or black A, 2–10</p>
-      <p class="rank-line">A♥ is always third-best trump. Follow only when trump is led; 5 of trump may renege.</p>
-      <div class="row"><button id="rank-close" type="button">Close</button></div>
-    </div>
-  </div>
-
-  <script src="js/a45s_web.js?v=20260819i"></script>
+  <script src="js/a45s_web.js?v=20260820a"></script>
   <script>
     const $ = (id) => document.getElementById(id);
     const A = A45sWeb;
@@ -127,6 +185,9 @@
     let lastState = null;
     let histOpen = false;
     let inspectIndex = 0;
+    let reviewIndex = -1;
+    let lastSummary = null;
+    let replayOn = false;
     // Freeze the completed 4-card trick ~2s (same as robot lead pause) so a
     // human winner can read it. Legal lead clicks stay live and cancel it.
     const TRICK_HOLD_MS = 2000;
@@ -137,6 +198,11 @@
     try { fillLatch = localStorage.getItem(FILL_PREF) === '1'; } catch (e) {}
     let fillGlideKey = '';
     let fillGlidePlayed = false;
+    // Default on (unlike fill overlay). Missing key → show.
+    const RANK_PREF = 'a45s.rankStrip';
+    let rankLatch = true;
+    try { if (localStorage.getItem(RANK_PREF) === '0') rankLatch = false; } catch (e) {}
+    let gearPopOpen = false;
 
     function setStatus(msg, kind) {
       const el = $('status');
@@ -309,12 +375,14 @@
         setFillPlus($('you-fill-plus'), 0, false, false);
         document.querySelectorAll('.seatbox .fill-plus').forEach((el) => setFillPlus(el, 0, false, false));
         $('you-hand-wrap').classList.remove('has-fill');
+        $('rank-strip').classList.remove('clear-fill');
         return;
       }
       btn.hidden = false;
       btn.classList.toggle('on', show);
       btn.setAttribute('aria-pressed', show ? 'true' : 'false');
       $('you-hand-wrap').classList.toggle('has-fill', show);
+      $('rank-strip').classList.toggle('clear-fill', show && !$('rank-strip').hidden);
       setFillPlus($('you-fill-plus'), counts[me], show, glide);
       document.querySelectorAll('.seatbox[data-slot]').forEach((box) => {
         const slot = +box.getAttribute('data-slot');
@@ -405,14 +473,12 @@
       const bySeat = {};
       (cards || []).forEach((t) => { bySeat[t.seat] = t.card; });
       const lead = opts.lead;
-      const winner = opts.winner;
       for (let abs = 0; abs < 4; abs++) {
         const card = bySeat[abs];
         const slot = document.createElement('div');
         let cls = 'slot s' + rel(abs);
         if (!card) cls += ' empty';
         if (lead != null && abs === lead) cls += ' lead';
-        if (winner != null && abs === winner) cls += ' winner';
         slot.className = cls;
         slot.appendChild(A.cardSvg(card || 'cblank'));
         if (lead != null && abs === lead) {
@@ -421,18 +487,42 @@
           chip.textContent = 'lead';
           slot.appendChild(chip);
         }
-        if (opts.names) {
-          const cap = document.createElement('div');
-          cap.className = 'inspect-who';
-          cap.textContent = who(abs);
-          slot.appendChild(cap);
-        }
         box.appendChild(slot);
       }
     }
 
+    // Hand-end: compact inspect-sized viewer; all five piles stay in the pocket.
+    function clampReview(n) {
+      if (reviewIndex < 0 || reviewIndex >= n) reviewIndex = n - 1;
+      return reviewIndex;
+    }
+    function showReview(i) {
+      if (!lastState || lastState.phase !== 'handend') return;
+      const n = (lastState.past_tricks || []).length;
+      if (!n) return;
+      reviewIndex = Math.max(0, Math.min(i, n - 1));
+      renderState(lastState);
+    }
+
     function renderTrick(st) {
-      paintTrick($('trick'), heldTrick || st.current_trick || []);
+      const past = st.past_tricks || [];
+      const nav = $('trick-nav');
+      const box = $('trick');
+      if (st.phase === 'handend' && past.length) {
+        const i = clampReview(past.length);
+        const tr = past[i];
+        const cards = tr.cards || [];
+        nav.hidden = false;
+        $('trick-title').textContent = 'Trick ' + (i + 1) + ' of ' + past.length;
+        $('trick-prev').disabled = i <= 0;
+        $('trick-next').disabled = i >= past.length - 1;
+        box.classList.add('inspect-trick');
+        paintTrick(box, cards, { lead: cards.length ? cards[0].seat : null });
+        return;
+      }
+      nav.hidden = true;
+      box.classList.remove('inspect-trick');
+      paintTrick(box, heldTrick || st.current_trick || []);
     }
 
     function pocketStacked() {
@@ -526,11 +616,18 @@
       pocket.hidden = false;
       box.classList.remove('kitty');
       label.textContent = 'Past tricks';
+      const sel = st.phase === 'handend' ? clampReview(past.length) : -1;
       past.forEach((tr, i) => {
         const mine = (tr.winner & 1) === (me & 1);
-        const pile = A.cardSvg(mine ? 'csvert' : 'cshoriz', 'pile ' + teamClass(tr.winner));
+        const pile = A.cardSvg(
+          mine ? 'csvert' : 'cshoriz',
+          'pile ' + teamClass(tr.winner) + (i === sel ? ' selected' : '')
+        );
         pile.setAttribute('title', 'Trick ' + (i + 1) + ' won by ' + who(tr.winner));
-        pile.addEventListener('click', () => showInspect(i));
+        pile.addEventListener('click', () => {
+          if (lastState && lastState.phase === 'handend') showReview(i);
+          else showInspect(i);
+        });
         box.appendChild(pile);
       });
       requestAnimationFrame(placeSidePocket);
@@ -547,9 +644,7 @@
       const cards = tr.cards || [];
       $('inspect-title').textContent = 'Trick ' + (inspectIndex + 1) + ' of ' + past.length;
       paintTrick($('inspect-cards'), cards, {
-        names: true,
         lead: cards.length ? cards[0].seat : null,
-        winner: tr.winner,
       });
       $('inspect-prev').disabled = inspectIndex <= 0;
       $('inspect-next').disabled = inspectIndex >= past.length - 1;
@@ -616,17 +711,134 @@
       return A.sortCards(hand, key);
     }
 
+    function rankFace(id, trumpKey) {
+      const r = id.split('_')[0];
+      const face = r === 't' ? '10' : r.toUpperCase();
+      if (id === 'a_he' && trumpKey !== 'he') return 'A♥';
+      return face;
+    }
+
+    function stripTrick(st) {
+      if (st.phase === 'handend') {
+        const past = st.past_tricks || [];
+        if (!past.length) return [];
+        return past[clampReview(past.length)].cards || [];
+      }
+      return heldTrick || st.current_trick || [];
+    }
+
+    function paintRankRow(suitKey, asTrump, trumpKey, inHand, onTrick, win, leadToken, quiet) {
+      const row = document.createElement('div');
+      row.className = 'rank-row' + (asTrump ? ' trump' : ' off') + (quiet ? ' quiet' : '');
+      const pip = document.createElement('span');
+      pip.className = 'rank-suit';
+      pip.appendChild(A.suitSvg(SUIT_KEY.indexOf(suitKey), 'suit'));
+      row.appendChild(pip);
+      const list = A.rankList(suitKey, asTrump);
+      // Trump: split after Q (last honor). Off: K Q J then pips (J is an honor off-suit).
+      const honorN = asTrump ? list.findIndex((id) => id[0] === 'q') + 1 : 3;
+      const honors = document.createElement('span');
+      honors.className = 'rank-run honors';
+      const pips = document.createElement('span');
+      pips.className = 'rank-run pips';
+      const winId = win ? A.tokenToSvg(win.card) : '';
+      list.forEach((id, i) => {
+        const cell = document.createElement('span');
+        cell.className = 'rank-cell';
+        cell.textContent = rankFace(id, trumpKey);
+        if (id.endsWith('_he') || id.endsWith('_di')) cell.classList.add('red');
+        if (id === 'a_he' && trumpKey !== 'he') cell.classList.add('wide');
+        if (id[0] === 't') cell.classList.add('wide');
+        const held = inHand.has(id);
+        if (held) cell.classList.add('held');
+        if (id === winId) cell.classList.add('winner');
+        else if (onTrick.has(id)) cell.classList.add('played');
+        const beats = !!(held && win && leadToken && A.cardBeats(id, win.card, trumpKey, leadToken));
+        if (beats) cell.classList.add('beats');
+        if (id === winId) cell.title = 'Current winner';
+        else if (beats) cell.title = 'Beats current winner';
+        else if (held) cell.title = 'In your hand';
+        (i < honorN ? honors : pips).appendChild(cell);
+      });
+      row.appendChild(honors);
+      row.appendChild(pips);
+      return row;
+    }
+
+    function syncRankGear() {
+      const gear = $('rank-gear');
+      const check = $('rank-check');
+      if (check) check.checked = rankLatch;
+      gear.classList.toggle('open', gearPopOpen);
+      gear.setAttribute('aria-expanded', gearPopOpen ? 'true' : 'false');
+    }
+
+    function setGearPop(on) {
+      gearPopOpen = !!on;
+      $('gear-pop').hidden = !gearPopOpen;
+      syncRankGear();
+    }
+
+    function setRankLatch(on) {
+      rankLatch = !!on;
+      try { localStorage.setItem(RANK_PREF, rankLatch ? '1' : '0'); } catch (e) {}
+      if (lastState) renderState(lastState);
+      else {
+        syncRankGear();
+        $('rank-strip').hidden = true;
+      }
+    }
+
+    function renderRankStrip(st) {
+      syncRankGear();
+      const box = $('rank-strip');
+      const named = st && st.trump != null;
+      if (!st || !named || !rankLatch) {
+        box.hidden = true;
+        return;
+      }
+      const trumpKey = SUIT_KEY[st.trump];
+      const cards = stripTrick(st);
+      const lead = cards[0];
+      // Off row only if the *lead* is non-trump. A♥ is trump; slough after a trump lead is ignored.
+      const leadIsTrump = !!(lead && A.isTrumpCard(lead.card, trumpKey));
+      const offKey = (lead && !leadIsTrump) ? A.suitOf(lead.card) : null;
+      const hand = st.phase === 'handend' ? [] : displayCards(st);
+      const inHand = new Set(hand.map(A.tokenToSvg));
+      const onTrick = new Set(cards.map((t) => A.tokenToSvg(t.card)));
+      const win = A.trickWinner(cards, trumpKey);
+      const rows = $('rank-rows');
+      rows.innerHTML = '';
+      const quietOff = !!(offKey && cards.some((t) => A.isTrumpCard(t.card, trumpKey)));
+      rows.appendChild(paintRankRow(trumpKey, true, trumpKey, inHand, onTrick, win, lead && lead.card, false));
+      if (offKey) {
+        rows.appendChild(paintRankRow(offKey, false, trumpKey, inHand, onTrick, win, lead.card, quietOff));
+      } else {
+        const spacer = document.createElement('div');
+        spacer.className = 'rank-row spacer';
+        spacer.setAttribute('aria-hidden', 'true');
+        rows.appendChild(spacer);
+      }
+      box.hidden = false;
+    }
+
     function renderYou(st) {
       const row = $('you-hand');
       row.innerHTML = '';
-      const { kit } = splitHandKitty(st);
-      const cards = displayCards(st);
-      const legal = new Set((st.legal_cards || '').split(',').filter(Boolean));
-      const picking = isActor(st, me) && inKeepPhase(st) && legal.size > 0;
-      row.classList.toggle('with-kitty', kit.length > 0);
-      cards.forEach((c) => row.appendChild(paintHandCard(c, st, legal, picking)));
-      $('hand-sort').hidden = !(st.why === 'trumpselect' && st.declarer === me && kit.length && !handMerged);
-      paintOval($('you-bid-oval'), bidMarkFor(st, me));
+      if (st.phase !== 'handend') {
+        const { kit } = splitHandKitty(st);
+        const cards = displayCards(st);
+        const legal = new Set((st.legal_cards || '').split(',').filter(Boolean));
+        const picking = isActor(st, me) && inKeepPhase(st) && legal.size > 0;
+        row.classList.toggle('with-kitty', kit.length > 0);
+        cards.forEach((c) => row.appendChild(paintHandCard(c, st, legal, picking)));
+        $('hand-sort').hidden = !(st.why === 'trumpselect' && st.declarer === me && kit.length && !handMerged);
+        paintOval($('you-bid-oval'), bidMarkFor(st, me));
+      } else {
+        row.classList.remove('with-kitty');
+        $('hand-sort').hidden = true;
+        paintOval($('you-bid-oval'), null);
+      }
       fillNamebar($('you-bar'), me, (st.actors || []).indexOf(me) >= 0);
       if (st.dealer === me) {
         const cr = A.cardSvg('crown', 'crown');
@@ -754,14 +966,6 @@
         acts.appendChild(go);
       }
 
-      if (st.phase === 'handend') {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.textContent = 'Next hand';
-        btn.addEventListener('click', () => A.send(ws, { action: 'nexthand' }));
-        acts.appendChild(btn);
-      }
-
       Object.keys(paused).forEach((seat) => {
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -775,6 +979,8 @@
     function renderState(s) {
       lastState = s;
       me = s.seat;
+      if (s.phase !== 'handend') reviewIndex = -1;
+      else $('inspect').hidden = true;
       noteTrickHold(s);
       $('sc-ew').textContent = s.score[0];
       $('sc-ns').textContent = s.score[1];
@@ -790,9 +996,80 @@
       renderTrick(s);
       renderSidePocket(s);
       renderYou(s);
+      renderRankStrip(s);
+      renderScorecard(s);
+      renderPlayReplay();
       renderFill(s, showF, glideF);
       renderActs(s);
       if (!$('inspect').hidden) showInspect(inspectIndex);
+    }
+
+    function fmtHandPts(n) {
+      return n >= 0 ? '+' + n : String(n);
+    }
+
+    function seriesOver(st) {
+      if (!st || st.phase !== 'handend') return false;
+      return lastSummary
+        ? !!lastSummary.series_over
+        : (st.score[0] >= 125 || st.score[1] >= 125);
+    }
+
+    // Declarer side wins if they reached 125; otherwise the other side
+    // (same XOR as old playEnd when both teams can be over).
+    function seriesWinTeam(st, over) {
+      if (!over || !st) return null;
+      const ew = lastSummary ? lastSummary.tot_ew : st.score[0];
+      const ns = lastSummary ? lastSummary.tot_ns : st.score[1];
+      const d = st.declarer != null ? (st.declarer & 1) : (ew >= ns ? 0 : 1);
+      return ((d === 0 ? ew : ns) >= 125) ? d : 1 - d;
+    }
+
+    function applyWinner(st) {
+      const team = seriesWinTeam(st, seriesOver(st));
+      const card = $('scorecard');
+      card.querySelector('.pair-ew .scorecard-dance').classList.toggle('winner', team === 0);
+      card.querySelector('.pair-ns .scorecard-dance').classList.toggle('winner', team === 1);
+      $('tot-ew').classList.toggle('winner', team === 0);
+      $('tot-ns').classList.toggle('winner', team === 1);
+    }
+
+    // Replay docks left of the you-namebar whenever the table option is on.
+    function renderPlayReplay() {
+      $('replay').hidden = !replayOn;
+    }
+
+    // Hand-end occupies the vacant hand slot. Series-over nods the winning header.
+    function renderScorecard(st) {
+      const card = $('scorecard');
+      const wrap = $('you-hand-wrap');
+      if (st.phase !== 'handend') {
+        lastSummary = null;
+        card.hidden = true;
+        wrap.hidden = false;
+        applyWinner(st);
+        return;
+      }
+      wrap.hidden = true;
+      card.hidden = false;
+      const over = seriesOver(st);
+      $('next-hand').textContent = over ? 'New game' : 'Deal again';
+      $('score-lbl').textContent = over ? 'Game over' : 'Series';
+      $('pts-ew').textContent = lastSummary ? fmtHandPts(lastSummary.pts_ew) : '—';
+      $('pts-ns').textContent = lastSummary ? fmtHandPts(lastSummary.pts_ns) : '—';
+      $('tot-ew').textContent = lastSummary ? String(lastSummary.tot_ew) : String(st.score[0]);
+      $('tot-ns').textContent = lastSummary ? String(lastSummary.tot_ns) : String(st.score[1]);
+      const mine = (st.seat & 1) === 0 ? 'ew' : 'ns';
+      card.querySelectorAll('.team-ew, .team-ns').forEach((el) => {
+        el.classList.toggle('mine', el.classList.contains('team-' + mine));
+      });
+      $('you-ew').hidden = mine !== 'ew';
+      $('you-ns').hidden = mine !== 'ns';
+      applyWinner(st);
+    }
+
+    function sendReplay() {
+      A.send(ws, { action: 'replaydeal' });
     }
 
     function renderPaused() {
@@ -805,16 +1082,40 @@
     function renderHist(j) {
       const box = $('hist');
       box.innerHTML = '';
-      (j.hands || []).forEach((h, i) => {
+      const hands = j.hands || [];
+      const past = j.past_games || [];
+      if (!hands.length && !past.length) {
         const p = document.createElement('p');
-        p.textContent = `H${i + 1}  White ${h.pts_ew} / Red ${h.pts_ns}  tot ${h.tot_ew}–${h.tot_ns}`;
+        p.innerHTML = '<i>No score history yet</i>';
         box.appendChild(p);
-      });
-      (j.past_games || []).forEach((g, i) => {
+        return;
+      }
+      past.forEach((g, i) => {
         const p = document.createElement('p');
         p.textContent = `Game ${i + 1}  ${g[0]}–${g[1]}`;
         box.appendChild(p);
       });
+      hands.forEach((h, i) => {
+        const p = document.createElement('p');
+        p.textContent = `H${i + 1}  White ${h.pts_ew} / Red ${h.pts_ns}  tot ${h.tot_ew}–${h.tot_ns}`;
+        box.appendChild(p);
+      });
+    }
+
+    function setHistOpen(on) {
+      histOpen = !!on;
+      const box = $('hist');
+      box.hidden = !histOpen;
+      document.querySelectorAll('.score-chip').forEach((el) => {
+        el.setAttribute('aria-expanded', histOpen ? 'true' : 'false');
+      });
+      if (!histOpen) return;
+      if (!box.childElementCount) {
+        const p = document.createElement('p');
+        p.innerHTML = '<i>No score history yet</i>';
+        box.appendChild(p);
+      }
+      if (ws && ws.readyState === 1) A.send(ws, { action: 'getscorehistory' });
     }
 
     function formatIdleCountdown(sec) {
@@ -882,28 +1183,60 @@
       ev.stopPropagation();
       showInspect(inspectIndex + 1);
     });
+    $('trick-prev').addEventListener('click', () => {
+      if (lastState) showReview(clampReview((lastState.past_tricks || []).length) - 1);
+    });
+    $('trick-next').addEventListener('click', () => {
+      if (lastState) showReview(clampReview((lastState.past_tricks || []).length) + 1);
+    });
     document.addEventListener('keydown', (ev) => {
-      if ($('inspect').hidden) return;
-      if (ev.key === 'ArrowLeft') { ev.preventDefault(); showInspect(inspectIndex - 1); }
-      else if (ev.key === 'ArrowRight') { ev.preventDefault(); showInspect(inspectIndex + 1); }
-      else if (ev.key === 'Escape') { $('inspect').hidden = true; }
+      if (!$('inspect').hidden) {
+        if (ev.key === 'ArrowLeft') { ev.preventDefault(); showInspect(inspectIndex - 1); }
+        else if (ev.key === 'ArrowRight') { ev.preventDefault(); showInspect(inspectIndex + 1); }
+        else if (ev.key === 'Escape') { $('inspect').hidden = true; }
+        return;
+      }
+      if (ev.key === 'Escape' && gearPopOpen) {
+        ev.preventDefault();
+        setGearPop(false);
+        return;
+      }
+      if (ev.key === 'Escape' && histOpen) {
+        ev.preventDefault();
+        setHistOpen(false);
+        return;
+      }
+      if (!lastState || lastState.phase !== 'handend') return;
+      const n = (lastState.past_tricks || []).length;
+      if (!n) return;
+      if (ev.key === 'ArrowLeft') { ev.preventDefault(); showReview(clampReview(n) - 1); }
+      else if (ev.key === 'ArrowRight') { ev.preventDefault(); showReview(clampReview(n) + 1); }
+      else if (ev.key === 'Escape') { ev.preventDefault(); showReview(n - 1); }
     });
     $('fill-btn').addEventListener('click', () => {
       fillLatch = !fillLatch;
       try { localStorage.setItem(FILL_PREF, fillLatch ? '1' : '0'); } catch (e) {}
       if (lastState) renderState(lastState);
     });
-    $('rank-btn').addEventListener('click', () => { $('rank-pop').hidden = false; });
-    $('rank-close').addEventListener('click', () => { $('rank-pop').hidden = true; });
-    $('rank-pop').addEventListener('click', (ev) => {
-      if (ev.target === $('rank-pop')) $('rank-pop').hidden = true;
+    $('rank-gear').addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      if (histOpen) setHistOpen(false);
+      setGearPop($('gear-pop').hidden);
     });
+    $('rank-check').addEventListener('change', () => setRankLatch($('rank-check').checked));
+    $('rank-hide').addEventListener('click', () => setRankLatch(false));
+    syncRankGear();
     $('inspect').addEventListener('click', (ev) => {
       if (ev.target.id === 'inspect') $('inspect').hidden = true;
     });
-    $('hist-btn').addEventListener('click', () => {
-      histOpen = !histOpen;
-      $('hist').hidden = !histOpen;
+    document.querySelectorAll('.score-chip').forEach((el) => {
+      el.addEventListener('click', () => setHistOpen(!histOpen));
+    });
+    document.addEventListener('click', (ev) => {
+      if (gearPopOpen && !ev.target.closest('.gear-wrap')) setGearPop(false);
+      if (!histOpen) return;
+      if (ev.target.closest('.score-chip') || ev.target.closest('#hist')) return;
+      setHistOpen(false);
     });
     $('hand-sort').addEventListener('click', () => {
       if (!lastState) return;
@@ -928,7 +1261,8 @@
         if (j.action === 'joined') {
           persistJoined(j);
           setStatus('joined', 'ok');
-          $('replay').hidden = !j.replay;
+          replayOn = !!j.replay;
+          renderPlayReplay();
           return;
         }
         if (j.action === 'players') {
@@ -985,11 +1319,8 @@
           return;
         }
         if (j.action === 'summary') {
-          setStatus(
-            `Hand White ${j.pts_ew} / Red ${j.pts_ns} · tot ${j.tot_ew}–${j.tot_ns}` +
-              (j.series_over ? ' · game over' : ''),
-            'ok'
-          );
+          lastSummary = j;
+          if (lastState) renderScorecard(lastState);
           return;
         }
         if (j.action === 'idlewarning') {
@@ -1031,7 +1362,8 @@
           uuid: sess.uuid,
         });
       };
-      $('replay').addEventListener('click', () => A.send(ws, { action: 'replaydeal' }));
+      $('replay').addEventListener('click', sendReplay);
+      $('next-hand').addEventListener('click', () => A.send(ws, { action: 'nexthand' }));
       $('btn-idle-stay').addEventListener('click', () => {
         A.send(ws, { action: 'idlestay' });
         setStatus('Staying…');

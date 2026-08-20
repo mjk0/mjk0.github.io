@@ -205,6 +205,7 @@ export function forgetProfile(username) {
  * }} TalkRead
  * @typedef {{
  *   hand_sort: 'desc'|'asc',
+ *   warn_subset_lead: boolean,
  *   game: { n?: number, hl?: number, opts?: number, rank_pack?: string },
  *   recent_invitees: string[],
  *   friends: string[],
@@ -216,6 +217,7 @@ export function forgetProfile(username) {
 export function defaultPrefs() {
   return {
     hand_sort: 'desc',
+    warn_subset_lead: true,
     game: {},
     recent_invitees: [],
     friends: [],
@@ -258,6 +260,7 @@ export function normalizePrefs(raw) {
   if (trIn.chat_at) talk_read.chat_at = String(trIn.chat_at);
   return {
     hand_sort: hs,
+    warn_subset_lead: raw.warn_subset_lead !== false,
     game,
     recent_invitees: normalizeNameList(raw.recent_invitees),
     friends: normalizeNameList(raw.friends),
@@ -349,6 +352,19 @@ export function applyHandSortLocal(sort) {
   const cur = loadPrefsCache();
   if (cur.hand_sort === next) return false;
   cachePrefs({ ...cur, hand_sort: next });
+  return true;
+}
+
+export function warnSubsetLead() {
+  return loadPrefsCache().warn_subset_lead !== false;
+}
+
+/** Apply warn_subset_lead locally; true if the cache actually changed. */
+export function applyWarnSubsetLeadLocal(on) {
+  const next = !!on;
+  const cur = loadPrefsCache();
+  if (cur.warn_subset_lead === next) return false;
+  cachePrefs({ ...cur, warn_subset_lead: next });
   return true;
 }
 
