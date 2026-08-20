@@ -133,7 +133,7 @@
     const id = /^[CDHS]/.test(raw) ? tokenToSvg(raw) : raw;
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     let vb = '0 0 60 80';
-    if (id.indexOf('fan') >= 0) vb = '0 4 200 90';
+    if (id.indexOf('fan') >= 0) vb = '0 0 200 96';
     else if (id === 'cshoriz' || id === 'csvert') vb = '0 0 86 86';
     else if (id === 'crown') vb = '0 0 64 64';
     svg.setAttribute('viewBox', vb);

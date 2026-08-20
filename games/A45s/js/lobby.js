@@ -38,6 +38,19 @@
     return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>';
   }
 
+  const ROBOT_PACKS = [
+    {
+      v: 'random',
+      title: 'Random',
+      names: 'B.Curly, B.Moe, B.Homer, B.Meow, B.Neo, B.Spock, B.Fry, B.Groot, B.Yoda, B.Chewie, B.Data, B.Hal, B.Gizmo, B.Fozzie, B.Scooby, B.Bugs, B.Elmo, B.Kermit, B.Loki, B.Piglet, B.Goofy, B.R2D2, B.C3PO, B.Porky',
+    },
+    {
+      v: 'classic',
+      title: 'Clown',
+      names: 'B.Ratfink, B.Homer, B.Turd, B.Donut',
+    },
+  ];
+
   function esc(s) {
     return String(s || '').replace(/[&<>"']/g, (c) =>
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -481,31 +494,44 @@
     pop.dataset.table = t.id;
     pop.setAttribute('role', 'dialog');
     pop.setAttribute('aria-label', 'Table options');
+    pop.addEventListener('click', (e) => e.stopPropagation());
     const lab = document.createElement('div');
     lab.className = 'opts-label';
     lab.textContent = 'Robot names';
     pop.appendChild(lab);
-    [
-      { v: 'random', title: 'Random', hint: 'B.Curly, B.Yoda, …' },
-      { v: 'classic', title: 'Clown', hint: 'B.Ratfink, B.Homer, B.Turd, B.Donut' },
-    ].forEach((opt) => {
-      const row = document.createElement('label');
-      row.className = 'opts-radio';
-      const inp = document.createElement('input');
-      inp.type = 'radio';
-      inp.name = 'robots-' + t.id;
-      inp.value = opt.v;
-      inp.checked = (t.robots || 'random') === opt.v;
-      inp.addEventListener('change', () => {
-        A.send(ws, { action: 'setrobots', table: t.id, pack: opt.v });
-        closeOpts();
+    const curPack = (t.robots === 'classic' || t.robots === 'clown') ? 'classic' : 'random';
+    const packRow = document.createElement('div');
+    packRow.className = 'opts-pack-row';
+    packRow.setAttribute('role', 'group');
+    packRow.setAttribute('aria-label', 'Robot names');
+    const names = document.createElement('div');
+    names.className = 'opts-names';
+    const setPackUi = (pack) => {
+      const opt = ROBOT_PACKS.find((p) => p.v === pack) || ROBOT_PACKS[0];
+      packRow.querySelectorAll('.opts-pack-btn').forEach((b) => {
+        const on = b.dataset.pack === opt.v;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
       });
-      const txt = document.createElement('span');
-      txt.innerHTML = `${esc(opt.title)}<span class="hint">${esc(opt.hint)}</span>`;
-      row.appendChild(inp);
-      row.appendChild(txt);
-      pop.appendChild(row);
+      names.textContent = opt.names;
+      names.title = opt.names;
+    };
+    ROBOT_PACKS.forEach((opt) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'opts-pack-btn';
+      btn.dataset.pack = opt.v;
+      btn.textContent = opt.title;
+      btn.addEventListener('click', () => {
+        if (btn.getAttribute('aria-pressed') === 'true') return;
+        A.send(ws, { action: 'setrobots', table: t.id, pack: opt.v });
+        setPackUi(opt.v);
+      });
+      packRow.appendChild(btn);
     });
+    pop.appendChild(packRow);
+    pop.appendChild(names);
+    setPackUi(curPack);
     const lab2 = document.createElement('div');
     lab2.className = 'opts-label opts-label-gap';
     lab2.textContent = 'Deal';
@@ -519,7 +545,11 @@
       A.send(ws, { action: 'setreplay', table: t.id, on: inp.checked });
     });
     const txt = document.createElement('span');
-    txt.innerHTML = `Replay this deal<span class="hint">Same cards, bidding starts over</span>`;
+    txt.innerHTML = `Allow <span class="opts-replay-mark">${replayChipSvg()} Replay</span>`;
+    const hint = document.createElement('span');
+    hint.className = 'hint';
+    hint.textContent = 'Same cards, bidding starts over';
+    txt.appendChild(hint);
     row.appendChild(inp);
     row.appendChild(txt);
     pop.appendChild(row);

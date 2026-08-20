@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Auction 45s — Table</title>
-  <link rel="stylesheet" href="css/a45s_web.css?v=20260819b">
+  <link rel="stylesheet" href="css/a45s_web.css?v=20260819p">
 </head>
 <body class="felt-page">
   <div class="felt">
@@ -18,19 +18,21 @@
       </span>
       <span id="meta" class="sub" style="margin:0"></span>
       <button id="rank-btn" class="ghost" type="button">Card rank</button>
+      <button id="fill-btn" class="ghost fill-btn" type="button" hidden title="Show fill-in counts" aria-label="Show fill-in counts" aria-pressed="false">+</button>
       <button id="hist-btn" class="ghost" type="button">Scores</button>
-      <button id="replay" class="ghost" type="button" hidden>Replay this deal</button>
+      <button id="replay" class="ghost" type="button" hidden title="Replay this deal" aria-label="Replay this deal">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+        Replay
+      </button>
       <button id="leavegame" class="ghost" type="button">Leave</button>
     </header>
 
-    <div class="felt-opp seatbox" data-slot="2"></div>
-    <div class="felt-left-col">
-      <div id="kitty-box" class="kitty-box" hidden>
-        <div id="kitty" class="kitty"></div>
-        <span class="side-label">Kitty</span>
-      </div>
-      <div class="felt-left seatbox" data-slot="1"></div>
+    <div id="side-pocket" class="felt-pocket" hidden>
+      <div id="side-cards" class="side-cards"></div>
+      <span id="side-label" class="side-label">Kitty</span>
     </div>
+    <div class="felt-opp seatbox" data-slot="2"><div class="fill-plus from-o" hidden></div></div>
+    <div class="felt-left seatbox" data-slot="1"><div class="fill-plus from-l" hidden></div></div>
     <div class="felt-center">
       <div id="keep-panel" class="keep-panel" hidden>
         <p id="keep-headline" class="keep-headline"></p>
@@ -38,21 +40,18 @@
         <div id="keep-trumps" class="trump-pick"></div>
       </div>
       <div id="trick" class="trick" aria-label="Current trick"></div>
-      <div class="side-col" style="margin-top:0.4rem">
-        <div id="piles" class="piles"></div>
-        <span class="side-label">Past tricks</span>
-      </div>
     </div>
-    <div class="felt-right seatbox" data-slot="3"></div>
+    <div class="felt-right seatbox" data-slot="3"><div class="fill-plus from-r" hidden></div></div>
 
     <div class="felt-you">
       <div id="bid-acts" class="bid-self" hidden></div>
-      <div class="you-hand-wrap">
+      <div id="you-hand-wrap" class="you-hand-wrap">
         <button id="hand-sort" class="hand-sort" type="button" hidden>Sort</button>
         <div id="you-hand" class="hand-row"></div>
+        <div id="you-fill-plus" class="fill-plus from-s" hidden></div>
         <div id="you-bid-oval" class="bid-oval" hidden></div>
       </div>
-      <div id="you-bar" class="namebar" style="max-width:22rem;margin:0.3rem auto 0"></div>
+      <div id="you-bar" class="namebar"></div>
     </div>
 
     <div class="felt-acts">
@@ -82,8 +81,16 @@
 
   <div id="inspect" class="inspect" hidden>
     <div class="panel">
-      <p id="inspect-title" class="sub"></p>
-      <div id="inspect-cards" class="hand-row"></div>
+      <div class="inspect-nav">
+        <button id="inspect-prev" class="inspect-step" type="button" aria-label="Previous trick">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+        </button>
+        <p id="inspect-title" class="sub"></p>
+        <button id="inspect-next" class="inspect-step" type="button" aria-label="Next trick">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+        </button>
+      </div>
+      <div id="inspect-cards" class="trick inspect-trick" aria-label="Past trick"></div>
       <div class="row"><button id="inspect-close" type="button">Close</button></div>
     </div>
   </div>
@@ -98,12 +105,10 @@
     </div>
   </div>
 
-  <script src="js/a45s_web.js?v=20260818w"></script>
+  <script src="js/a45s_web.js?v=20260819i"></script>
   <script>
     const $ = (id) => document.getElementById(id);
     const A = A45sWeb;
-    const DIRS = ['E', 'S', 'W', 'N'];
-    const DIRL = ['East', 'South', 'West', 'North'];
     const SUITS = ['clubs', 'diamonds', 'hearts', 'spades'];
     const sess = A.getSession();
     let idleWarnEndsAt = 0;
@@ -121,6 +126,17 @@
     let me = 0;
     let lastState = null;
     let histOpen = false;
+    let inspectIndex = 0;
+    // Freeze the completed 4-card trick ~2s (same as robot lead pause) so a
+    // human winner can read it. Legal lead clicks stay live and cancel it.
+    const TRICK_HOLD_MS = 2000;
+    let heldTrick = null;
+    let holdTimer = null;
+    const FILL_PREF = 'a45s.fillOverlay';
+    let fillLatch = false;
+    try { fillLatch = localStorage.getItem(FILL_PREF) === '1'; } catch (e) {}
+    let fillGlideKey = '';
+    let fillGlidePlayed = false;
 
     function setStatus(msg, kind) {
       const el = $('status');
@@ -130,6 +146,10 @@
 
     function rel(abs) {
       return (abs - me + 4) % 4;
+    }
+
+    function who(seat) {
+      return names[seat] || '—';
     }
 
     function teamClass(seat) {
@@ -175,10 +195,6 @@
       return { kind: 'contract', amount: st.contract_bid || 0, trump: st.trump };
     }
 
-    function seatMarkFor(st, seat) {
-      return bidMarkFor(st, seat) || contractMarkFor(st, seat);
-    }
-
     function paintOval(el, mark) {
       if (!el) return;
       if (!mark) {
@@ -219,12 +235,9 @@
     function fillNamebar(el, seat, actor) {
       el.className = 'namebar ' + teamClass(seat) + (actor ? ' actor' : '');
       el.innerHTML = '';
-      const dir = document.createElement('span');
-      dir.className = 'dir';
-      dir.textContent = DIRS[seat];
       const nm = document.createElement('span');
-      nm.textContent = names[seat] || '—';
-      el.appendChild(dir);
+      nm.className = 'nm';
+      nm.textContent = who(seat);
       el.appendChild(nm);
       return el;
     }
@@ -234,18 +247,107 @@
       return A.cardSvg(id, 'fan-back');
     }
 
+    function fillCounts(st) {
+      const a = st && st.fill_counts;
+      return Array.isArray(a) && a.length === 4 ? a : null;
+    }
+    function fillForced(st) {
+      if (!fillCounts(st)) return false;
+      const past = (st.past_tricks || []).length;
+      if (past === 0) return true;
+      // Trick-1 hold only. Trick 2's 4-card freeze also has past===1 + heldTrick.
+      return past === 1 && !!heldTrick && !(st.current_trick || []).length;
+    }
+    function fillShow(st) {
+      return !!(fillCounts(st) && (fillLatch || fillForced(st)));
+    }
+    function fillGlideNow(st, show) {
+      const c = fillCounts(st);
+      const key = c ? c.join(',') : '';
+      if (!key) {
+        fillGlideKey = '';
+        fillGlidePlayed = false;
+        return false;
+      }
+      if (key !== fillGlideKey) {
+        fillGlideKey = key;
+        fillGlidePlayed = false;
+      }
+      if (!show || fillGlidePlayed) return false;
+      fillGlidePlayed = true;
+      return true;
+    }
+    function bindFillGlideOnce(el) {
+      if (!el || el._fillGlideBound) return;
+      el._fillGlideBound = true;
+      el.addEventListener('animationend', (ev) => {
+        if (String(ev.animationName || '').indexOf('fill-glide') === 0) {
+          el.classList.remove('glide');
+        }
+      });
+    }
+    function setFillPlus(el, n, show, glide) {
+      if (!el) return;
+      bindFillGlideOnce(el);
+      if (!show) {
+        el.hidden = true;
+        el.classList.remove('glide');
+        el.textContent = '';
+        return;
+      }
+      el.hidden = false;
+      el.textContent = '+' + n;
+      if (glide) el.classList.add('glide');
+    }
+    function renderFill(st, show, glide) {
+      const counts = fillCounts(st);
+      const btn = $('fill-btn');
+      if (!counts) {
+        btn.hidden = true;
+        btn.classList.remove('on');
+        btn.setAttribute('aria-pressed', 'false');
+        setFillPlus($('you-fill-plus'), 0, false, false);
+        document.querySelectorAll('.seatbox .fill-plus').forEach((el) => setFillPlus(el, 0, false, false));
+        $('you-hand-wrap').classList.remove('has-fill');
+        return;
+      }
+      btn.hidden = false;
+      btn.classList.toggle('on', show);
+      btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+      $('you-hand-wrap').classList.toggle('has-fill', show);
+      setFillPlus($('you-fill-plus'), counts[me], show, glide);
+      document.querySelectorAll('.seatbox[data-slot]').forEach((box) => {
+        const slot = +box.getAttribute('data-slot');
+        const seat = (me + slot) & 3;
+        setFillPlus(box.querySelector('.fill-plus'), counts[seat], show, glide);
+      });
+    }
+
     function renderSeatBox(slot, seat, st) {
       const box = document.querySelector('.seatbox[data-slot="' + slot + '"]');
       if (!box) return;
-      box.innerHTML = '';
-      const count = (st.hand_counts && st.hand_counts[seat]) || 0;
-      const wrap = document.createElement('div');
-      wrap.className = 'fan-wrap';
-      wrap.appendChild(fanForCount(count));
-      const ov = makeOval(seatMarkFor(st, seat));
-      if (ov) wrap.appendChild(ov);
-      box.appendChild(wrap);
-      const bar = document.createElement('div');
+      const plus = box.querySelector('.fill-plus');
+      let wrap = box.querySelector('.fan-wrap');
+      if (!wrap) {
+        wrap = document.createElement('div');
+        wrap.className = 'fan-wrap';
+        box.insertBefore(wrap, plus || box.firstChild);
+      }
+      // Leave +N in the wrap — detaching it restarts the glide animation.
+      if (plus && plus.parentElement !== wrap) wrap.appendChild(plus);
+      const nextFan = fanForCount((st.hand_counts && st.hand_counts[seat]) || 0);
+      const oldFan = wrap.querySelector('.fan-back');
+      if (oldFan) oldFan.replaceWith(nextFan);
+      else wrap.insertBefore(nextFan, wrap.firstChild);
+      const oldOv = wrap.querySelector(':scope > .bid-oval');
+      if (oldOv) oldOv.remove();
+      const bidOv = makeOval(bidMarkFor(st, seat));
+      if (bidOv) wrap.appendChild(bidOv);
+      let bar = box.querySelector(':scope > .namebar');
+      if (!bar) {
+        bar = document.createElement('div');
+        box.appendChild(bar);
+      }
       const actor = (st.actors || []).indexOf(seat) >= 0;
       fillNamebar(bar, seat, actor);
       if (st.dealer === seat) {
@@ -259,61 +361,198 @@
         p.textContent = ' (paused)';
         bar.appendChild(p);
       }
-      box.appendChild(bar);
+      const contractOv = makeOval(contractMarkFor(st, seat));
+      if (contractOv) bar.appendChild(contractOv);
     }
 
-    function renderTrick(st) {
-      const box = $('trick');
+    function dropTrickHold() {
+      heldTrick = null;
+      if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+    }
+
+    function sameTrick(a, b) {
+      return !!(a && b && a.length === b.length &&
+        a.every((c, i) => c.seat === b[i].seat && c.card === b[i].card));
+    }
+
+    function startTrickHold(cards) {
+      heldTrick = cards.map((t) => ({ seat: t.seat, card: t.card }));
+      if (holdTimer) clearTimeout(holdTimer);
+      holdTimer = setTimeout(() => {
+        holdTimer = null;
+        const n = ((lastState && lastState.current_trick) || []).length;
+        if (n === 4) return; // server still sitting on this trick (robot 2s)
+        heldTrick = null;
+        if (lastState) renderState(lastState);
+      }, TRICK_HOLD_MS);
+    }
+
+    function noteTrickHold(st) {
+      const cur = st.current_trick || [];
+      if (cur.length === 4) {
+        if (!sameTrick(heldTrick, cur)) startTrickHold(cur);
+        return;
+      }
+      if (cur.length > 0) { dropTrickHold(); return; }
+      // Empty: keep freeze until timeout, unless we left play (replay / new deal).
+      if (st.phase !== 'trickplay' && st.phase !== 'handend') dropTrickHold();
+      else if (!holdTimer) heldTrick = null;
+    }
+
+    function paintTrick(box, cards, opts) {
+      opts = opts || {};
       box.innerHTML = '';
       const bySeat = {};
-      (st.current_trick || []).forEach((t) => { bySeat[t.seat] = t.card; });
+      (cards || []).forEach((t) => { bySeat[t.seat] = t.card; });
+      const lead = opts.lead;
+      const winner = opts.winner;
       for (let abs = 0; abs < 4; abs++) {
+        const card = bySeat[abs];
         const slot = document.createElement('div');
-        slot.className = 'slot s' + rel(abs) + (bySeat[abs] ? '' : ' empty');
-        slot.appendChild(A.cardSvg(bySeat[abs] || 'cblank'));
+        let cls = 'slot s' + rel(abs);
+        if (!card) cls += ' empty';
+        if (lead != null && abs === lead) cls += ' lead';
+        if (winner != null && abs === winner) cls += ' winner';
+        slot.className = cls;
+        slot.appendChild(A.cardSvg(card || 'cblank'));
+        if (lead != null && abs === lead) {
+          const chip = document.createElement('span');
+          chip.className = 'lead-chip';
+          chip.textContent = 'lead';
+          slot.appendChild(chip);
+        }
+        if (opts.names) {
+          const cap = document.createElement('div');
+          cap.className = 'inspect-who';
+          cap.textContent = who(abs);
+          slot.appendChild(cap);
+        }
         box.appendChild(slot);
       }
     }
 
-    function renderKitty(st) {
-      const box = $('kitty');
-      const pocket = $('kitty-box');
+    function renderTrick(st) {
+      paintTrick($('trick'), heldTrick || st.current_trick || []);
+    }
+
+    function pocketStacked() {
+      return window.matchMedia('(max-width: 700px)').matches;
+    }
+
+    function pocketAboveLeft() {
+      return window.matchMedia('(max-width: 1024px)').matches;
+    }
+
+    // Wide: mid-angle of left ↔ opposite. Narrow: just above the left player.
+    // ≤700px: CSS grid (same column as left); JS only clears inline coords.
+    function placeSidePocket() {
+      const felt = document.querySelector('.felt');
+      const pocket = $('side-pocket');
+      if (!felt || !pocket) return;
+      if (pocket.hidden || pocketStacked()) {
+        pocket.style.left = '';
+        pocket.style.top = '';
+        return;
+      }
+      const left = document.querySelector('.felt-left');
+      const opp = document.querySelector('.felt-opp');
+      const center = document.querySelector('.felt-center');
+      if (!left || !opp) return;
+      const f = felt.getBoundingClientRect();
+      const L = left.getBoundingClientRect();
+      const cs = getComputedStyle(felt);
+      const padL = parseFloat(cs.paddingLeft) || 0;
+      const padT = parseFloat(cs.paddingTop) || 0;
+      let mx;
+      let my;
+      if (pocketAboveLeft()) {
+        const head = document.querySelector('.felt-head');
+        const headBottom = head ? head.getBoundingClientRect().bottom : f.top;
+        const gap = 10;
+        mx = L.left + L.width / 2;
+        my = L.top - gap - pocket.offsetHeight / 2;
+        const minCy = headBottom + 6 + pocket.offsetHeight / 2;
+        if (my < minCy) my = minCy;
+      } else {
+        const O = opp.getBoundingClientRect();
+        const C = (center || felt).getBoundingClientRect();
+        const lx = L.left + L.width / 2;
+        const ly = L.top + L.height / 2;
+        const ox = O.left + O.width / 2;
+        const oy = O.top + O.height / 2;
+        const cx = C.left + C.width / 2;
+        const cy = C.top + C.height / 2;
+        mx = (lx + ox) / 2;
+        my = (ly + oy) / 2;
+        const dx = ox - lx;
+        const dy = oy - ly;
+        const len = Math.hypot(dx, dy) || 1;
+        let px = -dy / len;
+        let py = dx / len;
+        if (px * (cx - mx) + py * (cy - my) > 0) {
+          px = -px;
+          py = -py;
+        }
+        const offset = Math.min(pocket.offsetWidth * 0.42, len * 0.2);
+        mx += px * offset;
+        my += py * offset;
+      }
+      pocket.style.left = Math.round(mx - f.left - padL - pocket.offsetWidth / 2) + 'px';
+      pocket.style.top = Math.round(my - f.top - padT - pocket.offsetHeight / 2) + 'px';
+    }
+
+    function renderSidePocket(st) {
+      const pocket = $('side-pocket');
+      const box = $('side-cards');
+      const label = $('side-label');
       box.innerHTML = '';
-      // Silhouettes only while bidding. Declarer sees faces in-hand; others see it leave.
-      if (st.phase !== 'bidding') {
+      // Kitty while bidding; past tricks after. Never both.
+      if (st.phase === 'bidding') {
+        pocket.hidden = false;
+        box.classList.add('kitty');
+        label.textContent = 'Kitty';
+        for (let i = 0; i < 4; i++) box.appendChild(A.cardSvg('cbcatsil'));
+        requestAnimationFrame(placeSidePocket);
+        return;
+      }
+      const past = st.past_tricks || [];
+      if (!past.length) {
         pocket.hidden = true;
+        box.classList.remove('kitty');
+        pocket.style.left = '';
+        pocket.style.top = '';
         return;
       }
       pocket.hidden = false;
-      for (let i = 0; i < 4; i++) box.appendChild(A.cardSvg('cbcatsil'));
-    }
-
-    function renderPiles(st) {
-      const box = $('piles');
-      box.innerHTML = '';
-      const side = box.closest('.side-col');
-      if (side) side.hidden = !(st.past_tricks && st.past_tricks.length);
-      (st.past_tricks || []).forEach((tr, i) => {
-        const pile = A.cardSvg((tr.winner & 1) === 0 ? 'cshoriz' : 'csvert', 'pile ' + teamClass(tr.winner));
-        pile.title = 'Trick ' + (i + 1) + ' won by ' + DIRL[tr.winner];
-        pile.addEventListener('click', () => showInspect(tr, i));
+      box.classList.remove('kitty');
+      label.textContent = 'Past tricks';
+      past.forEach((tr, i) => {
+        const mine = (tr.winner & 1) === (me & 1);
+        const pile = A.cardSvg(mine ? 'csvert' : 'cshoriz', 'pile ' + teamClass(tr.winner));
+        pile.setAttribute('title', 'Trick ' + (i + 1) + ' won by ' + who(tr.winner));
+        pile.addEventListener('click', () => showInspect(i));
         box.appendChild(pile);
       });
+      requestAnimationFrame(placeSidePocket);
     }
 
-    function showInspect(tr, i) {
-      $('inspect-title').textContent = 'Trick ' + (i + 1) + ' — ' + DIRL[tr.winner] + ' won';
-      const row = $('inspect-cards');
-      row.innerHTML = '';
-      (tr.cards || []).forEach((c) => {
-        const wrap = document.createElement('div');
-        wrap.appendChild(A.cardSvg(c.card));
-        const cap = document.createElement('div');
-        cap.className = 'side-label';
-        cap.textContent = DIRS[c.seat];
-        wrap.appendChild(cap);
-        row.appendChild(wrap);
+    function showInspect(i) {
+      const past = (lastState && lastState.past_tricks) || [];
+      if (!past.length) {
+        $('inspect').hidden = true;
+        return;
+      }
+      inspectIndex = Math.max(0, Math.min(i, past.length - 1));
+      const tr = past[inspectIndex];
+      const cards = tr.cards || [];
+      $('inspect-title').textContent = 'Trick ' + (inspectIndex + 1) + ' of ' + past.length;
+      paintTrick($('inspect-cards'), cards, {
+        names: true,
+        lead: cards.length ? cards[0].seat : null,
+        winner: tr.winner,
       });
+      $('inspect-prev').disabled = inspectIndex <= 0;
+      $('inspect-next').disabled = inspectIndex >= past.length - 1;
       $('inspect').hidden = false;
     }
 
@@ -387,13 +626,15 @@
       row.classList.toggle('with-kitty', kit.length > 0);
       cards.forEach((c) => row.appendChild(paintHandCard(c, st, legal, picking)));
       $('hand-sort').hidden = !(st.why === 'trumpselect' && st.declarer === me && kit.length && !handMerged);
-      paintOval($('you-bid-oval'), seatMarkFor(st, me));
+      paintOval($('you-bid-oval'), bidMarkFor(st, me));
       fillNamebar($('you-bar'), me, (st.actors || []).indexOf(me) >= 0);
       if (st.dealer === me) {
         const cr = A.cardSvg('crown', 'crown');
         cr.setAttribute('viewBox', '0 0 64 64');
         $('you-bar').appendChild(cr);
       }
+      const youContract = makeOval(contractMarkFor(st, me));
+      if (youContract) $('you-bar').appendChild(youContract);
     }
 
     function bidBtnSpec(b, high, isDealer) {
@@ -413,7 +654,7 @@
         return;
       }
       chip.hidden = false;
-      $('contract-who').textContent = DIRL[st.declarer];
+      $('contract-who').textContent = who(st.declarer);
       const suitEl = $('contract-suit');
       suitEl.innerHTML = '';
       if (st.trump != null) {
@@ -460,7 +701,7 @@
           chips.appendChild(ic);
         });
       } else if (st.why === 'trumpselect') {
-        headline.textContent = 'Waiting for ' + DIRL[st.declarer] + ' to name trump…';
+        headline.textContent = 'Waiting for ' + who(st.declarer) + ' to name trump…';
       } else {
         if (st.trump != null) {
           headline.appendChild(document.createTextNode('Trump is '));
@@ -525,7 +766,7 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'ghost';
-        btn.textContent = 'Robot for ' + DIRS[seat];
+        btn.textContent = 'Robot for ' + who(+seat);
         btn.addEventListener('click', () => A.send(ws, { action: 'handoffrobot', seat: +seat }));
         acts.appendChild(btn);
       });
@@ -534,26 +775,30 @@
     function renderState(s) {
       lastState = s;
       me = s.seat;
+      noteTrickHold(s);
       $('sc-ew').textContent = s.score[0];
       $('sc-ns').textContent = s.score[1];
-      $('meta').textContent = DIRL[s.dealer] + ' deals';
+      $('meta').textContent = who(s.dealer) + ' deals';
       renderContractChip(s);
 
+      const showF = fillShow(s);
+      const glideF = fillGlideNow(s, showF);
       renderSeatBox(2, (me + 2) & 3, s);
       renderSeatBox(1, (me + 1) & 3, s);
       renderSeatBox(3, (me + 3) & 3, s);
       renderKeepPanel(s);
       renderTrick(s);
-      renderKitty(s);
-      renderPiles(s);
+      renderSidePocket(s);
       renderYou(s);
+      renderFill(s, showF, glideF);
       renderActs(s);
+      if (!$('inspect').hidden) showInspect(inspectIndex);
     }
 
     function renderPaused() {
       const seats = Object.keys(paused);
       $('paused').textContent = seats.length
-        ? 'Paused: ' + seats.map((s) => DIRS[s] + ' ' + paused[s]).join(', ')
+        ? 'Paused: ' + seats.map((s) => paused[s] || who(+s)).join(', ')
         : '';
     }
 
@@ -562,7 +807,7 @@
       box.innerHTML = '';
       (j.hands || []).forEach((h, i) => {
         const p = document.createElement('p');
-        p.textContent = `H${i + 1}  EW ${h.pts_ew} / NS ${h.pts_ns}  tot ${h.tot_ew}–${h.tot_ns}`;
+        p.textContent = `H${i + 1}  White ${h.pts_ew} / Red ${h.pts_ns}  tot ${h.tot_ew}–${h.tot_ns}`;
         box.appendChild(p);
       });
       (j.past_games || []).forEach((g, i) => {
@@ -621,7 +866,33 @@
       me = j.seat;
     }
 
+    window.addEventListener('resize', () => requestAnimationFrame(placeSidePocket));
+    if (window.matchMedia) {
+      window.matchMedia('(max-width: 700px)').addEventListener('change', () => {
+        requestAnimationFrame(placeSidePocket);
+      });
+    }
+
     $('inspect-close').addEventListener('click', () => { $('inspect').hidden = true; });
+    $('inspect-prev').addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      showInspect(inspectIndex - 1);
+    });
+    $('inspect-next').addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      showInspect(inspectIndex + 1);
+    });
+    document.addEventListener('keydown', (ev) => {
+      if ($('inspect').hidden) return;
+      if (ev.key === 'ArrowLeft') { ev.preventDefault(); showInspect(inspectIndex - 1); }
+      else if (ev.key === 'ArrowRight') { ev.preventDefault(); showInspect(inspectIndex + 1); }
+      else if (ev.key === 'Escape') { $('inspect').hidden = true; }
+    });
+    $('fill-btn').addEventListener('click', () => {
+      fillLatch = !fillLatch;
+      try { localStorage.setItem(FILL_PREF, fillLatch ? '1' : '0'); } catch (e) {}
+      if (lastState) renderState(lastState);
+    });
     $('rank-btn').addEventListener('click', () => { $('rank-pop').hidden = false; });
     $('rank-close').addEventListener('click', () => { $('rank-pop').hidden = true; });
     $('rank-pop').addEventListener('click', (ev) => {
@@ -650,13 +921,13 @@
       me = hint;
       ws = A.connect('game', (j) => {
         if (j.action === 'loggedin') {
-          setStatus(sess.seat != null ? 'rejoining ' + DIRS[sess.seat] : 'joining…', 'ok');
+          setStatus(sess.seat != null ? 'rejoining' : 'joining…', 'ok');
           A.send(ws, { action: 'joinseat', table, seat: hint });
           return;
         }
         if (j.action === 'joined') {
           persistJoined(j);
-          setStatus('at ' + DIRL[j.seat], 'ok');
+          setStatus('joined', 'ok');
           $('replay').hidden = !j.replay;
           return;
         }
@@ -682,7 +953,7 @@
         if (j.action === 'robottookover') {
           delete paused[j.seat];
           renderPaused();
-          setStatus(DIRS[j.seat] + ' is now ' + j.name, 'ok');
+          setStatus(who(j.seat) + ' is now ' + j.name, 'ok');
           return;
         }
         if (j.action === 'scorehistory') {
@@ -715,7 +986,7 @@
         }
         if (j.action === 'summary') {
           setStatus(
-            `Hand EW ${j.pts_ew} / NS ${j.pts_ns} · tot ${j.tot_ew}–${j.tot_ns}` +
+            `Hand White ${j.pts_ew} / Red ${j.pts_ns} · tot ${j.tot_ew}–${j.tot_ns}` +
               (j.series_over ? ' · game over' : ''),
             'ok'
           );

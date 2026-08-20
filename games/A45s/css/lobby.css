@@ -589,7 +589,8 @@ html:has(.lobby-page), html:has(.doc-page) {
   position: fixed;
   left: 0;
   top: 0;
-  min-width: 13rem;
+  min-width: 16rem;
+  max-width: 18rem;
   background: var(--bg-elev);
   border: 1px solid var(--border-hi);
   border-radius: 8px;
@@ -609,14 +610,37 @@ html:has(.lobby-page), html:has(.doc-page) {
   text-transform: uppercase;
   color: var(--muted);
 }
-.opts-popover .opts-radio {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.4rem;
-  font-size: 0.82rem;
-  cursor: pointer;
+.opts-pack-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
 }
-.opts-popover .opts-radio .hint,
+.opts-popover .opts-pack-btn {
+  padding: 0.12em 0.5em;
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.opts-popover .opts-pack-btn.on {
+  background: #263238;
+  border-color: #263238;
+  color: #faf6f0;
+}
+.opts-popover .opts-pack-btn.on:hover {
+  background: #37474f;
+  border-color: #37474f;
+  color: #faf6f0;
+}
+.opts-names {
+  min-width: 0;
+  font-size: 0.72rem;
+  color: var(--muted);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .opts-popover .opts-check .hint {
   display: block;
   font-size: 0.72rem;
@@ -634,6 +658,27 @@ html:has(.lobby-page), html:has(.doc-page) {
   gap: 0.4rem;
   font-size: 0.82rem;
   cursor: pointer;
+}
+.opts-replay-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin: 0 0.08em;
+  padding: 0.05em 0.4em 0.08em 0.28em;
+  border: 1px solid var(--border-hi);
+  border-radius: 4px;
+  background: #fff;
+  font-weight: 650;
+  font-size: 0.78rem;
+  line-height: 1.2;
+  vertical-align: middle;
+  color: var(--ink);
+}
+.opts-replay-mark svg {
+  width: 0.9em;
+  height: 0.9em;
+  fill: currentColor;
+  flex-shrink: 0;
 }
 
 .seat-pairs {
