@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Auction 45s — Table</title>
-  <link rel="stylesheet" href="css/a45s_web.css?v=20260820u">
+  <link rel="stylesheet" href="css/a45s_web.css?v=20260821h">
 </head>
 <body class="felt-page">
   <div class="felt">
@@ -16,7 +16,7 @@
         <button type="button" class="score-chip ns" title="Score history" aria-label="Red score, open history" aria-expanded="false" aria-controls="hist">
           Red <strong id="sc-ns">0</strong>
         </button>
-        <span id="contract-chip" class="contract-chip" hidden>
+        <span id="contract-chip" class="contract-chip is-off" aria-hidden="true">
           <span id="contract-who"></span>
           <span id="contract-suit" class="contract-suit"></span>
           <span id="contract-bid"></span>
@@ -33,10 +33,10 @@
             </label>
           </div>
         </div>
-        <button id="fill-btn" class="ghost fill-btn" type="button" hidden title="Show fill-in counts" aria-label="Show fill-in counts" aria-pressed="false">+</button>
+        <button id="fill-btn" class="ghost fill-btn is-off" type="button" title="Show fill-in counts" aria-label="Show fill-in counts" aria-pressed="false">+</button>
         <button id="leavegame" class="ghost" type="button">Leave</button>
       </div>
-      <div id="hist" class="hist-pop" hidden></div>
+      <div id="hist" class="hist-pop" hidden role="dialog" aria-label="Score history"></div>
     </header>
 
     <div id="side-pocket" class="felt-pocket" hidden>
@@ -46,12 +46,17 @@
     <div class="felt-opp seatbox" data-slot="2"><div class="fill-plus from-o" hidden></div></div>
     <div class="felt-left seatbox" data-slot="1"><div class="fill-plus from-l" hidden></div></div>
     <div class="felt-center">
-      <div id="keep-panel" class="keep-panel" hidden>
+      <div id="keep-panel" class="keep-panel is-off" aria-hidden="true">
         <p id="keep-headline" class="keep-headline"></p>
-        <p id="keep-copy" class="keep-copy"></p>
-        <div id="keep-trumps" class="trump-pick"></div>
+        <div id="discard-tray" class="discard-tray" hidden>
+          <div class="keep-bar">
+            <p class="discard-label">Discard</p>
+            <div id="keep-go-slot" class="keep-go-slot"></div>
+          </div>
+          <div id="discard-row" class="hand-row discard-row"></div>
+        </div>
       </div>
-      <div id="trick-nav" class="inspect-nav trick-nav" hidden>
+      <div id="trick-nav" class="inspect-nav trick-nav" aria-hidden="true">
         <button id="trick-prev" class="inspect-step" type="button" aria-label="Previous trick">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
         </button>
@@ -60,23 +65,32 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
         </button>
       </div>
-      <div id="trick" class="trick" aria-label="Current trick"></div>
+      <div id="trick" class="trick" aria-label="Current trick">
+        <div id="play-hint" class="play-hint slot s0" aria-hidden="true">
+          <div class="play-hint-frame">
+            <span class="play-hint-copy">Your<br>Play</span>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="felt-right seatbox" data-slot="3"><div class="fill-plus from-r" hidden></div></div>
 
     <div class="felt-you">
-      <div id="bid-acts" class="bid-self" hidden></div>
-      <div id="rank-strip" class="rank-strip" hidden>
+      <div class="you-chrome">
+      <div id="bid-acts" class="bid-self is-off" aria-hidden="true"></div>
+      <div id="rank-strip" class="rank-strip is-off" aria-hidden="true">
         <div id="rank-rows" class="rank-rows"></div>
         <button id="rank-hide" class="rank-hide" type="button" title="Hide rank strip" aria-label="Hide rank strip">×</button>
       </div>
+      </div>
+      <div class="you-play-slot">
       <div id="you-hand-wrap" class="you-hand-wrap">
         <button id="hand-sort" class="hand-sort" type="button" hidden>Sort</button>
         <div id="you-hand" class="hand-row"></div>
         <div id="you-fill-plus" class="fill-plus from-s" hidden></div>
         <div id="you-bid-oval" class="bid-oval" hidden></div>
       </div>
-      <div id="scorecard" class="scorecard" hidden>
+      <div id="scorecard" class="scorecard is-off" aria-hidden="true">
         <table class="scorecard-inner">
           <colgroup>
             <col>
@@ -113,6 +127,7 @@
             <td class="team-ns"><span id="tot-ns" class="scorecard-dance">0</span></td>
           </tr>
         </table>
+      </div>
       </div>
       <div class="you-name-row">
         <div id="you-bar" class="namebar"></div>
@@ -193,6 +208,12 @@
     const TRICK_HOLD_MS = 2000;
     let heldTrick = null;
     let holdTimer = null;
+    // Hand-end: shrink the live last trick, then show review chrome + 5th pile.
+    const ARCHIVE_MS = 600;
+    let reviewChrome = false;
+    let archiveRunning = false;
+    let archiveTimer = null;
+    let archiveRaf = 0;
     const FILL_PREF = 'a45s.fillOverlay';
     let fillLatch = false;
     try { fillLatch = localStorage.getItem(FILL_PREF) === '1'; } catch (e) {}
@@ -203,6 +224,12 @@
     let rankLatch = true;
     try { if (localStorage.getItem(RANK_PREF) === '0') rankLatch = false; } catch (e) {}
     let gearPopOpen = false;
+    // Desktop sugar: while you lead, hovering a non-trump hand card fills row 2.
+    let leadHover = null;
+    let lastPtr = null;
+    let paintingHand = false;
+    let playHintKey = '';
+    let playHintDismissed = '';
 
     function setStatus(msg, kind) {
       const el = $('status');
@@ -369,20 +396,18 @@
       const counts = fillCounts(st);
       const btn = $('fill-btn');
       if (!counts) {
-        btn.hidden = true;
+        btn.classList.add('is-off');
         btn.classList.remove('on');
         btn.setAttribute('aria-pressed', 'false');
         setFillPlus($('you-fill-plus'), 0, false, false);
         document.querySelectorAll('.seatbox .fill-plus').forEach((el) => setFillPlus(el, 0, false, false));
         $('you-hand-wrap').classList.remove('has-fill');
-        $('rank-strip').classList.remove('clear-fill');
         return;
       }
-      btn.hidden = false;
+      btn.classList.remove('is-off');
       btn.classList.toggle('on', show);
       btn.setAttribute('aria-pressed', show ? 'true' : 'false');
       $('you-hand-wrap').classList.toggle('has-fill', show);
-      $('rank-strip').classList.toggle('clear-fill', show && !$('rank-strip').hidden);
       setFillPlus($('you-fill-plus'), counts[me], show, glide);
       document.querySelectorAll('.seatbox[data-slot]').forEach((box) => {
         const slot = +box.getAttribute('data-slot');
@@ -433,6 +458,10 @@
       if (contractOv) bar.appendChild(contractOv);
     }
 
+    function reduceMotion() {
+      return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }
+
     function dropTrickHold() {
       heldTrick = null;
       if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
@@ -462,33 +491,66 @@
         return;
       }
       if (cur.length > 0) { dropTrickHold(); return; }
-      // Empty: keep freeze until timeout, unless we left play (replay / new deal).
-      if (st.phase !== 'trickplay' && st.phase !== 'handend') dropTrickHold();
+      // Empty: keep freeze until timeout, unless we left play / hand-end archive.
+      if (st.phase !== 'trickplay') dropTrickHold();
       else if (!holdTimer) heldTrick = null;
     }
 
-    function paintTrick(box, cards, opts) {
-      opts = opts || {};
-      box.innerHTML = '';
-      const bySeat = {};
-      (cards || []).forEach((t) => { bySeat[t.seat] = t.card; });
-      const lead = opts.lead;
-      for (let abs = 0; abs < 4; abs++) {
-        const card = bySeat[abs];
+    function paintTrick(box, cards) {
+      [...box.children].forEach((el) => {
+        if (!el.classList.contains('play-hint')) el.remove();
+      });
+      (cards || []).forEach((t, i) => {
         const slot = document.createElement('div');
-        let cls = 'slot s' + rel(abs);
-        if (!card) cls += ' empty';
-        if (lead != null && abs === lead) cls += ' lead';
-        slot.className = cls;
-        slot.appendChild(A.cardSvg(card || 'cblank'));
-        if (lead != null && abs === lead) {
-          const chip = document.createElement('span');
-          chip.className = 'lead-chip';
-          chip.textContent = 'lead';
-          slot.appendChild(chip);
-        }
+        slot.className = 'slot s' + rel(t.seat) + (i === 0 ? ' lead' : '');
+        slot.style.zIndex = String(i + 1);
+        if (i === 0) slot.setAttribute('aria-label', 'lead');
+        slot.appendChild(A.cardSvg(t.card));
         box.appendChild(slot);
-      }
+      });
+    }
+
+    function stopArchiveTimer() {
+      const box = $('trick');
+      if (archiveTimer) { clearTimeout(archiveTimer); archiveTimer = null; }
+      if (archiveRaf) { cancelAnimationFrame(archiveRaf); archiveRaf = 0; }
+      box.removeEventListener('transitionend', onArchiveEnd);
+    }
+
+    function cancelArchive() {
+      stopArchiveTimer();
+      $('trick').classList.remove('trick-archiving');
+      archiveRunning = false;
+    }
+
+    function settleArchive() {
+      reviewChrome = true;
+      stopArchiveTimer();
+      const box = $('trick');
+      box.classList.add('inspect-trick');
+      box.classList.remove('trick-archiving');
+      archiveRunning = false;
+    }
+
+    function onArchiveEnd(ev) {
+      if (ev && ev.target !== $('trick')) return;
+      if (ev && ev.propertyName && ev.propertyName !== 'transform') return;
+      if (reviewChrome) return;
+      settleArchive();
+      if (lastState) renderState(lastState);
+    }
+
+    function startArchive(box) {
+      if (archiveRunning) return;
+      archiveRunning = true;
+      box.classList.remove('inspect-trick', 'trick-archiving');
+      void box.offsetWidth;
+      archiveRaf = requestAnimationFrame(() => {
+        archiveRaf = 0;
+        box.classList.add('trick-archiving');
+        box.addEventListener('transitionend', onArchiveEnd);
+        archiveTimer = setTimeout(() => onArchiveEnd(null), ARCHIVE_MS);
+      });
     }
 
     // Hand-end: compact inspect-sized viewer; all five piles stay in the pocket.
@@ -500,29 +562,97 @@
       if (!lastState || lastState.phase !== 'handend') return;
       const n = (lastState.past_tricks || []).length;
       if (!n) return;
+      if (!reviewChrome) settleArchive();
       reviewIndex = Math.max(0, Math.min(i, n - 1));
       renderState(lastState);
     }
 
+    function setTrickNav(on) {
+      const nav = $('trick-nav');
+      nav.classList.toggle('is-on', !!on);
+      nav.setAttribute('aria-hidden', on ? 'false' : 'true');
+    }
+
     function renderTrick(st) {
       const past = st.past_tricks || [];
-      const nav = $('trick-nav');
       const box = $('trick');
       if (st.phase === 'handend' && past.length) {
+        if (!reviewChrome) {
+          setTrickNav(false);
+          if (!archiveRunning) {
+            if (!box.querySelector('.slot:not(.play-hint)')) {
+              paintTrick(box, (past[past.length - 1].cards || []));
+            }
+            startArchive(box);
+          }
+          return;
+        }
         const i = clampReview(past.length);
         const tr = past[i];
         const cards = tr.cards || [];
-        nav.hidden = false;
+        setTrickNav(true);
         $('trick-title').textContent = 'Trick ' + (i + 1) + ' of ' + past.length;
         $('trick-prev').disabled = i <= 0;
         $('trick-next').disabled = i >= past.length - 1;
         box.classList.add('inspect-trick');
-        paintTrick(box, cards, { lead: cards.length ? cards[0].seat : null });
+        box.classList.remove('trick-archiving');
+        paintTrick(box, cards);
         return;
       }
-      nav.hidden = true;
+      cancelArchive();
+      setTrickNav(false);
       box.classList.remove('inspect-trick');
       paintTrick(box, heldTrick || st.current_trick || []);
+    }
+
+    // You-slot ghost: episode is stable across State pushes so the 4s delay
+    // does not restart. Not a played card — paintTrick leaves #play-hint in place.
+    function playHintEpisode(st) {
+      if (!st || st.why !== 'play' || st.phase === 'handend') return '';
+      if (!isActor(st, me)) return '';
+      const cards = heldTrick || st.current_trick || [];
+      if (cards.some((t) => t.seat === me)) return '';
+      return (st.past_tricks || []).length + ':' +
+        cards.map((t) => t.seat + ':' + t.card).join(',');
+    }
+
+    function dismissPlayHint() {
+      if (!playHintKey) return;
+      playHintDismissed = playHintKey;
+      const hint = $('play-hint');
+      hint.classList.remove('is-on', 'is-paused');
+      hint.setAttribute('aria-hidden', 'true');
+    }
+
+    function syncPlayHint(st) {
+      const hint = $('play-hint');
+      const ep = playHintEpisode(st);
+      if (!ep || playHintDismissed === ep) {
+        if (!ep) playHintDismissed = '';
+        playHintKey = '';
+        hint.classList.remove('is-on', 'is-paused');
+        hint.setAttribute('aria-hidden', 'true');
+        return;
+      }
+      const n = (heldTrick || st.current_trick || []).length;
+      hint.style.zIndex = String(n + 1);
+      if (playHintKey !== ep) {
+        playHintKey = ep;
+        hint.classList.remove('is-on', 'is-paused');
+        void hint.offsetWidth;
+      }
+      const inspectOpen = !$('inspect').hidden;
+      hint.classList.toggle('is-paused', inspectOpen);
+      hint.classList.add('is-on');
+      hint.setAttribute('aria-hidden', inspectOpen ? 'true' : 'false');
+      if (!lastPtr) return;
+      const hit = document.elementFromPoint(lastPtr.x, lastPtr.y);
+      if (hit && hit.closest && hit.closest('#you-hand .card.legal')) dismissPlayHint();
+    }
+
+    function hideInspect() {
+      $('inspect').hidden = true;
+      if (lastState) syncPlayHint(lastState);
     }
 
     function pocketStacked() {
@@ -602,7 +732,6 @@
         box.classList.add('kitty');
         label.textContent = 'Kitty';
         for (let i = 0; i < 4; i++) box.appendChild(A.cardSvg('cbcatsil'));
-        requestAnimationFrame(placeSidePocket);
         return;
       }
       const past = st.past_tricks || [];
@@ -616,8 +745,11 @@
       pocket.hidden = false;
       box.classList.remove('kitty');
       label.textContent = 'Past tricks';
-      const sel = st.phase === 'handend' ? clampReview(past.length) : -1;
-      past.forEach((tr, i) => {
+      // During the last-trick shrink the 5th pile is still the live trick.
+      const shown = (st.phase === 'handend' && !reviewChrome && past.length)
+        ? past.slice(0, -1) : past;
+      const sel = (st.phase === 'handend' && reviewChrome) ? clampReview(past.length) : -1;
+      shown.forEach((tr, i) => {
         const mine = (tr.winner & 1) === (me & 1);
         const pile = A.cardSvg(
           mine ? 'csvert' : 'cshoriz',
@@ -630,7 +762,6 @@
         });
         box.appendChild(pile);
       });
-      requestAnimationFrame(placeSidePocket);
     }
 
     function showInspect(i) {
@@ -643,26 +774,33 @@
       const tr = past[inspectIndex];
       const cards = tr.cards || [];
       $('inspect-title').textContent = 'Trick ' + (inspectIndex + 1) + ' of ' + past.length;
-      paintTrick($('inspect-cards'), cards, {
-        lead: cards.length ? cards[0].seat : null,
-      });
+      paintTrick($('inspect-cards'), cards);
       $('inspect-prev').disabled = inspectIndex <= 0;
       $('inspect-next').disabled = inspectIndex >= past.length - 1;
       $('inspect').hidden = false;
+      if (lastState) syncPlayHint(lastState);
     }
 
-    function paintHandCard(c, st, legal, picking) {
+    function paintHandCard(c, st, opts) {
       const svg = A.cardSvg(c);
-      if (st.why === 'play' && legal.has(c)) {
+      svg.dataset.card = c;
+      if (st.why === 'play' && opts.legal && opts.legal.has(c)) {
         svg.classList.add('legal');
         svg.addEventListener('click', () => A.send(ws, { action: 'play', card: c }));
-      } else if (picking && legal.has(c)) {
+      } else if (opts.move === 'discard') {
         svg.classList.add('legal');
-        if (keep.has(c)) svg.classList.add('pick');
-        else svg.classList.add('dim');
         svg.addEventListener('click', () => {
-          if (keep.has(c)) keep.delete(c);
-          else keep.add(c);
+          keep.delete(c);
+          renderState(st);
+        });
+      } else if (opts.move === 'keep') {
+        svg.classList.add('legal');
+        svg.addEventListener('click', () => {
+          if (keep.size >= 5) {
+            bumpKeepFull();
+            return;
+          }
+          keep.add(c);
           renderState(st);
         });
       } else if (st.why === 'play') {
@@ -671,26 +809,50 @@
       return svg;
     }
 
+    function bumpKeepFull() {
+      const wrap = $('you-hand-wrap');
+      wrap.classList.remove('keep-shake');
+      void wrap.offsetWidth;
+      wrap.classList.add('keep-shake');
+    }
+
     function trumpKey(st) {
       if (trump != null) return SUIT_KEY[trump];
       if (st && st.trump != null) return SUIT_KEY[st.trump];
       return null;
     }
 
+    function shouldSplitKeep(st) {
+      return !!(inKeepPhase(st) && isActor(st, me) && trumpKey(st));
+    }
+
+    function poolCards(st) {
+      const { hand, kit } = splitHandKitty(st);
+      if (kit.length && !handMerged) {
+        return handOrder.length
+          ? handOrder
+          : A.sortCards(hand, null).concat(A.sortCards(kit, null));
+      }
+      return hand.concat(kit);
+    }
+
+    function bestFiveTrump(cards, key) {
+      const tr = A.sortCards(cards.filter((c) => A.isTrumpCard(c, key)), key);
+      return new Set(tr.slice(0, 5));
+    }
+
     function applyTrumpPick(st, i) {
       trump = i;
-      const key = SUIT_KEY[i];
-      handOrder = A.sortCards(displayCards(st), key);
       handMerged = true;
-      keep = new Set(handOrder.filter((c) => A.isTrumpCard(c, key)));
+      const { hand, kit } = splitHandKitty(st);
+      keep = bestFiveTrump(hand.concat(kit), SUIT_KEY[i]);
       renderState(st);
     }
 
     function defaultKeepFor(st) {
-      const cards = displayCards(st);
       const key = trumpKey(st);
       if (!key) return new Set();
-      return new Set(cards.filter((c) => A.isTrumpCard(c, key)));
+      return bestFiveTrump(poolCards(st), key);
     }
 
     function splitHandKitty(st) {
@@ -702,6 +864,9 @@
     }
 
     function displayCards(st) {
+      if (shouldSplitKeep(st)) {
+        return A.sortCards(poolCards(st).filter((c) => keep.has(c)), trumpKey(st));
+      }
       const { hand, kit } = splitHandKitty(st);
       if (kit.length) {
         if (handOrder.length) return handOrder;
@@ -709,6 +874,11 @@
       }
       const key = st.trump != null ? SUIT_KEY[st.trump] : null;
       return A.sortCards(hand, key);
+    }
+
+    function discardCards(st) {
+      if (!shouldSplitKeep(st)) return [];
+      return A.sortCards(poolCards(st).filter((c) => !keep.has(c)), null);
     }
 
     function rankFace(id, trumpKey) {
@@ -785,60 +955,119 @@
       if (lastState) renderState(lastState);
       else {
         syncRankGear();
-        $('rank-strip').hidden = true;
+        syncYouChrome(null);
       }
+    }
+
+    function canHoverLead(st) {
+      return !!(st && st.why === 'play' && st.phase !== 'handend'
+        && isActor(st, me) && stripTrick(st).length === 0);
+    }
+
+    function fineHover(ev) {
+      if (ev && ev.pointerType === 'touch') return false;
+      return !(window.matchMedia && !window.matchMedia('(hover: hover)').matches);
+    }
+
+    function cardFromNode(node) {
+      const el = node && node.closest ? node.closest('.card') : null;
+      return (el && el.dataset.card) || null;
+    }
+
+    function setLeadHover(card) {
+      const next = card || null;
+      if (leadHover === next) return;
+      leadHover = next;
+      if (lastState) renderRankStrip(lastState);
+    }
+
+    function pickLeadHoverFromPoint() {
+      if (!canHoverLead(lastState) || !lastPtr) return;
+      if (window.matchMedia && !window.matchMedia('(hover: hover)').matches) {
+        leadHover = null;
+        return;
+      }
+      const hit = document.elementFromPoint(lastPtr.x, lastPtr.y);
+      const row = $('you-hand');
+      if (!hit || !row.contains(hit)) {
+        leadHover = null;
+        return;
+      }
+      leadHover = cardFromNode(hit);
     }
 
     function renderRankStrip(st) {
       syncRankGear();
       const box = $('rank-strip');
       const named = st && st.trump != null;
-      if (!st || !named || !rankLatch) {
-        box.hidden = true;
-        return;
-      }
+      if (!st || !named || !rankLatch) return;
       const trumpKey = SUIT_KEY[st.trump];
       const cards = stripTrick(st);
       const lead = cards[0];
-      // Off row only if the *lead* is non-trump. A♥ is trump; slough after a trump lead is ignored.
+      const youLead = canHoverLead(st);
+      if (!youLead) leadHover = null;
+      else if (leadHover && (st.hand || '').split(',').indexOf(leadHover) < 0) leadHover = null;
+      // Off row: real non-trump lead, else hover preview while you lead.
+      // A♥ is trump; slough after a trump lead is ignored.
       const leadIsTrump = !!(lead && A.isTrumpCard(lead.card, trumpKey));
-      const offKey = (lead && !leadIsTrump) ? A.suitOf(lead.card) : null;
+      let offKey = (lead && !leadIsTrump) ? A.suitOf(lead.card) : null;
+      let preview = false;
+      if (!offKey && youLead && leadHover && !A.isTrumpCard(leadHover, trumpKey)) {
+        offKey = A.suitOf(leadHover);
+        preview = true;
+      }
       const hand = st.phase === 'handend' ? [] : displayCards(st);
       const inHand = new Set(hand.map(A.tokenToSvg));
       const onTrick = new Set(cards.map((t) => A.tokenToSvg(t.card)));
-      const win = A.trickWinner(cards, trumpKey);
+      const win = preview ? null : A.trickWinner(cards, trumpKey);
       const rows = $('rank-rows');
       rows.innerHTML = '';
-      const quietOff = !!(offKey && cards.some((t) => A.isTrumpCard(t.card, trumpKey)));
+      const quietOff = !!(offKey && !preview && cards.some((t) => A.isTrumpCard(t.card, trumpKey)));
       rows.appendChild(paintRankRow(trumpKey, true, trumpKey, inHand, onTrick, win, lead && lead.card, false));
       if (offKey) {
-        rows.appendChild(paintRankRow(offKey, false, trumpKey, inHand, onTrick, win, lead.card, quietOff));
+        const offRow = paintRankRow(
+          offKey, false, trumpKey, inHand, onTrick,
+          preview ? null : win, preview ? null : lead.card, quietOff
+        );
+        if (preview) offRow.classList.add('preview');
+        rows.appendChild(offRow);
       } else {
         const spacer = document.createElement('div');
         spacer.className = 'rank-row spacer';
         spacer.setAttribute('aria-hidden', 'true');
         rows.appendChild(spacer);
       }
-      box.hidden = false;
     }
 
     function renderYou(st) {
+      paintingHand = true;
       const row = $('you-hand');
+      const wrap = $('you-hand-wrap');
       row.innerHTML = '';
       if (st.phase !== 'handend') {
         const { kit } = splitHandKitty(st);
+        const split = shouldSplitKeep(st);
         const cards = displayCards(st);
         const legal = new Set((st.legal_cards || '').split(',').filter(Boolean));
-        const picking = isActor(st, me) && inKeepPhase(st) && legal.size > 0;
-        row.classList.toggle('with-kitty', kit.length > 0);
-        cards.forEach((c) => row.appendChild(paintHandCard(c, st, legal, picking)));
+        row.classList.toggle('with-kitty', kit.length > 0 && !split && !handMerged);
+        wrap.classList.toggle('keeping', split);
+        wrap.classList.remove('keep-shake');
+        cards.forEach((c) => row.appendChild(paintHandCard(c, st, {
+          legal,
+          move: split ? 'discard' : null,
+        })));
         $('hand-sort').hidden = !(st.why === 'trumpselect' && st.declarer === me && kit.length && !handMerged);
         paintOval($('you-bid-oval'), bidMarkFor(st, me));
       } else {
+        leadHover = null;
+        lastPtr = null;
         row.classList.remove('with-kitty');
+        wrap.classList.remove('keeping', 'keep-shake');
         $('hand-sort').hidden = true;
         paintOval($('you-bid-oval'), null);
       }
+      paintingHand = false;
+      pickLeadHoverFromPoint();
       fillNamebar($('you-bar'), me, (st.actors || []).indexOf(me) >= 0);
       if (st.dealer === me) {
         const cr = A.cardSvg('crown', 'crown');
@@ -861,77 +1090,71 @@
 
     function renderContractChip(st) {
       const chip = $('contract-chip');
-      if (st.declarer == null) {
-        chip.hidden = true;
-        return;
-      }
-      chip.hidden = false;
-      $('contract-who').textContent = who(st.declarer);
+      const on = st.declarer != null;
+      setSlotOff(chip, !on);
+      $('contract-who').textContent = on ? who(st.declarer) : '\u00a0';
       const suitEl = $('contract-suit');
       suitEl.innerHTML = '';
-      if (st.trump != null) {
-        suitEl.appendChild(A.suitSvg(st.trump, 'suit'));
-      } else {
-        suitEl.appendChild(A.suitSvg(4, 'suit sil'));
-      }
-      $('contract-bid').textContent = String(st.contract_bid || '');
+      suitEl.appendChild(A.suitSvg(
+        on && st.trump != null ? st.trump : 4,
+        on && st.trump != null ? 'suit' : 'suit sil'
+      ));
+      $('contract-bid').textContent = on ? String(st.contract_bid || '') : '\u00a0';
     }
 
     function renderKeepPanel(st) {
       const panel = $('keep-panel');
       const trick = $('trick');
       const headline = $('keep-headline');
-      const copy = $('keep-copy');
-      const chips = $('keep-trumps');
-      chips.innerHTML = '';
+      const tray = $('discard-tray');
+      const drow = $('discard-row');
       headline.textContent = '';
-      copy.textContent = '';
+      drow.innerHTML = '';
       if (!inKeepPhase(st)) {
-        panel.hidden = true;
-        trick.hidden = false;
+        setSlotOff(panel, true);
+        tray.hidden = true;
+        trick.classList.remove('is-off');
         return;
       }
-      panel.hidden = false;
-      trick.hidden = true;
-      const named = st.trump != null ? st.trump : trump;
-      const iAmDecl = st.declarer === me;
-      const iAct = isActor(st, me);
-
-      if (st.why === 'trumpselect' && iAmDecl) {
-        if (named == null) {
-          headline.textContent = 'Name trump, then keep five.';
-        } else {
-          headline.appendChild(document.createTextNode('Trump is '));
-          headline.appendChild(A.suitSvg(named, 'suit'));
+      trick.classList.add('is-off');
+      const split = shouldSplitKeep(st);
+      let wait = '';
+      if (!split) {
+        if (st.why === 'trumpselect' && st.declarer !== me) {
+          wait = who(st.declarer) + ' is naming trump…';
+        } else if (st.why === 'discard' && !isActor(st, me)) {
+          wait = 'Waiting for discards…';
         }
-        [0, 1, 2, 3].forEach((i) => {
-          const ic = A.suitSvg(i);
-          if (trump === i) ic.classList.add('on');
-          else if (trump == null) ic.classList.add('pulse');
-          ic.setAttribute('title', SUITS[i]);
-          ic.addEventListener('click', () => applyTrumpPick(st, i));
-          chips.appendChild(ic);
-        });
-      } else if (st.why === 'trumpselect') {
-        headline.textContent = 'Waiting for ' + who(st.declarer) + ' to name trump…';
-      } else {
-        if (st.trump != null) {
-          headline.appendChild(document.createTextNode('Trump is '));
-          headline.appendChild(A.suitSvg(st.trump, 'suit'));
-        }
-        copy.textContent = iAct
-          ? 'Trump cards start kept. Click to change, then confirm.'
-          : 'Waiting for others to discard…';
       }
+      const show = split || !!wait;
+      setSlotOff(panel, !show);
+      tray.hidden = !split;
+      headline.textContent = wait;
+      if (split) {
+        discardCards(st).forEach((c) => {
+          drow.appendChild(paintHandCard(c, st, { move: 'keep' }));
+        });
+      }
+    }
+
+    // Rank strip auto-show stays in the reserved band; user × may collapse it.
+    function syncYouChrome(st) {
+      const bidOff = $('bid-acts').classList.contains('is-off');
+      const wantRank = !!(st && st.trump != null && rankLatch);
+      setSlotOff($('rank-strip'), !wantRank);
+      document.querySelector('.you-chrome').classList.toggle('user-off', !rankLatch && bidOff);
     }
 
     function renderActs(st) {
       const acts = $('acts');
       const bidActs = $('bid-acts');
+      const keepGo = $('keep-go-slot');
       acts.innerHTML = '';
       bidActs.innerHTML = '';
-      bidActs.hidden = true;
+      if (keepGo) keepGo.innerHTML = '';
+      bidActs.classList.remove('trump-bar');
 
+      let bidOn = false;
       if (st.why === 'bid' && st.legal_bids && st.legal_bids.length) {
         const high = currentHigh(st);
         st.legal_bids.forEach((b) => {
@@ -943,28 +1166,49 @@
           btn.addEventListener('click', () => A.send(ws, { action: 'bid', bid: b }));
           bidActs.appendChild(btn);
         });
-        bidActs.hidden = false;
+        bidOn = true;
       }
 
       if (inKeepPhase(st) && isActor(st, me)) {
-        const go = document.createElement('button');
-        go.type = 'button';
-        const over = keep.size > 5;
-        const needTrump = st.why === 'trumpselect' && trump == null;
-        go.disabled = over || needTrump;
-        go.textContent = over
-          ? 'Keep at most 5'
-          : needTrump
-            ? 'Select trump'
-            : (st.why === 'trumpselect' ? 'Name trump & keep' : 'Keep selected');
-        go.addEventListener('click', () => {
-          const msg = { action: 'selecthand', cards: [...keep].join(',') };
-          if (st.why === 'trumpselect') msg.trump = SUITS[trump];
-          A.send(ws, msg);
-          keep = new Set();
-        });
-        acts.appendChild(go);
+        if (st.why === 'trumpselect' && st.declarer === me) {
+          bidActs.classList.add('trump-bar');
+          const q = document.createElement('span');
+          q.className = 'trump-q';
+          q.textContent = 'Trump?';
+          bidActs.appendChild(q);
+          [0, 1, 2, 3].forEach((i) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'suit-btn' + (trump === i ? ' on' : (trump == null ? ' pulse' : ''));
+            btn.setAttribute('aria-pressed', trump === i ? 'true' : 'false');
+            btn.setAttribute('aria-label', SUITS[i]);
+            btn.title = SUITS[i];
+            btn.appendChild(A.suitSvg(i));
+            btn.addEventListener('click', () => applyTrumpPick(st, i));
+            bidActs.appendChild(btn);
+          });
+          bidOn = true;
+        }
+        if (shouldSplitKeep(st) && keepGo) {
+          const go = document.createElement('button');
+          go.type = 'button';
+          go.className = 'keep-go';
+          const over = keep.size > 5;
+          go.disabled = over;
+          go.textContent = over ? 'Keep at most 5' : 'Done';
+          if (!over) go.classList.add('pulse');
+          go.addEventListener('click', () => {
+            const msg = { action: 'selecthand', cards: [...keep].join(',') };
+            if (st.why === 'trumpselect') msg.trump = SUITS[trump];
+            A.send(ws, msg);
+            keep = new Set();
+          });
+          keepGo.appendChild(go);
+        }
       }
+
+      setSlotOff(bidActs, !bidOn);
+      syncYouChrome(st);
 
       Object.keys(paused).forEach((seat) => {
         const btn = document.createElement('button');
@@ -977,10 +1221,20 @@
     }
 
     function renderState(s) {
+      if (s.phase !== 'handend') {
+        cancelArchive();
+        reviewChrome = false;
+        reviewIndex = -1;
+      } else if (!lastState || lastState.phase !== 'handend') {
+        // Join/refresh already at hand-end: skip shrink. Live last trick: archive.
+        const live = lastState && lastState.phase === 'trickplay' &&
+          ((heldTrick && heldTrick.length === 4) ||
+            ((lastState.current_trick || []).length === 4));
+        reviewChrome = !live || reduceMotion();
+        $('inspect').hidden = true;
+      }
       lastState = s;
       me = s.seat;
-      if (s.phase !== 'handend') reviewIndex = -1;
-      else $('inspect').hidden = true;
       noteTrickHold(s);
       $('sc-ew').textContent = s.score[0];
       $('sc-ns').textContent = s.score[1];
@@ -1002,6 +1256,8 @@
       renderFill(s, showF, glideF);
       renderActs(s);
       if (!$('inspect').hidden) showInspect(inspectIndex);
+      placeSidePocket();
+      syncPlayHint(s);
     }
 
     function fmtHandPts(n) {
@@ -1040,18 +1296,23 @@
     }
 
     // Hand-end occupies the vacant hand slot. Series-over nods the winning header.
+    // visibility (is-off), not display:none — stacked slot keeps compass height.
+    function setSlotOff(el, off) {
+      el.classList.toggle('is-off', !!off);
+      el.setAttribute('aria-hidden', off ? 'true' : 'false');
+    }
     function renderScorecard(st) {
       const card = $('scorecard');
       const wrap = $('you-hand-wrap');
       if (st.phase !== 'handend') {
         lastSummary = null;
-        card.hidden = true;
-        wrap.hidden = false;
+        setSlotOff(card, true);
+        setSlotOff(wrap, false);
         applyWinner(st);
         return;
       }
-      wrap.hidden = true;
-      card.hidden = false;
+      setSlotOff(wrap, true);
+      setSlotOff(card, false);
       const over = seriesOver(st);
       $('next-hand').textContent = over ? 'New game' : 'Deal again';
       $('score-lbl').textContent = over ? 'Game over' : 'Series';
@@ -1079,27 +1340,77 @@
         : '';
     }
 
+    function histWinCells(tr, a, b) {
+      const ea = document.createElement('td');
+      const eb = document.createElement('td');
+      ea.textContent = String(a);
+      eb.textContent = String(b);
+      if (a > b) ea.className = 'win';
+      else if (b > a) eb.className = 'win';
+      tr.append(ea, eb);
+    }
+
     function renderHist(j) {
       const box = $('hist');
       box.innerHTML = '';
       const hands = j.hands || [];
-      const past = j.past_games || [];
-      if (!hands.length && !past.length) {
-        const p = document.createElement('p');
-        p.innerHTML = '<i>No score history yet</i>';
-        box.appendChild(p);
-        return;
+      let past = j.past_games || [];
+      if (hands.length && past.length) {
+        const last = past[past.length - 1];
+        const lastH = hands[hands.length - 1];
+        if (last[0] === lastH.tot_ew && last[1] === lastH.tot_ns) past = past.slice(0, -1);
       }
+      const h = document.createElement('h3');
+      h.textContent = 'Score History';
+      const table = document.createElement('table');
+      table.className = 'hist-table';
+      table.innerHTML = '<thead><tr><th>Game</th><th class="team-ew">White</th><th class="team-ns">Red</th></tr></thead>';
+      const tb = document.createElement('tbody');
       past.forEach((g, i) => {
-        const p = document.createElement('p');
-        p.textContent = `Game ${i + 1}  ${g[0]}–${g[1]}`;
-        box.appendChild(p);
+        const tr = document.createElement('tr');
+        tr.className = 'hist-past';
+        const td = document.createElement('td');
+        td.textContent = String(i + 1);
+        tr.appendChild(td);
+        histWinCells(tr, g[0], g[1]);
+        tb.appendChild(tr);
       });
-      hands.forEach((h, i) => {
-        const p = document.createElement('p');
-        p.textContent = `H${i + 1}  White ${h.pts_ew} / Red ${h.pts_ns}  tot ${h.tot_ew}–${h.tot_ns}`;
-        box.appendChild(p);
-      });
+      const gn = String(past.length + 1);
+      if (!hands.length) {
+        const tr = document.createElement('tr');
+        const tdG = document.createElement('td');
+        tdG.textContent = gn;
+        const tdM = document.createElement('td');
+        tdM.colSpan = 2;
+        const em = document.createElement('i');
+        em.textContent = 'No score history yet';
+        tdM.appendChild(em);
+        tr.append(tdG, tdM);
+        tb.appendChild(tr);
+      } else {
+        hands.forEach((row, i) => {
+          const tr = document.createElement('tr');
+          if (i === 0) {
+            const tdG = document.createElement('td');
+            tdG.rowSpan = hands.length + 1;
+            tdG.textContent = gn;
+            tr.appendChild(tdG);
+          }
+          histWinCells(tr, row.pts_ew, row.pts_ns);
+          tb.appendChild(tr);
+        });
+        const tot = document.createElement('tr');
+        tot.className = 'hist-tot';
+        const last = hands[hands.length - 1];
+        const t0 = document.createElement('td');
+        t0.textContent = String(last.tot_ew);
+        const t1 = document.createElement('td');
+        t1.textContent = String(last.tot_ns);
+        tot.append(t0, t1);
+        tb.appendChild(tot);
+      }
+      table.appendChild(tb);
+      box.append(h, table);
     }
 
     function setHistOpen(on) {
@@ -1110,11 +1421,7 @@
         el.setAttribute('aria-expanded', histOpen ? 'true' : 'false');
       });
       if (!histOpen) return;
-      if (!box.childElementCount) {
-        const p = document.createElement('p');
-        p.innerHTML = '<i>No score history yet</i>';
-        box.appendChild(p);
-      }
+      if (!box.childElementCount) renderHist({ hands: [], past_games: [] });
       if (ws && ws.readyState === 1) A.send(ws, { action: 'getscorehistory' });
     }
 
@@ -1174,7 +1481,7 @@
       });
     }
 
-    $('inspect-close').addEventListener('click', () => { $('inspect').hidden = true; });
+    $('inspect-close').addEventListener('click', hideInspect);
     $('inspect-prev').addEventListener('click', (ev) => {
       ev.stopPropagation();
       showInspect(inspectIndex - 1);
@@ -1193,7 +1500,7 @@
       if (!$('inspect').hidden) {
         if (ev.key === 'ArrowLeft') { ev.preventDefault(); showInspect(inspectIndex - 1); }
         else if (ev.key === 'ArrowRight') { ev.preventDefault(); showInspect(inspectIndex + 1); }
-        else if (ev.key === 'Escape') { $('inspect').hidden = true; }
+        else if (ev.key === 'Escape') { hideInspect(); }
         return;
       }
       if (ev.key === 'Escape' && gearPopOpen) {
@@ -1225,9 +1532,27 @@
     });
     $('rank-check').addEventListener('change', () => setRankLatch($('rank-check').checked));
     $('rank-hide').addEventListener('click', () => setRankLatch(false));
+    $('you-hand').addEventListener('pointerover', (ev) => {
+      if (ev.target.closest && ev.target.closest('.card.legal')) dismissPlayHint();
+      if (!fineHover(ev) || !canHoverLead(lastState)) return;
+      lastPtr = { x: ev.clientX, y: ev.clientY };
+      const card = cardFromNode(ev.target);
+      if (card) setLeadHover(card);
+    });
+    $('you-hand').addEventListener('pointermove', (ev) => {
+      if (!fineHover(ev)) return;
+      lastPtr = { x: ev.clientX, y: ev.clientY };
+    });
+    $('you-hand').addEventListener('pointerout', (ev) => {
+      if (paintingHand || !fineHover(ev)) return;
+      const next = ev.relatedTarget;
+      if (next && $('you-hand').contains(next)) return;
+      lastPtr = null;
+      setLeadHover(null);
+    });
     syncRankGear();
     $('inspect').addEventListener('click', (ev) => {
-      if (ev.target.id === 'inspect') $('inspect').hidden = true;
+      if (ev.target.id === 'inspect') hideInspect();
     });
     document.querySelectorAll('.score-chip').forEach((el) => {
       el.addEventListener('click', () => setHistOpen(!histOpen));
@@ -1305,8 +1630,6 @@
             const kit = (j.kitty || '').split(',').filter(Boolean);
             if (j.why === 'trumpselect') {
               handOrder = A.sortCards(hand, null).concat(A.sortCards(kit, null));
-              // Orig five start selected until a suit is named (then trump + A♥).
-              if (j.declarer === me) hand.forEach((c) => keep.add(c));
             } else if (j.why === 'discard') {
               handOrder = [];
               if (j.trump != null) trump = j.trump;

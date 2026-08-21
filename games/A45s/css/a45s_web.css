@@ -98,18 +98,26 @@ code { font-size: 0.85rem; }
 /* —— table felt (step 7) —— */
 body.felt-page {
   background: #1c6840;
+  /* On body so #inspect (outside .felt) can size the overlap stack. */
+  --card-w: clamp(2.5rem, min(9.2vh, 10.5vw), 15vh);
+  --card-h: calc(var(--card-w) * 4 / 3);
+  --trick-w: calc(var(--card-w) * 136 / 60);
+  --trick-h: calc(var(--card-w) * 182 / 60);
+  --steel: lightsteelblue;
+  --bid-face: #e8edf2;
+  --pile-back: #9aa8b5;
+  --team-red: #8b1e1e;
+  --name-ew: ivory;
+  --name-ew-edge: lightskyblue;
+  --name-ns: color-mix(in srgb, lightpink 45%, white);
 }
 body.felt-page .wrap { display: none; }
 .felt {
   /* Play pieces track the viewport (old Node A45s used vh/vw; rem caps left large windows empty). */
-  --card-w: clamp(2.5rem, min(9.2vh, 10.5vw), 15vh);
-  --card-h: calc(var(--card-w) * 4 / 3);
   --fan-w: calc(var(--card-w) * 2.4);
   --fan-h: calc(var(--fan-w) * 0.5);
   --pile-w: calc(var(--card-w) * 0.62);
   --pile-h: calc(var(--card-h) * 0.62);
-  --trick-w: clamp(10rem, min(36vh, 42vw), 48vh);
-  --trick-h: clamp(8.5rem, min(32vh, 38vw), 42vh);
   --name-fs: clamp(0.88rem, min(2.6vh, 2.4vw), 2.4vh);
   font-size: clamp(0.88rem, min(2.2vh, 2vw), 2.1vh);
   position: relative;
@@ -160,6 +168,10 @@ body.felt-page .wrap { display: none; }
   background: burlywood;
   color: #111;
   border-color: #fff;
+}
+.fill-btn.is-off {
+  visibility: hidden;
+  pointer-events: none;
 }
 .fill-btn[hidden] { display: none !important; }
 .gear-wrap { position: relative; display: inline-flex; }
@@ -260,6 +272,8 @@ body.felt-page .wrap { display: none; }
   align-items: center;
   justify-content: center;
   overflow: visible;
+  min-width: var(--trick-w);
+  position: relative;
 }
 .felt-right {
   grid-column: 3;
@@ -275,7 +289,7 @@ body.felt-page .wrap { display: none; }
   align-items: center;
   position: relative;
 }
-.felt-acts { grid-column: 1 / -1; grid-row: 5; }
+.felt-acts { grid-column: 1 / -1; grid-row: 5; min-height: 2.4em; }
 .felt-foot { grid-column: 1 / -1; grid-row: 6; }
 
 .seatbox { text-align: center; position: relative; }
@@ -285,10 +299,12 @@ body.felt-page .wrap { display: none; }
   align-items: center;
   justify-content: center;
   gap: 0.3em;
-  border: 1px solid #111;
+  background: var(--steel);
+  color: #111;
+  border: 3px solid transparent;
+  box-shadow: 0 0 0 1px #222;
   padding: 0.12em 0.5em;
   font-size: var(--name-fs);
-  color: #111;
   min-height: 1.55em;
   min-width: var(--fan-w);
   box-sizing: border-box;
@@ -303,8 +319,15 @@ body.felt-page .wrap { display: none; }
   white-space: nowrap;
   max-width: 12em;
 }
-.namebar.ew { background: #fff; }
-.namebar.ns { background: #8b1e1e; color: #fff; }
+.namebar.ew {
+  background: var(--name-ew);
+  border-color: var(--name-ew-edge);
+}
+.namebar.ns {
+  background: #ffdee3;
+  background: var(--name-ns);
+  border-color: var(--team-red);
+}
 .namebar.actor { outline: 3px solid gold; }
 .namebar .crown { width: 1em; height: 1em; flex-shrink: 0; }
 .fan svg, .fan-back {
@@ -351,8 +374,12 @@ body.felt-page .wrap { display: none; }
   width: var(--trick-w);
   height: var(--trick-h);
   margin: 0 auto;
+  overflow: visible;
 }
 .trick[hidden] { display: none !important; }
+#trick.is-off {
+  visibility: hidden;
+}
 
 .contract-chip {
   display: inline-flex;
@@ -365,6 +392,10 @@ body.felt-page .wrap { display: none; }
   padding: 0.12em 0.55em 0.12em 0.5em;
   font-weight: bold;
   line-height: 1.2;
+}
+.contract-chip.is-off {
+  visibility: hidden;
+  pointer-events: none;
 }
 .contract-chip[hidden] { display: none !important; }
 .contract-chip #contract-who {
@@ -389,111 +420,149 @@ body.felt-page .wrap { display: none; }
 }
 
 .keep-panel {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   background: burlywood;
   color: #111;
   border: 2px solid #fff;
   border-radius: 9px;
-  padding: 0.55em 0.8em 0.65em;
-  margin: 0 auto 0.35em;
-  width: fit-content;
-  max-width: 100%;
+  padding: 0.4em 0.7em 0.5em;
+  margin: 0;
+  width: max-content;
+  max-width: min(92vw, calc(var(--card-w) * 0.84 * 8 + 4em));
+  overflow: visible;
   text-align: center;
+}
+.keep-panel.is-off {
+  visibility: hidden;
+  pointer-events: none;
 }
 .keep-panel[hidden] { display: none !important; }
 .keep-headline {
   margin: 0;
-  font-size: 1.15em;
+  font-size: 1em;
   font-weight: bold;
+}
+.keep-headline:empty { display: none; }
+.keep-bar {
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0.4em;
-  min-height: 1.8em;
+  justify-content: space-between;
+  gap: 0.8em;
+  min-height: 2.2em;
 }
-.keep-headline .suit {
-  width: 1.8em;
-  height: 1.8em;
-  background: #f4efe4;
-  border-radius: 6px;
-  padding: 0.1em;
-  cursor: default;
+.keep-go-slot {
+  margin: 0;
+  flex: 0 0 auto;
 }
-.keep-copy {
-  margin: 0.3em 0 0;
+.keep-go-slot:empty { display: none; }
+.discard-tray {
+  margin: 0;
+  padding: 0;
+}
+.discard-tray[hidden] { display: none !important; }
+.discard-label {
+  margin: 0;
   font-size: 0.95em;
+  font-weight: bold;
 }
-.keep-copy:empty { display: none; }
-.keep-panel .trump-pick {
+.discard-row {
+  min-height: calc(var(--card-h) * 0.84);
+  min-width: calc(var(--card-w) * 2.2);
   justify-content: center;
-  margin-top: 0.45rem;
 }
-.keep-panel .trump-pick:empty { display: none; }
-.keep-panel .trump-pick .suit.pulse {
-  animation: bid-wait 1.15s ease-in-out infinite;
+.discard-row .card {
+  width: calc(var(--card-w) * 0.84);
+  height: calc(var(--card-h) * 0.84);
+}
+.discard-row .card.legal:hover {
+  transform: translateY(0.3em);
+}
+.discard-tray:not(:has(.card)) .discard-row {
+  border: 1px dashed rgba(0,0,0,0.28);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.18);
 }
 .trick .slot {
   position: absolute;
-  width: 28%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  z-index: 1;
+  width: calc(60 / 136 * 100%);
 }
 .trick .slot svg { width: 100%; height: auto; display: block; }
-.trick .s0 { left: 36%; bottom: 2%; }   /* you */
-.trick .s1 { left: 2%; top: 32%; }      /* left */
-.trick .s2 { left: 36%; top: 2%; }      /* opp */
-.trick .s3 { right: 2%; top: 32%; }     /* right */
-.trick .empty { opacity: 0.15; }
-.trick .slot.lead { z-index: 2; }
-#trick.inspect-trick {
-  margin: 0.15em auto 0;
-}
-.lead-chip {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  transform: translate(-50%, -100%);
-  background: burlywood;
-  color: #111;
-  font-size: 0.7em;
-  font-weight: bold;
-  line-height: 1.2;
-  padding: 0.04em 0.32em;
-  border: 1px solid #111;
-  border-radius: 3px;
-  z-index: 5;
+.trick .s0 { left: calc(44 / 136 * 100%); top: calc(102 / 182 * 100%); } /* you */
+.trick .s1 { left: 0; top: calc(60 / 182 * 100%); } /* left */
+.trick .s2 { left: calc(32 / 136 * 100%); top: 0; } /* opp */
+.trick .s3 { left: calc(76 / 136 * 100%); top: calc(42 / 182 * 100%); } /* right */
+/* Delayed you-to-play ghost: same footprint as your card, not in the play stack. */
+#play-hint {
+  height: calc(80 / 182 * 100%);
   pointer-events: none;
-  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+}
+#play-hint.is-on {
+  visibility: visible;
+  animation: play-hint-in 4s cubic-bezier(0.95, 0.05, 0.795, 0.035) forwards,
+             play-hint-flash 4s ease 4s infinite;
+}
+#play-hint.is-paused {
+  animation-play-state: paused;
+  visibility: hidden;
+  opacity: 0;
+}
+.play-hint-frame {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border: 2px dashed gold;
+  border-radius: 10%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 14%;
+}
+.play-hint-copy {
+  color: #ffe44a;
+  font-weight: bold;
+  font-size: calc(var(--card-w) * 0.26);
+  line-height: 1.05;
+  text-align: center;
+  text-shadow: 0 0 2px #111, 0 0 2px #111;
+}
+@keyframes play-hint-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes play-hint-flash {
+  0%, 50%, 100% { opacity: 1; filter: drop-shadow(0 0 5px gold); }
+  25%, 75% { opacity: 0; filter: none; }
+}
+/* Felt #trick keeps live layout size; review is a visual scale toward the nav. */
+#trick {
+  transform-origin: 50% 0;
+}
+#trick.inspect-trick,
+#trick.trick-archiving {
+  width: var(--trick-w);
+  height: var(--trick-h);
+  margin: 0 auto;
+  transform: scale(0.82);
+}
+#trick.trick-archiving {
+  transition: transform 0.5s ease-out 0.08s;
 }
 .inspect-trick {
-  width: clamp(10rem, 26vmin, 30vmin);
-  height: clamp(8.8rem, 23vmin, 27vmin);
+  width: calc(var(--trick-w) * 0.82);
+  height: calc(var(--trick-h) * 0.82);
   margin: 0.45em auto 0.55em;
   overflow: visible;
-}
-/* Outer edge of the compass — touches the card, does not cover it. */
-.inspect-trick .s0 .lead-chip {
-  top: auto;
-  bottom: 0;
-  transform: translate(-50%, 100%);
-}
-.inspect-trick .s1 .lead-chip {
-  left: 0;
-  top: 50%;
-  transform: translate(-100%, -50%);
-}
-.inspect-trick .s3 .lead-chip {
-  left: auto;
-  right: 0;
-  top: 50%;
-  transform: translate(100%, -50%);
 }
 #inspect .panel {
   text-align: center;
   min-width: 14em;
-  padding: 0.7em 1.7em 1.15em;
+  padding: 0.7em 1em 1.15em;
   overflow: visible;
 }
 #inspect .row { justify-content: center; margin-top: 0.35em; }
@@ -505,6 +574,17 @@ body.felt-page .wrap { display: none; }
   margin-bottom: 0.15em;
 }
 .inspect-nav[hidden] { display: none !important; }
+/* Reserved band: visibility only, so review chrome does not reflow the trick. */
+#trick-nav {
+  display: flex;
+  width: var(--trick-w);
+  min-height: 1.85em;
+  box-sizing: border-box;
+}
+#trick-nav:not(.is-on) {
+  visibility: hidden;
+  pointer-events: none;
+}
 .inspect-nav .sub {
   margin: 0;
   min-width: 7.2em;
@@ -533,14 +613,6 @@ body.felt-page .wrap { display: none; }
   opacity: 0.32;
   cursor: default;
 }
-.inspect-trick .lead-chip {
-  font-size: 0.62em;
-  padding: 0.02em 0.28em;
-}
-.inspect-trick .s2 .lead-chip {
-  top: 0;
-  transform: translate(-50%, -100%);
-}
 
 .felt-pocket .side-label {
   background: burlywood;
@@ -555,6 +627,8 @@ body.felt-page .wrap { display: none; }
   gap: 0.15em;
   justify-content: center;
   overflow: visible;
+  min-width: calc(var(--pile-w) * (5 - 4 * 0.34));
+  padding-bottom: calc(var(--pile-h) * 0.08);
 }
 .side-cards.kitty .card + .card {
   margin-left: calc(var(--pile-w) * -0.28);
@@ -563,6 +637,9 @@ body.felt-page .wrap { display: none; }
   /* 34% overlap (old #oldTricks was 41% of 86); 5 piles stay clickable. */
   gap: 0;
   padding-bottom: calc(var(--pile-h) * 0.08);
+  /* 5 overlapping piles: 5w - 4*0.34w. Stable from trick 1 through review. */
+  justify-content: flex-start;
+  min-width: calc(var(--pile-w) * (5 - 4 * 0.34));
 }
 .side-cards:not(.kitty) .pile + .pile {
   margin-left: calc(var(--pile-w) * -0.34);
@@ -580,8 +657,7 @@ body.felt-page .wrap { display: none; }
   height: var(--pile-h);
 }
 .side-cards .pile { cursor: pointer; }
-.side-cards .pile.ew use { fill: #ddd; }
-.side-cards .pile.ns use { fill: #c45; }
+.side-cards .pile use { fill: var(--pile-back); }
 .side-cards .pile:hover { filter: brightness(1.3); }
 .side-cards .pile.selected {
   outline: 2px solid gold;
@@ -622,27 +698,27 @@ body.felt-page .wrap { display: none; }
 .bid-oval.pass {
   color: #fff;
   background: dimgray;
-  box-shadow: 0 0 3pt 3pt pink;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 .bid-oval.b15 {
   color: #fff;
   background: olivedrab;
-  box-shadow: 0 0 3pt 3pt greenyellow;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 .bid-oval.b20 {
   color: #fff;
   background: #1c5cff;
-  box-shadow: 0 0 3pt 3pt aqua;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 .bid-oval.b25 {
   color: #111;
   background: gold;
-  box-shadow: 0 0 3pt 3pt yellow;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 .bid-oval.b30 {
   color: #fff;
   background: orangered;
-  box-shadow: 0 0 3pt 3pt red;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 .bid-oval.wait {
   color: #efe6c8;
@@ -672,6 +748,38 @@ body.felt-page .wrap { display: none; }
   0%, 100% { transform: scale(1); box-shadow: 0 0 6px 1px gold; }
   50% { transform: scale(1.12); box-shadow: 0 0 14px 4px gold; }
 }
+/* Bid bar and rank strip share one band (max height). User collapse may hide it. */
+.you-chrome {
+  display: grid;
+  justify-items: center;
+  width: 100%;
+  margin: 0 auto 0.35em;
+  min-height: 3.8em;
+}
+.you-chrome > #bid-acts,
+.you-chrome > #rank-strip {
+  grid-area: 1 / 1;
+}
+.you-chrome.user-off { display: none; }
+.you-chrome > .is-off {
+  visibility: hidden;
+  pointer-events: none;
+}
+/* Hand and scorecard share one cell so swapping them does not steal from 1fr. */
+.you-play-slot {
+  display: grid;
+  justify-items: center;
+  width: 100%;
+  padding-top: 1.45em; /* own +N sits above card 5 */
+}
+.you-play-slot > #you-hand-wrap,
+.you-play-slot > #scorecard {
+  grid-area: 1 / 1;
+}
+.you-play-slot > .is-off {
+  visibility: hidden;
+  pointer-events: none;
+}
 .you-hand-wrap {
   position: relative;
   display: flex;
@@ -679,22 +787,34 @@ body.felt-page .wrap { display: none; }
   width: fit-content;
   max-width: 100%;
   margin: 0 auto;
+  min-width: calc(5 * var(--card-w) + 4 * 0.2em);
+  min-height: var(--card-h);
 }
 .you-hand-wrap[hidden] { display: none !important; }
-/* Keep a 5-card footprint so own +N stays over slot 5 after a card is played. */
 .you-hand-wrap.has-fill {
   min-width: calc(5 * var(--card-w) + 4 * 0.2em);
 }
-.you-hand-wrap.has-fill .hand-row {
-  justify-content: flex-start;
-  min-width: 100%;
+.you-hand-wrap.keeping {
+  min-width: calc(5 * var(--card-w) + 4 * 0.2em);
+  min-height: var(--card-h);
+}
+.you-hand-wrap.keeping .hand-row {
+  min-height: var(--card-h);
+}
+@keyframes keep-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-0.28em); }
+  75% { transform: translateX(0.28em); }
+}
+.you-hand-wrap.keep-shake {
+  animation: keep-shake 0.28s ease;
 }
 
 .rank-strip {
   display: flex;
   align-items: flex-start;
   gap: 0.25em;
-  margin: 0 auto 0.35em;
+  margin: 0;
   width: fit-content;
   max-width: 100%;
   background: rgba(0, 0, 0, 0.32);
@@ -704,8 +824,6 @@ body.felt-page .wrap { display: none; }
   position: relative;
   z-index: 4;
 }
-/* Own +N sits above card 5; leave a gap so it does not cover the strip. */
-.rank-strip.clear-fill { margin-bottom: 1.45em; }
 .rank-strip[hidden] { display: none !important; }
 .rank-rows {
   display: flex;
@@ -987,6 +1105,10 @@ body.felt-page .wrap { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .scorecard-dance.winner { animation: none; }
+  #trick.trick-archiving { transition: none; }
+  #play-hint.is-on {
+    animation: play-hint-in 0.01s linear 4s forwards;
+  }
 }
 .scorecard-go {
   display: flex;
@@ -1003,6 +1125,9 @@ body.felt-page .wrap { display: none; }
   font-size: 1.22em;
   font-weight: bold;
   padding: 0.5em 1.15em;
+  background: var(--steel);
+  color: #111;
+  border: 2px solid #333;
   box-shadow: 0 0.15em 0.35em rgba(0, 0, 0, 0.32);
 }
 #you-bid-oval {
@@ -1027,25 +1152,93 @@ body.felt-page .wrap { display: none; }
   border: 2px solid #fff;
   border-radius: 9px;
   padding: 0.35em 0.55em;
-  margin: 0 auto 0.55em;
+  margin: 0;
   width: fit-content;
   max-width: 100%;
+  min-height: 2.55em;
   position: relative;
   z-index: 3;
 }
 .bid-self[hidden], .bid-oval[hidden] { display: none !important; }
 .bid-self button {
   font-size: 1em;
-  padding: 0.35em 0.7em;
+  padding: 0.35em 0.7em 0.35em 0.85em;
   font-weight: bold;
 }
-.bid-self button.pass { background: dimgray; color: #fff; }
-.bid-self button.b15 { background: olivedrab; color: #fff; }
-.bid-self button.b20 { background: #1c5cff; color: #fff; }
-.bid-self button.b25 { background: gold; color: #111; }
-.bid-self button.b30 { background: orangered; color: #fff; }
+.bid-self button.pass { --bid-accent: dimgray; }
+.bid-self button.b15 { --bid-accent: olivedrab; }
+.bid-self button.b20 { --bid-accent: #1c5cff; }
+.bid-self button.b25 { --bid-accent: gold; }
+.bid-self button.b30 { --bid-accent: orangered; }
+.bid-self button.pass,
+.bid-self button.b15,
+.bid-self button.b20,
+.bid-self button.b25,
+.bid-self button.b30 {
+  background: var(--bid-face);
+  color: #111;
+  border: 2px solid #333;
+  box-shadow: inset 0.38em 0 0 var(--bid-accent);
+}
 .bid-self button.hold {
+  box-shadow:
+    inset 0.38em 0 0 var(--bid-accent),
+    0 0 0 2px #111,
+    0 0 0 4px #2a2a2a;
+}
+.bid-self button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.bid-self.trump-bar {
+  gap: 0.4em;
+  padding: 0.4em 0.65em;
+}
+.bid-self .trump-q {
+  font-weight: bold;
+  color: #111;
+  margin-right: 0.15em;
+}
+.bid-self button.suit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.55em;
+  height: 2.55em;
+  padding: 0.2em;
+  background: #f4efe4;
+  color: #111;
+  border: 2px solid #111;
+  border-radius: 10px;
+  box-shadow: 0 0.12em 0 0 #333, 0 0.22em 0.35em rgba(0,0,0,0.28);
+}
+.bid-self button.suit-btn svg {
+  width: 1.7em;
+  height: 1.7em;
+  display: block;
+}
+.bid-self button.suit-btn.pulse {
+  animation: bid-wait 1.15s ease-in-out infinite;
+}
+.bid-self button.suit-btn.on {
+  background: #fff6d0;
   box-shadow: 0 0 0 2px #111, 0 0 0 5px gold;
+  transform: translateY(0.1em);
+}
+.bid-self button.keep-go,
+.keep-go-slot .keep-go {
+  margin-left: 0.35em;
+  padding: 0.35em 0.85em;
+  font-weight: bold;
+  background: var(--steel);
+  color: #111;
+  border: 2px solid #333;
+  box-shadow: 0 0.12em 0 0 #333, 0 0.22em 0.35em rgba(0, 0, 0, 0.28);
+}
+.keep-go-slot .keep-go { margin-left: 0; }
+.bid-self button.keep-go.pulse,
+.keep-go-slot .keep-go.pulse {
+  animation: bid-wait 1.15s ease-in-out infinite;
 }
 
 .acts-bar {
@@ -1055,16 +1248,6 @@ body.felt-page .wrap { display: none; }
   justify-content: center;
   align-items: center;
 }
-.trump-pick { display: flex; gap: 0.35em; align-items: center; }
-.trump-pick .suit {
-  width: 1.8em;
-  height: 1.8em;
-  cursor: pointer;
-  background: rgba(255,255,255,0.85);
-  border-radius: 6px;
-  padding: 0.15em;
-}
-.trump-pick .suit.on { outline: 3px solid var(--accent); }
 
 .inspect {
   position: fixed;
@@ -1087,19 +1270,61 @@ body.felt-page .wrap { display: none; }
   left: 0;
   top: calc(100% + 4px);
   z-index: 4;
-  min-width: 14em;
+  min-width: 12.5em;
   max-width: min(22em, 100%);
-  max-height: 14rem;
+  max-height: min(22rem, 70vh);
   overflow-y: auto;
   background: #16532c;
   color: var(--ink);
-  padding: 0.45em 0.7em;
+  padding: 0.45em 0.55em 0.55em;
   border-radius: 6px;
   border: 1px solid rgba(255,255,255,0.22);
   font-size: 0.9em;
   box-shadow: 0 0.35em 0.8em rgba(0,0,0,0.35);
 }
-.hist-pop p { margin: 0.2em 0; }
+.hist-pop h3 {
+  margin: 0 0 0.35em;
+  font-size: 1em;
+  font-weight: bold;
+  text-align: center;
+}
+.hist-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  color: #111;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.hist-table th,
+.hist-table td {
+  padding: 0.14em 0.5em;
+  border: 1px solid #333;
+}
+.hist-table th:first-child {
+  background: #5a6a78;
+  color: #fff;
+}
+.hist-table th.team-ew {
+  background: #f2f2f2;
+  color: #111;
+}
+.hist-table th.team-ns {
+  background: #8b1e1e;
+  color: #fff;
+}
+.hist-table td[rowspan] {
+  vertical-align: middle;
+  background: #fff;
+  font-weight: bold;
+}
+.hist-table .win { background: lightgreen; }
+.hist-table tr.hist-past { background: burlywood; }
+.hist-table tr.hist-tot {
+  background: burlywood;
+  border-top: 2px solid #333;
+  font-weight: bold;
+}
 .hist-pop[hidden], .inspect[hidden] { display: none; }
 .idle-warn { z-index: 8; }
 .idle-warn .panel {
@@ -1114,12 +1339,12 @@ body.felt-page .wrap { display: none; }
 }
 
 @media (max-width: 700px) {
-  .felt {
+  body.felt-page {
     --card-w: clamp(2.2rem, 16vw, 3.6rem);
+  }
+  .felt {
     --fan-w: clamp(5rem, 38vw, 8rem);
     --fan-h: calc(var(--fan-w) * 0.5);
-    --trick-w: 12rem;
-    --trick-h: 11rem;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: auto auto auto auto 1fr auto auto auto;
     padding: 0.3rem;
@@ -1148,12 +1373,19 @@ body.felt-page .wrap { display: none; }
   }
   .bid-self button {
     font-size: 0.9em;
-    padding: 0.3em 0.5em;
+    padding: 0.3em 0.5em 0.3em 0.7em;
+  }
+  .bid-self button.suit-btn {
+    width: 2.25em;
+    height: 2.25em;
+  }
+  .bid-self button.suit-btn svg {
+    width: 1.45em;
+    height: 1.45em;
   }
   .you-hand-wrap { padding-bottom: 1.7em; }
   .rank-cell { min-width: 1em; padding: 0.04em 0.1em; }
   .rank-run.pips .rank-cell { font-size: 0.75em; }
   .hand-sort { right: 0.15em; top: -0.2em; }
   #you-bid-oval { right: 0.1em; top: auto; bottom: 0; }
-  .inspect-trick { width: 10.2rem; height: 9.1rem; }
 }
