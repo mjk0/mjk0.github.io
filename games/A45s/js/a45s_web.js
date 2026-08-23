@@ -84,7 +84,11 @@
   }
 
   function send(ws, obj) {
-    if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(obj));
+      return true;
+    }
+    return false;
   }
 
   const SUIT_ID = { C: 'cl', D: 'di', H: 'he', S: 'sp' };

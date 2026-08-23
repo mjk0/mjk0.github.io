@@ -338,6 +338,44 @@ html:has(.lobby-page), html:has(.doc-page) {
 }
 .mp-name { font-weight: 650; min-width: 6em; }
 .mp-email { flex: 1; font-size: 0.85rem; color: var(--muted); }
+.mp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-left: auto;
+}
+.mp-forget,
+.mp-email-btn,
+.mp-delete {
+  font-size: 0.85rem;
+}
+.mp-email-form {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  margin-top: 0.25rem;
+  padding-top: 0.35rem;
+  border-top: 1px dashed var(--border);
+}
+.mp-email-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.mp-email-form input {
+  min-width: 10rem;
+  font-size: 0.9rem;
+}
+.mp-email-err {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--danger, #c44);
+}
 .howto-body { display: flex; flex-direction: column; gap: 0.65rem; }
 .howto-body p { margin: 0; font-size: 0.9rem; }
 .howto-steps { margin: 0; padding-left: 1.2rem; font-size: 0.9rem; }
@@ -1027,6 +1065,7 @@ html:has(.lobby-page), html:has(.doc-page) {
 }
 .player-list li {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
   padding: 0.28rem 0;
@@ -1036,7 +1075,16 @@ html:has(.lobby-page), html:has(.doc-page) {
 .player-list li.me .player-name { color: #fff59d; font-weight: 700; }
 .player-list li.inviteable { cursor: pointer; }
 .player-list li.inviteable:hover { color: #fff; }
-.player-status { font-size: 0.78rem; color: #c8e6c9; }
+.player-status { font-size: 0.78rem; color: #c8e6c9; margin-left: auto; }
+.player-list .player-dev-delete {
+  flex: 0 0 auto;
+  min-width: 1.6rem;
+  padding: 0.1em 0.28em;
+  font-size: 0.8rem;
+  line-height: 1;
+  opacity: 0.75;
+}
+.player-list .player-dev-delete:hover { opacity: 1; }
 
 .chat-log li { padding: 0.25rem 0; color: #c8e6c9; }
 .chat-log li b { color: #fff; font-weight: 600; }

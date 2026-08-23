@@ -14,6 +14,10 @@
   let takenOver = false;
   let authRejected = false;
   let authPanel = 'hidden'; // hidden | first | create | gate | manage | howto
+  /** Username whose Change-email form is open in Manage profiles (or ''). */
+  let emailEditFor = '';
+  /** Target of a pending DevDeleteUser (wait for Users / err). */
+  let pendingDevDelete = '';
   let tables = [];
   let online = [];
   let news = [];
@@ -215,27 +219,240 @@
     const ul = $('manage-list');
     const list = A.loadProfiles();
     if (!list.length) {
+      emailEditFor = '';
       ul.innerHTML = '<li class="hint">No saved profiles on this browser.</li>';
       return;
     }
+    const canEdit = isSignedIn() && !!me;
     ul.replaceChildren(...list.map((p) => {
       const li = document.createElement('li');
-      li.innerHTML = `<span class="mp-name">${esc(p.username)}</span><span class="mp-email">${esc(p.email || '—')}</span>`;
+      const name = document.createElement('span');
+      name.className = 'mp-name';
+      name.textContent = p.username;
+      const em = document.createElement('span');
+      em.className = 'mp-email';
+      em.textContent = p.email || '—';
+      const actions = document.createElement('div');
+      actions.className = 'mp-actions';
+
+      const isMe = canEdit && sameName(p.username, me);
+      if (isMe) {
+        const change = document.createElement('button');
+        change.type = 'button';
+        change.className = 'mp-email-btn';
+        change.textContent =
+          emailEditFor && sameName(emailEditFor, p.username) ? 'Cancel' : 'Change email';
+        change.addEventListener('click', () => {
+          emailEditFor =
+            emailEditFor && sameName(emailEditFor, p.username) ? '' : p.username;
+          renderManageList();
+        });
+        actions.appendChild(change);
+
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'mp-delete danger';
+        del.textContent = 'Delete username…';
+        del.title = 'Remove this name on the server (not just this browser)';
+        del.addEventListener('click', () => requestDeleteUsername(p));
+        actions.appendChild(del);
+      }
+
       const forget = document.createElement('button');
       forget.type = 'button';
-      forget.className = 'danger';
+      forget.className = 'mp-forget danger';
       forget.textContent = 'Forget';
       forget.addEventListener('click', () => {
         if (!confirm(`Remove “${p.username}” from this browser?`)) return;
         const wasMe = me && sameName(p.username, me);
+        if (emailEditFor && sameName(emailEditFor, p.username)) emailEditFor = '';
         A.forgetProfile(p.username);
         if (wasMe && isSignedIn()) { doSignOut(); return; }
         renderManageList();
         renderAuth();
       });
-      li.appendChild(forget);
+      actions.appendChild(forget);
+      li.append(name, em, actions);
+
+      if (isMe && emailEditFor && sameName(emailEditFor, p.username)) {
+        li.appendChild(buildEmailEditForm(p));
+      }
       return li;
     }));
+  }
+
+  /** Inline Change-email form for the signed-in profile row. */
+  function buildEmailEditForm(p) {
+    const form = document.createElement('form');
+    form.className = 'mp-email-form';
+    form.autocomplete = 'off';
+
+    const locked = !!(p.email && String(p.email).trim());
+    let currentInput = null;
+    if (locked) {
+      const curLab = document.createElement('label');
+      curLab.textContent = 'Current email';
+      currentInput = document.createElement('input');
+      currentInput.type = 'email';
+      currentInput.name = 'current_email';
+      currentInput.required = true;
+      currentInput.placeholder = p.email;
+      currentInput.autocomplete = 'username';
+      curLab.appendChild(currentInput);
+      form.appendChild(curLab);
+    }
+
+    const newLab = document.createElement('label');
+    newLab.textContent = locked ? 'New email' : 'Email';
+    const newInput = document.createElement('input');
+    newInput.type = 'email';
+    newInput.name = 'new_email';
+    newInput.required = true;
+    newInput.placeholder = 'you@example.com';
+    newInput.autocomplete = 'email';
+    newLab.appendChild(newInput);
+    form.appendChild(newLab);
+
+    const save = document.createElement('button');
+    save.type = 'submit';
+    save.textContent = 'Save';
+    form.appendChild(save);
+
+    const err = document.createElement('p');
+    err.className = 'mp-email-err';
+    err.hidden = true;
+    form.appendChild(err);
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      err.hidden = true;
+      const newEmail = newInput.value.trim();
+      if (!newEmail) {
+        err.textContent = 'Enter a non-empty email.';
+        err.hidden = false;
+        return;
+      }
+      const currentEmail = locked ? (currentInput?.value || '').trim() : '';
+      if (locked && !currentEmail) {
+        err.textContent = 'Enter the current email that locked this name.';
+        err.hidden = false;
+        return;
+      }
+      if (!A.send(ws, {
+        action: 'setemail',
+        current_email: currentEmail,
+        new_email: newEmail,
+      })) {
+        err.textContent = 'Not connected — try again when online.';
+        err.hidden = false;
+      }
+    });
+
+    setTimeout(() => (currentInput || newInput)?.focus(), 0);
+    return form;
+  }
+
+  /** Apply server EmailChanged to session + local profile. */
+  function applyEmailChanged(newEmail) {
+    const em = String(newEmail || '').trim();
+    email = em;
+    const sess = A.getSession() || {};
+    A.setSession({
+      uuid: sess.uuid,
+      username: me || sess.username,
+      email: em,
+    });
+    if (me) A.upsertProfile(me, em);
+    emailEditFor = '';
+    renderManageList();
+    renderAuth();
+    setBanner('Email updated', 'ok');
+  }
+
+  /** Confirm + optional email proof, then DeleteUser (I2). */
+  function requestDeleteUsername(p) {
+    const name = String(p.username || '').trim();
+    if (!name) return;
+    const locked = !!(p.email && String(p.email).trim());
+    const ok = confirm(
+      `Delete “${name}” on the server?\n\n` +
+        `This removes stats and prefs for that name and cannot be undone.\n` +
+        `Leave any table seat first.\n\n` +
+        `(Forget only removes the shortcut on this browser.)`,
+    );
+    if (!ok) return;
+    let em = '';
+    if (locked) {
+      const entered = window.prompt(
+        `Enter the email that locked “${name}” to confirm delete:`,
+        '',
+      );
+      if (entered == null) return;
+      em = String(entered).trim();
+      if (!em) {
+        setBanner('Email required to delete a locked username.', 'err');
+        return;
+      }
+    }
+    if (!A.send(ws, { action: 'deleteuser', email: em })) {
+      setBanner('Not connected — try again when online.', 'err');
+    }
+  }
+
+  /**
+   * Server deleted this username. Forget profile, clear session, show Continue/create gate.
+   */
+  function handleUserDeleted() {
+    const uname = me;
+    emailEditFor = '';
+    pendingDevDelete = '';
+    intentionalClose = true;
+    takenOver = false;
+    authRejected = false;
+    authenticated = false;
+    if (uname) A.forgetProfile(uname);
+    A.setSession(null);
+    A.setSignOutGate(true);
+    me = '';
+    email = '';
+    isDev = false;
+    tables = [];
+    online = [];
+    if (ws) {
+      try { ws.close(); } catch (_) {}
+      ws = null;
+    }
+    intentionalClose = false;
+    authPanel = A.loadProfiles().length ? 'gate' : 'first';
+    setStatus('sign in');
+    renderTables();
+    renderOnline();
+    renderAuth();
+    setBanner('Username deleted on the server.', 'ok');
+  }
+
+  /** Dev moderation: delete another username (I3). */
+  function requestDevDeleteUser(name) {
+    const target = String(name || '').trim();
+    if (!target || !isDev) return;
+    if (me && sameName(target, me)) {
+      setBanner('Use Manage profiles → Delete username to remove your own name.', 'err');
+      return;
+    }
+    if (
+      !confirm(
+        `Dev: delete “${target}” on the server?\n\n` +
+          `Removes stats/prefs and disconnects them. They must not be seated at a table.\n` +
+          `This cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+    pendingDevDelete = target;
+    if (!A.send(ws, { action: 'devdeleteuser', username: target })) {
+      pendingDevDelete = '';
+      setBanner('Not connected — try again when online.', 'err');
+    }
   }
 
   function renderAuth() {
@@ -437,7 +654,27 @@
         li.title = 'Invite to your private table';
         li.addEventListener('click', () => inviteAdd(n));
       }
-      li.innerHTML = `<span class="player-name">${esc(n)}</span><span class="player-status">${esc(formatPresenceStatus(p))}</span>`;
+      const nameEl = document.createElement('span');
+      nameEl.className = 'player-name';
+      nameEl.textContent = n;
+      const st = document.createElement('span');
+      st.className = 'player-status';
+      st.textContent = formatPresenceStatus(p);
+      li.append(nameEl, st);
+      // I3: Dev may delete another username (not self — use Manage for that).
+      if (isDev && me && !sameName(n, me)) {
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'icon-btn danger trash-btn player-dev-delete';
+        del.textContent = '🗑';
+        del.title = 'Dev: delete this username on the server';
+        del.setAttribute('aria-label', del.title);
+        del.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          requestDevDeleteUser(n);
+        });
+        li.appendChild(del);
+      }
       ul.appendChild(li);
     });
   }
@@ -1281,6 +1518,13 @@
     }
     if (j.action === 'users') {
       online = Array.isArray(j.people) ? j.people : [];
+      if (pendingDevDelete) {
+        const still = online.some((p) => sameName(p.name, pendingDevDelete));
+        if (!still) {
+          setBanner(`Deleted “${pendingDevDelete}” on the server.`, 'ok');
+          pendingDevDelete = '';
+        }
+      }
       renderOnline();
       if (inviteOpen) requestAnimationFrame(mountOpenPopovers);
       return;
@@ -1326,7 +1570,15 @@
       else recomputeUnread('feedback');
       return;
     }
+    if (j.action === 'emailchanged') {
+      applyEmailChanged(j.email);
+      return;
+    }
     if (j.action === 'err') {
+      if (j.err === 'user_deleted') {
+        handleUserDeleted();
+        return;
+      }
       if (j.err === 'duplicate_login') {
         takenOver = true;
         authenticated = false;
@@ -1347,6 +1599,33 @@
         $('in-email').focus();
         return;
       }
+      if (j.err === 'email_mismatch') {
+        setBanner('Current email does not match. Re-enter the email that locked this name.', 'err');
+        return;
+      }
+      if (j.err === 'bad_email') {
+        setBanner('Enter a non-empty email address.', 'err');
+        return;
+      }
+      if (j.err === 'in_game') {
+        const msg = pendingDevDelete
+          ? 'That player must leave their table seat first.'
+          : 'Leave the table first, then delete the username.';
+        pendingDevDelete = '';
+        setBanner(msg, 'err');
+        return;
+      }
+      if (j.err === 'forbidden') {
+        pendingDevDelete = '';
+        setBanner('Not allowed.', 'err');
+        return;
+      }
+      if (j.err === 'missing') {
+        pendingDevDelete = '';
+        setBanner('User not found.', 'err');
+        return;
+      }
+      if (pendingDevDelete && !j.err) pendingDevDelete = '';
       setBanner(j.err || 'error', 'err');
       setStatus(j.err || 'error', 'err');
     }
