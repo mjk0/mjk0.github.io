@@ -1954,6 +1954,7 @@ button:focus-visible {
   box-sizing: border-box;
   min-height: calc(2.4rem * var(--ui, 1));
   position: relative;
+  z-index: 1; /* under pause chrome */
   overflow: visible;
 }
 /* Table rank: permanent metal wash (status, not turn attention) */
@@ -2171,19 +2172,30 @@ button:focus-visible {
   box-shadow: 0 0 0 1px rgba(200, 70, 70, 0.25);
   opacity: 0.92;
 }
+/* Pause chrome over the fan (arc backs otherwise cover PAUSED / Take over) */
+.seat-token:not(.you-strip) .badge.pause,
+.seat-token:not(.you-strip) .btn-handoff {
+  position: relative;
+  z-index: 4;
+}
+.seat-token:not(.you-strip) .badge.pause {
+  margin-top: calc(-1.15rem * var(--ui, 1)); /* lower third of fan */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
 .seat-token .btn-handoff {
   margin-top: 0.15rem;
   font-size: 0.65rem;
   font-weight: 600;
   line-height: 1.2;
-  padding: 0.2rem 0.4rem;
-  border-radius: 4px;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
   border: 1px solid rgba(232, 200, 74, 0.55);
   background: rgba(40, 36, 20, 0.92);
   color: var(--accent-hi);
   cursor: pointer;
   white-space: nowrap;
   max-width: 7.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 .seat-token .btn-handoff:hover {
   background: rgba(70, 60, 25, 0.95);

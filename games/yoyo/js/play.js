@@ -1338,7 +1338,7 @@ function buildSeatToken(name, absSeat, n, rem, opts = {}) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'btn-handoff';
-    btn.textContent = 'Robot take over?';
+    btn.textContent = 'Take over';
     btn.title = `Let a robot play for ${name}`;
     btn.addEventListener('click', (e) => {
       e.stopPropagation();

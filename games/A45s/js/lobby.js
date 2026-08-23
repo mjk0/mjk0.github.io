@@ -58,6 +58,31 @@
   function sameName(a, b) {
     return String(a || '').toLowerCase() === String(b || '').toLowerCase();
   }
+  function displayTableName(id) {
+    const m = /^Open(\d+)$/i.exec(String(id || ''));
+    return m ? 'Table #' + m[1] : String(id || '');
+  }
+  function isOpenTable(id) {
+    return /^Open\d+$/i.test(String(id || ''));
+  }
+  function formatPresenceStatus(p) {
+    const w = p && p.where;
+    if (w === 'table') {
+      return isOpenTable(p.table) ? displayTableName(p.table) : 'waiting';
+    }
+    if (w === 'playing') {
+      return isOpenTable(p.table) ? displayTableName(p.table) + ' · playing' : 'playing';
+    }
+    return 'lobby';
+  }
+  function sortPeople(list) {
+    const rank = (w) => (w === 'playing' ? 2 : w === 'table' ? 1 : 0);
+    return (list || []).slice().sort((a, b) => {
+      const d = rank(a.where) - rank(b.where);
+      if (d) return d;
+      return String(a.name || '').localeCompare(String(b.name || ''));
+    });
+  }
   function isBot(n) { return /^B\./.test(String(n || '')); }
   function ghostTitle(t, i) {
     const g = t.last && t.last[i];
@@ -377,11 +402,13 @@
     const ul = $('online-list');
     ul.innerHTML = '';
     const canInvite = !!(minePriv() && !minePriv().started);
-    if (!online.length) {
+    const people = sortPeople(online);
+    if (!people.length) {
       ul.innerHTML = '<li class="empty-state">No one signed in.</li>';
       return;
     }
-    online.forEach((n) => {
+    people.forEach((p) => {
+      const n = p.name;
       const li = document.createElement('li');
       if (sameName(n, me)) li.classList.add('me');
       if (canInvite && !sameName(n, me)) {
@@ -389,7 +416,7 @@
         li.title = 'Invite to your private table';
         li.addEventListener('click', () => inviteAdd(n));
       }
-      li.innerHTML = `<span class="player-name">${esc(n)}</span><span class="player-status">lobby</span>`;
+      li.innerHTML = `<span class="player-name">${esc(n)}</span><span class="player-status">${esc(formatPresenceStatus(p))}</span>`;
       ul.appendChild(li);
     });
   }
@@ -645,36 +672,53 @@
     }
     pop.appendChild(section('Invited (' + inv.length + ')', cur));
 
-    const onlineHost = document.createElement('div');
-    onlineHost.className = 'invite-chips';
-    const others = online.filter((n) => !sameName(n, me) && !nameInList(inv, n)).sort((a, b) => a.localeCompare(b));
-    if (!others.length) {
-      const empty = document.createElement('span');
-      empty.className = 'invite-empty';
-      empty.textContent = 'No other players online';
-      onlineHost.appendChild(empty);
+    const others = sortPeople(
+      online.filter((p) => !sameName(p.name, me) && !nameInList(inv, p.name)),
+    );
+    const inLobby = others.filter((p) => p.where !== 'playing');
+    const inGame = others.filter((p) => p.where === 'playing');
+    const addRow = (name, playing) => {
+      const row = document.createElement('span');
+      row.className = 'invite-add-row' + (playing ? ' in-game' : '');
+      const add = document.createElement('button');
+      add.type = 'button';
+      add.className = 'invite-plus';
+      add.textContent = '+ ' + name;
+      add.title = playing
+        ? "In a game — they'll see this table when they return."
+        : 'Invite';
+      add.addEventListener('click', () => inviteAdd(name, false));
+      const star = document.createElement('button');
+      star.type = 'button';
+      star.className = 'icon-btn invite-star';
+      star.textContent = '★';
+      star.title = 'Invite and mark as friend (always invited)';
+      star.addEventListener('click', () => inviteAdd(name, true));
+      row.appendChild(add);
+      row.appendChild(star);
+      return row;
+    };
+
+    const lobbyHost = document.createElement('div');
+    lobbyHost.className = 'invite-chips';
+    if (!inLobby.length) {
+      if (!inGame.length) {
+        const empty = document.createElement('span');
+        empty.className = 'invite-empty';
+        empty.textContent = 'No other players online';
+        lobbyHost.appendChild(empty);
+        pop.appendChild(section('In lobby', lobbyHost));
+      }
     } else {
-      others.forEach((name) => {
-        const row = document.createElement('span');
-        row.className = 'invite-add-row';
-        const add = document.createElement('button');
-        add.type = 'button';
-        add.className = 'invite-plus';
-        add.textContent = '+ ' + name;
-        add.title = 'Invite';
-        add.addEventListener('click', () => inviteAdd(name, false));
-        const star = document.createElement('button');
-        star.type = 'button';
-        star.className = 'icon-btn invite-star';
-        star.textContent = '★';
-        star.title = 'Invite and mark as friend (always invited)';
-        star.addEventListener('click', () => inviteAdd(name, true));
-        row.appendChild(add);
-        row.appendChild(star);
-        onlineHost.appendChild(row);
-      });
+      inLobby.forEach((p) => lobbyHost.appendChild(addRow(p.name, false)));
+      pop.appendChild(section('In lobby', lobbyHost));
     }
-    pop.appendChild(section('Online now', onlineHost));
+    if (inGame.length) {
+      const gameHost = document.createElement('div');
+      gameHost.className = 'invite-chips';
+      inGame.forEach((p) => gameHost.appendChild(addRow(p.name, true)));
+      pop.appendChild(section('In a game', gameHost));
+    }
 
     const frHost = document.createElement('div');
     frHost.className = 'invite-chips';
@@ -1065,7 +1109,7 @@
       return;
     }
     if (j.action === 'users') {
-      online = j.names || [];
+      online = Array.isArray(j.people) ? j.people : [];
       renderOnline();
       if (inviteOpen) requestAnimationFrame(mountOpenPopovers);
       return;

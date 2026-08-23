@@ -1570,13 +1570,17 @@ function isPresenceOnline(p) {
 }
 
 // Client status text from presence (E8c).
-function formatPresenceStatus(p) {
+// Own private table id == player name → omit redundant table label.
+function formatPresenceStatus(p, playerName) {
   if (!p) return '';
   if (p.where === 'lobby') return 'lobby';
+  const ownPriv = !!(p.table && playerName && ukey(p.table) === ukey(playerName));
   if (p.where === 'table') {
+    if (ownPriv) return 'table';
     return p.table ? displayTableName(p.table) : 'table';
   }
   if (p.where === 'playing') {
+    if (ownPriv) return 'playing';
     const t = p.table ? displayTableName(p.table) : 'table';
     return `${t} · playing`;
   }
@@ -1664,7 +1668,7 @@ function renderOnline() {
   }
   ul.replaceChildren(
     ...kept.map(({ name, p }) =>
-      playerRow(name, formatPresenceStatus(p), {
+      playerRow(name, formatPresenceStatus(p, name), {
         meRow: !!(me && ukey(name) === ukey(me)),
         offline: !isPresenceOnline(p),
         dev: !!p.is_dev,

@@ -4,28 +4,30 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Auction 45s — Table</title>
-  <link rel="stylesheet" href="css/a45s_web.css?v=20260821h">
+  <link rel="stylesheet" href="css/a45s_web.css?v=20260822b">
 </head>
 <body class="felt-page">
   <div class="felt">
     <header class="felt-head">
       <div class="head-left">
-        <button type="button" class="score-chip ew" title="Score history" aria-label="White score, open history" aria-expanded="false" aria-controls="hist">
-          White <strong id="sc-ew">0</strong>
+        <button type="button" id="score-btn" class="score-btn" title="Score history" aria-label="Score, open history" aria-expanded="false" aria-controls="hist">
+          <span class="score-caption">Score <span id="score-caret" class="score-caret" aria-hidden="true">▾</span></span>
+          <span class="score-tiles">
+            <span class="score-tile ew"><strong id="sc-ew">0</strong></span>
+            <span class="score-tile ns"><strong id="sc-ns">0</strong></span>
+          </span>
         </button>
-        <button type="button" class="score-chip ns" title="Score history" aria-label="Red score, open history" aria-expanded="false" aria-controls="hist">
-          Red <strong id="sc-ns">0</strong>
-        </button>
-        <span id="contract-chip" class="contract-chip is-off" aria-hidden="true">
-          <span id="contract-who"></span>
-          <span id="contract-suit" class="contract-suit"></span>
-          <span id="contract-bid"></span>
+        <span id="contract-chip" class="contract-chip" aria-label="Bid none">
+          <span class="contract-label">Bid</span>
+          <span id="contract-suit" class="contract-suit" hidden></span>
+          <span id="contract-bid">--</span>
         </span>
-        <span id="meta" class="sub head-deals"></span>
       </div>
       <div class="head-right">
+        <button id="fill-btn" class="ghost fill-btn" type="button" hidden title="Show fill-in counts" aria-label="Show fill-in counts" aria-pressed="false">+N</button>
+        <button id="leavegame" class="ghost" type="button">Leave</button>
         <div class="gear-wrap">
-          <button id="rank-gear" class="ghost rank-gear" type="button" title="Table options" aria-label="Table options" aria-haspopup="true" aria-expanded="false" aria-controls="gear-pop">⚙</button>
+          <button id="rank-gear" class="rank-gear" type="button" title="Table options" aria-label="Table options" aria-haspopup="true" aria-expanded="false" aria-controls="gear-pop">⚙</button>
           <div id="gear-pop" class="gear-pop" hidden>
             <label class="gear-check">
               <input id="rank-check" type="checkbox" checked>
@@ -33,8 +35,6 @@
             </label>
           </div>
         </div>
-        <button id="fill-btn" class="ghost fill-btn is-off" type="button" title="Show fill-in counts" aria-label="Show fill-in counts" aria-pressed="false">+</button>
-        <button id="leavegame" class="ghost" type="button">Leave</button>
       </div>
       <div id="hist" class="hist-pop" hidden role="dialog" aria-label="Score history"></div>
     </header>
@@ -54,6 +54,7 @@
             <div id="keep-go-slot" class="keep-go-slot"></div>
           </div>
           <div id="discard-row" class="hand-row discard-row"></div>
+          <p id="trump-foot" class="trump-foot" hidden></p>
         </div>
       </div>
       <div id="trick-nav" class="inspect-nav trick-nav" aria-hidden="true">
@@ -91,6 +92,7 @@
         <div id="you-bid-oval" class="bid-oval" hidden></div>
       </div>
       <div id="scorecard" class="scorecard is-off" aria-hidden="true">
+        <div id="you-fill-end" class="fill-plus from-score" hidden aria-hidden="true"></div>
         <table class="scorecard-inner">
           <colgroup>
             <col>
@@ -396,19 +398,22 @@
       const counts = fillCounts(st);
       const btn = $('fill-btn');
       if (!counts) {
-        btn.classList.add('is-off');
+        btn.hidden = true;
         btn.classList.remove('on');
         btn.setAttribute('aria-pressed', 'false');
         setFillPlus($('you-fill-plus'), 0, false, false);
+        setFillPlus($('you-fill-end'), 0, false, false);
         document.querySelectorAll('.seatbox .fill-plus').forEach((el) => setFillPlus(el, 0, false, false));
         $('you-hand-wrap').classList.remove('has-fill');
         return;
       }
-      btn.classList.remove('is-off');
+      btn.hidden = false;
       btn.classList.toggle('on', show);
       btn.setAttribute('aria-pressed', show ? 'true' : 'false');
       $('you-hand-wrap').classList.toggle('has-fill', show);
-      setFillPlus($('you-fill-plus'), counts[me], show, glide);
+      const atEnd = st.phase === 'handend';
+      setFillPlus($('you-fill-plus'), counts[me], show && !atEnd, glide && !atEnd);
+      setFillPlus($('you-fill-end'), counts[me], show && atEnd, false);
       document.querySelectorAll('.seatbox[data-slot]').forEach((box) => {
         const slot = +box.getAttribute('data-slot');
         const seat = (me + slot) & 3;
@@ -449,13 +454,49 @@
         cr.setAttribute('viewBox', '0 0 64 64');
         bar.appendChild(cr);
       }
-      if (paused[seat]) {
-        const p = document.createElement('span');
-        p.textContent = ' (paused)';
-        bar.appendChild(p);
-      }
+      appendPausedMark(bar, seat);
       const contractOv = makeOval(contractMarkFor(st, seat));
       if (contractOv) bar.appendChild(contractOv);
+      syncRobotOffer(ensureRobotOffer(box, bar), seat);
+    }
+
+    function appendPausedMark(bar, seat) {
+      if (paused[seat] == null) return;
+      const mark = document.createElement('span');
+      mark.className = 'paused-mark';
+      mark.textContent = ' · paused';
+      bar.appendChild(mark);
+    }
+
+    // Handoff control under the missing seat's namebar (not the global acts bar).
+    function ensureRobotOffer(parent, afterEl) {
+      let btn = parent.querySelector(':scope > .robot-offer');
+      if (!btn) {
+        btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'robot-offer';
+        btn.hidden = true;
+        if (afterEl && afterEl.parentElement === parent) afterEl.after(btn);
+        else parent.appendChild(btn);
+      }
+      return btn;
+    }
+
+    function syncRobotOffer(btn, seat) {
+      if (paused[seat] == null) {
+        btn.hidden = true;
+        btn.removeAttribute('title');
+        btn.removeAttribute('aria-label');
+        btn.onclick = null;
+        return;
+      }
+      const name = paused[seat] || who(seat);
+      const tip = 'Robot take over for ' + name;
+      btn.textContent = 'Take over';
+      btn.title = tip;
+      btn.setAttribute('aria-label', tip);
+      btn.hidden = false;
+      btn.onclick = () => A.send(ws, { action: 'handoffrobot', seat: +seat });
     }
 
     function reduceMotion() {
@@ -1068,14 +1109,17 @@
       }
       paintingHand = false;
       pickLeadHoverFromPoint();
-      fillNamebar($('you-bar'), me, (st.actors || []).indexOf(me) >= 0);
+      const youBar = $('you-bar');
+      fillNamebar(youBar, me, (st.actors || []).indexOf(me) >= 0);
       if (st.dealer === me) {
         const cr = A.cardSvg('crown', 'crown');
         cr.setAttribute('viewBox', '0 0 64 64');
-        $('you-bar').appendChild(cr);
+        youBar.appendChild(cr);
       }
+      appendPausedMark(youBar, me);
       const youContract = makeOval(contractMarkFor(st, me));
-      if (youContract) $('you-bar').appendChild(youContract);
+      if (youContract) youBar.appendChild(youContract);
+      syncRobotOffer(ensureRobotOffer(youBar.parentElement, youBar), me);
     }
 
     function bidBtnSpec(b, high, isDealer) {
@@ -1090,16 +1134,37 @@
 
     function renderContractChip(st) {
       const chip = $('contract-chip');
-      const on = st.declarer != null;
-      setSlotOff(chip, !on);
-      $('contract-who').textContent = on ? who(st.declarer) : '\u00a0';
       const suitEl = $('contract-suit');
+      const bidEl = $('contract-bid');
+      const hasBid = st.declarer != null;
+      const named = trump != null ? trump : st.trump;
+      const hasTrump = hasBid && named != null;
+      const amt = hasBid ? String(st.contract_bid || '') : '--';
       suitEl.innerHTML = '';
-      suitEl.appendChild(A.suitSvg(
-        on && st.trump != null ? st.trump : 4,
-        on && st.trump != null ? 'suit' : 'suit sil'
-      ));
-      $('contract-bid').textContent = on ? String(st.contract_bid || '') : '\u00a0';
+      suitEl.classList.toggle('unknown', hasBid && !hasTrump);
+      if (!hasBid) {
+        suitEl.hidden = true;
+        bidEl.textContent = '--';
+        chip.setAttribute('aria-label', 'Bid none');
+        return;
+      }
+      suitEl.hidden = false;
+      if (hasTrump) {
+        suitEl.appendChild(A.suitSvg(named, 'suit'));
+        chip.setAttribute('aria-label', 'Bid ' + SUITS[named] + ' ' + amt);
+      } else {
+        suitEl.textContent = '?';
+        chip.setAttribute('aria-label', 'Bid unknown ' + amt);
+      }
+      bidEl.textContent = amt;
+    }
+
+    // "Trump is ♥" — suit SVG, optional trailing note (wait line).
+    function paintTrumpIs(el, suitIdx, note) {
+      el.textContent = '';
+      el.appendChild(document.createTextNode('Trump is '));
+      el.appendChild(A.suitSvg(suitIdx, 'trump-foot-suit'));
+      if (note) el.appendChild(document.createTextNode(note));
     }
 
     function renderKeepPanel(st) {
@@ -1108,8 +1173,11 @@
       const headline = $('keep-headline');
       const tray = $('discard-tray');
       const drow = $('discard-row');
+      const foot = $('trump-foot');
       headline.textContent = '';
       drow.innerHTML = '';
+      foot.textContent = '';
+      foot.hidden = true;
       if (!inKeepPhase(st)) {
         setSlotOff(panel, true);
         tray.hidden = true;
@@ -1118,22 +1186,34 @@
       }
       trick.classList.add('is-off');
       const split = shouldSplitKeep(st);
-      let wait = '';
+      const named = trump != null ? trump : st.trump;
+      let waitText = '';
+      let waitSuit = null;
       if (!split) {
         if (st.why === 'trumpselect' && st.declarer !== me) {
-          wait = who(st.declarer) + ' is naming trump…';
+          waitText = who(st.declarer) + ' is naming trump…';
         } else if (st.why === 'discard' && !isActor(st, me)) {
-          wait = 'Waiting for discards…';
+          if (named != null) {
+            waitSuit = named;
+          } else {
+            waitText = 'Waiting for discards…';
+          }
         }
       }
-      const show = split || !!wait;
+      const show = split || !!waitText || waitSuit != null;
       setSlotOff(panel, !show);
       tray.hidden = !split;
-      headline.textContent = wait;
+      if (waitSuit != null) paintTrumpIs(headline, waitSuit, ' — waiting for discards…');
+      else headline.textContent = waitText;
       if (split) {
         discardCards(st).forEach((c) => {
           drow.appendChild(paintHandCard(c, st, { move: 'keep' }));
         });
+        // Footer under the tray cards — keep-bar stays Discard | Done only.
+        if (named != null) {
+          paintTrumpIs(foot, named);
+          foot.hidden = false;
+        }
       }
     }
 
@@ -1146,10 +1226,8 @@
     }
 
     function renderActs(st) {
-      const acts = $('acts');
       const bidActs = $('bid-acts');
       const keepGo = $('keep-go-slot');
-      acts.innerHTML = '';
       bidActs.innerHTML = '';
       if (keepGo) keepGo.innerHTML = '';
       bidActs.classList.remove('trump-bar');
@@ -1209,15 +1287,6 @@
 
       setSlotOff(bidActs, !bidOn);
       syncYouChrome(st);
-
-      Object.keys(paused).forEach((seat) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'ghost';
-        btn.textContent = 'Robot for ' + who(+seat);
-        btn.addEventListener('click', () => A.send(ws, { action: 'handoffrobot', seat: +seat }));
-        acts.appendChild(btn);
-      });
     }
 
     function renderState(s) {
@@ -1238,7 +1307,6 @@
       noteTrickHold(s);
       $('sc-ew').textContent = s.score[0];
       $('sc-ns').textContent = s.score[1];
-      $('meta').textContent = who(s.dealer) + ' deals';
       renderContractChip(s);
 
       const showF = fillShow(s);
@@ -1417,9 +1485,9 @@
       histOpen = !!on;
       const box = $('hist');
       box.hidden = !histOpen;
-      document.querySelectorAll('.score-chip').forEach((el) => {
-        el.setAttribute('aria-expanded', histOpen ? 'true' : 'false');
-      });
+      const btn = $('score-btn');
+      btn.setAttribute('aria-expanded', histOpen ? 'true' : 'false');
+      $('score-caret').textContent = histOpen ? '\u25B4' : '\u25BE';
       if (!histOpen) return;
       if (!box.childElementCount) renderHist({ hands: [], past_games: [] });
       if (ws && ws.readyState === 1) A.send(ws, { action: 'getscorehistory' });
@@ -1554,13 +1622,11 @@
     $('inspect').addEventListener('click', (ev) => {
       if (ev.target.id === 'inspect') hideInspect();
     });
-    document.querySelectorAll('.score-chip').forEach((el) => {
-      el.addEventListener('click', () => setHistOpen(!histOpen));
-    });
+    $('score-btn').addEventListener('click', () => setHistOpen(!histOpen));
     document.addEventListener('click', (ev) => {
       if (gearPopOpen && !ev.target.closest('.gear-wrap')) setGearPop(false);
       if (!histOpen) return;
-      if (ev.target.closest('.score-chip') || ev.target.closest('#hist')) return;
+      if (ev.target.closest('#score-btn') || ev.target.closest('#hist')) return;
       setHistOpen(false);
     });
     $('hand-sort').addEventListener('click', () => {
@@ -1613,6 +1679,7 @@
           delete paused[j.seat];
           renderPaused();
           setStatus(who(j.seat) + ' is now ' + j.name, 'ok');
+          if (lastState) renderState(lastState);
           return;
         }
         if (j.action === 'scorehistory') {
