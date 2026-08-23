@@ -435,8 +435,43 @@ button:focus-visible {
   font-size: 0.85rem;
   color: var(--muted);
 }
-.lobby .manage-list .mp-forget {
+.lobby .manage-list .mp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-left: auto;
+}
+.lobby .manage-list .mp-forget,
+.lobby .manage-list .mp-email-btn,
+.lobby .manage-list .mp-delete {
   font-size: 0.85rem;
+}
+.lobby .manage-list .mp-email-form {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  margin-top: 0.25rem;
+  padding-top: 0.35rem;
+  border-top: 1px dashed var(--border);
+}
+.lobby .manage-list .mp-email-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.lobby .manage-list .mp-email-form input {
+  min-width: 10rem;
+  font-size: 0.9rem;
+}
+.lobby .manage-list .mp-email-err {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--danger, #c44);
 }
 .lobby .display-panel .pref-fieldset {
   border: 1px solid var(--border);
@@ -1207,11 +1242,11 @@ button:focus-visible {
 }
 .player-row {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
 }
 .player-row .player-name {
+  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1219,10 +1254,25 @@ button:focus-visible {
 }
 .player-row .player-status {
   flex: 0 0 auto;
+  margin-left: auto;
   font-size: 0.78rem;
   opacity: 0.78;
   text-align: right;
   white-space: nowrap;
+}
+.player-row .player-dev-delete {
+  flex: 0 0 auto;
+  min-width: 1.6rem;
+  padding: 0.1em 0.28em;
+  font-size: 0.8rem;
+  line-height: 1;
+  opacity: 0.75;
+}
+.player-row .player-dev-delete:hover {
+  opacity: 1;
+}
+.player-row.offline .player-dev-delete {
+  opacity: 0.9;
 }
 .player-row.offline {
   opacity: 0.48;

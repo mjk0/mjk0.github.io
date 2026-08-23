@@ -68,6 +68,8 @@ const optsDebounce = new Map();
 
 /** 'hidden' | 'first' | 'create' | 'gate' | 'manage' | 'display' */
 let authPanel = 'hidden';
+/** Username whose Change-email form is open in Manage profiles (or ''). */
+let emailEditFor = '';
 
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) =>
@@ -403,6 +405,7 @@ function openManagePanel() {
 }
 
 function closeManagePanel() {
+  emailEditFor = '';
   if (authPanel === 'manage' || authPanel === 'display') {
     if (isSignedInUi()) authPanel = 'hidden';
     else if (listProfiles().length) authPanel = 'gate';
@@ -451,9 +454,11 @@ function renderManageList() {
   if (!ul) return;
   const list = listProfiles();
   if (!list.length) {
+    emailEditFor = '';
     ul.innerHTML = '<li class="hint">No saved profiles on this browser.</li>';
     return;
   }
+  const canEditEmail = isSignedInUi() && !!me;
   ul.replaceChildren(
     ...list.map((p) => {
       const li = document.createElement('li');
@@ -463,6 +468,36 @@ function renderManageList() {
       const email = document.createElement('span');
       email.className = 'mp-email';
       email.textContent = p.email || '—';
+      const actions = document.createElement('div');
+      actions.className = 'mp-actions';
+
+      const isMe = canEditEmail && ukey(p.username) === ukey(me);
+      if (isMe) {
+        const change = document.createElement('button');
+        change.type = 'button';
+        change.className = 'mp-email-btn';
+        change.textContent =
+          emailEditFor && ukey(emailEditFor) === ukey(p.username)
+            ? 'Cancel'
+            : 'Change email';
+        change.addEventListener('click', () => {
+          emailEditFor =
+            emailEditFor && ukey(emailEditFor) === ukey(p.username)
+              ? ''
+              : p.username;
+          renderManageList();
+        });
+        actions.appendChild(change);
+
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'mp-delete danger';
+        del.textContent = 'Delete username…';
+        del.title = 'Remove this name on the server (not just this browser)';
+        del.addEventListener('click', () => requestDeleteUsername(p));
+        actions.appendChild(del);
+      }
+
       const forget = document.createElement('button');
       forget.type = 'button';
       forget.className = 'mp-forget danger';
@@ -470,6 +505,9 @@ function renderManageList() {
       forget.addEventListener('click', () => {
         if (!confirm(`Remove “${p.username}” from this browser?`)) return;
         const wasMe = me && ukey(p.username) === ukey(me);
+        if (emailEditFor && ukey(emailEditFor) === ukey(p.username)) {
+          emailEditFor = '';
+        }
         forgetProfile(p.username);
         if (wasMe && isSignedInUi()) {
           doSignOut();
@@ -479,10 +517,199 @@ function renderManageList() {
         renderContinueChips();
         renderAuthUi();
       });
-      li.append(name, email, forget);
+      actions.appendChild(forget);
+      li.append(name, email, actions);
+
+      if (isMe && emailEditFor && ukey(emailEditFor) === ukey(p.username)) {
+        li.appendChild(buildEmailEditForm(p));
+      }
       return li;
     }),
   );
+}
+
+/** Inline Change-email form for the signed-in profile row. */
+function buildEmailEditForm(p) {
+  const form = document.createElement('form');
+  form.className = 'mp-email-form';
+  form.autocomplete = 'off';
+
+  const locked = !!(p.email && String(p.email).trim());
+  let currentInput = null;
+  if (locked) {
+    const curLab = document.createElement('label');
+    curLab.textContent = 'Current email';
+    currentInput = document.createElement('input');
+    currentInput.type = 'email';
+    currentInput.name = 'current_email';
+    currentInput.required = true;
+    currentInput.placeholder = p.email;
+    currentInput.autocomplete = 'username';
+    curLab.appendChild(currentInput);
+    form.appendChild(curLab);
+  }
+
+  const newLab = document.createElement('label');
+  newLab.textContent = locked ? 'New email' : 'Email';
+  const newInput = document.createElement('input');
+  newInput.type = 'email';
+  newInput.name = 'new_email';
+  newInput.required = true;
+  newInput.placeholder = 'you@example.com';
+  newInput.autocomplete = 'email';
+  newLab.appendChild(newInput);
+  form.appendChild(newLab);
+
+  const save = document.createElement('button');
+  save.type = 'submit';
+  save.textContent = 'Save';
+  form.appendChild(save);
+
+  const err = document.createElement('p');
+  err.className = 'mp-email-err';
+  err.hidden = true;
+  form.appendChild(err);
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    err.hidden = true;
+    const newEmail = newInput.value.trim();
+    if (!newEmail) {
+      err.textContent = 'Enter a non-empty email.';
+      err.hidden = false;
+      return;
+    }
+    const currentEmail = locked
+      ? (currentInput?.value || '').trim()
+      : '';
+    if (locked && !currentEmail) {
+      err.textContent = 'Enter the current email that locked this name.';
+      err.hidden = false;
+      return;
+    }
+    if (!send({
+      action: 'setemail',
+      current_email: currentEmail,
+      new_email: newEmail,
+    })) {
+      err.textContent = 'Not connected — try again when online.';
+      err.hidden = false;
+    }
+  });
+
+  setTimeout(() => (currentInput || newInput)?.focus(), 0);
+  return form;
+}
+
+/** Apply server EmailChanged to session + local profile. */
+function applyEmailChanged(email) {
+  const em = String(email || '').trim();
+  const id = loadIdentity();
+  const uname = me || id.username;
+  if (!uname) return;
+  saveIdentity({
+    uuid: id.uuid || undefined,
+    username: uname,
+    email: em,
+    upsert: true,
+  });
+  emailEditFor = '';
+  setActionBanner('Email updated', 'ok');
+  renderManageList();
+  renderContinueChips();
+  renderHeader();
+}
+
+/** Target of a pending DevDeleteUser (wait for Users Sub / err). */
+let pendingDevDelete = '';
+
+/** Dev moderation: delete another username (E9c). */
+function requestDevDeleteUser(name) {
+  const target = String(name || '').trim();
+  if (!target || !meIsDev) return;
+  if (me && ukey(target) === ukey(me)) {
+    setActionBanner('Use Manage profiles → Delete username to remove your own name.', 'err');
+    return;
+  }
+  if (
+    !confirm(
+      `Dev: delete “${target}” on the server?\n\n` +
+        `Removes stats/prefs and disconnects them. They must not be seated at a table.\n` +
+        `This cannot be undone.`,
+    )
+  ) {
+    return;
+  }
+  pendingDevDelete = target;
+  if (!send({ action: 'devdeleteuser', username: target })) {
+    pendingDevDelete = '';
+    setActionBanner('Not connected — try again when online.', 'err');
+  }
+}
+
+/** Confirm + optional email proof, then DeleteUser (E9b). */
+function requestDeleteUsername(p) {
+  const name = String(p.username || '').trim();
+  if (!name) return;
+  const locked = !!(p.email && String(p.email).trim());
+  const ok = confirm(
+    `Delete “${name}” on the server?\n\n` +
+      `This removes stats and prefs for that name and cannot be undone.\n` +
+      `Leave any table seat first.\n\n` +
+      `(Forget only removes the shortcut on this browser.)`,
+  );
+  if (!ok) return;
+  let email = '';
+  if (locked) {
+    const entered = window.prompt(
+      `Enter the email that locked “${name}” to confirm delete:`,
+      '',
+    );
+    if (entered == null) return; // cancelled
+    email = String(entered).trim();
+    if (!email) {
+      setActionBanner('Email required to delete a locked username.', 'err');
+      return;
+    }
+  }
+  if (!send({ action: 'deleteuser', email })) {
+    setActionBanner('Not connected — try again when online.', 'err');
+  }
+}
+
+/**
+ * Server deleted this username (or we finished local cleanup after user_deleted).
+ * Forget profile, clear session, show Continue/create gate — no reconnect.
+ */
+function handleUserDeleted() {
+  const id = loadIdentity();
+  const uname = me || id.username;
+  emailEditFor = '';
+  clearReconnect();
+  intentionalClose = true;
+  takenOver = false;
+  authRejected = false;
+  authenticated = false;
+  if (uname) forgetProfile(uname);
+  me = '';
+  meIsDev = false;
+  tables.clear();
+  online.clear();
+  if (ws) {
+    ws.close();
+    ws = null;
+  }
+  clearSession();
+  authPanel = listProfiles().length ? 'gate' : 'first';
+  setStatus('sign in', '');
+  setActionBanner(
+    'Username deleted on the server. Create a new profile or continue as another saved name.',
+    'ok',
+  );
+  renderTables();
+  renderOnline();
+  renderContinueChips();
+  renderHeader();
 }
 
 function renderContinueChips() {
@@ -1614,7 +1841,11 @@ function presenceBand(p) {
 }
 
 // Build a presence list row.
-function playerRow(name, status, { meRow = false, offline = false, dev = false } = {}) {
+function playerRow(
+  name,
+  status,
+  { meRow = false, offline = false, dev = false, showDevDelete = false } = {},
+) {
   const li = document.createElement('li');
   li.className = 'player-row' + (offline ? ' offline' : '') + (meRow ? ' me' : '');
   const nm = document.createElement('span');
@@ -1630,6 +1861,20 @@ function playerRow(name, status, { meRow = false, offline = false, dev = false }
   st.className = 'player-status';
   st.textContent = status;
   li.append(nm, st);
+  // E9c: Dev may delete another username (not self — use Manage for that).
+  if (showDevDelete && !meRow) {
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'icon-btn danger trash-btn player-dev-delete';
+    del.textContent = '🗑';
+    del.title = 'Dev: delete this username on the server';
+    del.setAttribute('aria-label', del.title);
+    del.addEventListener('click', (e) => {
+      e.stopPropagation();
+      requestDevDeleteUser(name);
+    });
+    li.appendChild(del);
+  }
   return li;
 }
 
@@ -1666,12 +1911,14 @@ function renderOnline() {
     ul.replaceChildren();
     return;
   }
+  const showDevDelete = !!(authenticated && meIsDev);
   ul.replaceChildren(
     ...kept.map(({ name, p }) =>
       playerRow(name, formatPresenceStatus(p, name), {
         meRow: !!(me && ukey(name) === ukey(me)),
         offline: !isPresenceOnline(p),
         dev: !!p.is_dev,
+        showDevDelete,
       }),
     ),
   );
@@ -2295,6 +2542,10 @@ function applyUsers(u, t) {
   } else if (t === 'sub') {
     for (const name of Object.keys(u || {})) {
       online.delete(name);
+      if (pendingDevDelete && ukey(name) === ukey(pendingDevDelete)) {
+        setActionBanner(`Deleted username “${pendingDevDelete}”.`, 'ok');
+        pendingDevDelete = '';
+      }
     }
   }
   renderOnline();
@@ -2345,9 +2596,45 @@ function onServerEvent(ev) {
       handleTakenOver();
       return;
     }
+    if (ev.err === 'user_deleted') {
+      handleUserDeleted();
+      return;
+    }
     // Pre-Welcome auth failure: stop reconnect and show the login form.
     if (!authenticated && (ev.err === 'username_taken' || ev.err === 'authenticate')) {
       handleAuthRejected(ev.err);
+      return;
+    }
+    if (
+      authenticated &&
+      (ev.err === 'email_mismatch' ||
+        ev.err === 'bad_email' ||
+        ev.err === 'missing' ||
+        ev.err === 'in_game' ||
+        ev.err === 'forbidden')
+    ) {
+      const wasDevDelete = !!pendingDevDelete;
+      if (wasDevDelete) pendingDevDelete = '';
+      const formErr = document.querySelector('.mp-email-form .mp-email-err');
+      const msg =
+        ev.err === 'email_mismatch'
+          ? 'Current email does not match. Try again.'
+          : ev.err === 'bad_email'
+            ? 'New email cannot be empty.'
+            : ev.err === 'in_game'
+              ? wasDevDelete
+                ? 'That player must leave their table seat first.'
+                : 'Leave the table first, then delete the username.'
+              : ev.err === 'forbidden'
+                ? 'Not allowed.'
+                : wasDevDelete
+                  ? 'Could not delete that username.'
+                  : 'Could not update account.';
+      if (formErr && ev.err !== 'in_game' && ev.err !== 'forbidden' && !wasDevDelete) {
+        formErr.textContent = msg;
+        formErr.hidden = false;
+      }
+      setActionBanner(msg, 'err');
       return;
     }
     setActionBanner(ev.err || 'error', 'err');
@@ -2381,6 +2668,10 @@ function onServerEvent(ev) {
   if (a === 'prefs') {
     if (ev.prefs) cachePrefs(ev.prefs, me);
     if (authPanel === 'display') syncDisplayPanel();
+    return;
+  }
+  if (a === 'emailchanged') {
+    applyEmailChanged(ev.email);
     return;
   }
   if (a === 'users') {
