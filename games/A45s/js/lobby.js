@@ -18,19 +18,32 @@
   let online = [];
   let news = [];
   let feedback = [];
+  let chatMessages = []; // { from, text, at } for durable unread recompute
   let fbExpanded = '';
   let unread = { news: 0, chat: 0, feedback: 0 };
-  let seenTalk = false;
+  let talkBootstrapped = false; // first News snapshot while News open → mark read
   let optsOpen = '';
   let inviteOpen = '';
-  let myPrefs = { robots: 'random', replay: false, friends: [] };
+  let myPrefs = { robots: 'random', replay: false, friends: [], talk_read: {} };
+  let ranksState = { rows: [], you: null };
+  // Same path as table.html rank-gear — crisp at small size vs Unicode ⚙.
+  const GEAR_SVG = '<svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.07 7.07 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 1h-3.8a.5.5 0 0 0-.5.42l-.36 2.54c-.59.24-1.13.55-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 7.48a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.58a.5.5 0 0 0-.12.64l1.92 3.32c.14.24.43.34.68.22l2.39-.96c.5.39 1.04.7 1.63.94l.36 2.54c.05.24.26.42.5.42h3.8c.24 0 .45-.18.5-.42l.36-2.54c.59-.24 1.13-.55 1.63-.94l2.39.96c.25.1.54 0 .68-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/></svg>';
 
+  function normalizeTalkRead(tr) {
+    const t = tr && typeof tr === 'object' ? tr : {};
+    return {
+      news_at: t.news_at || null,
+      feedback_at: t.feedback_at || null,
+      chat_at: t.chat_at || null,
+    };
+  }
   function normalizePrefs(p) {
     const pack = p && (p.robots === 'classic' || p.robots === 'clown') ? 'classic' : 'random';
     return {
       robots: pack,
       replay: !!(p && p.replay),
       friends: Array.isArray(p && p.friends) ? p.friends.filter((n) => String(n || '').trim()) : [],
+      talk_read: normalizeTalkRead(p && p.talk_read),
     };
   }
 
@@ -300,10 +313,18 @@
     if (ws) { try { ws.close(); } catch (_) {} ws = null; }
     tables = [];
     online = [];
+    news = [];
+    feedback = [];
+    chatMessages = [];
+    talkBootstrapped = false;
+    myPrefs = normalizePrefs(null);
+    ranksState = { rows: [], you: null };
+    clearAllUnread();
     authPanel = A.loadProfiles().length ? 'gate' : 'first';
     setStatus('sign in');
     renderTables();
     renderOnline();
+    renderRanks();
     renderAuth();
   }
 
@@ -614,7 +635,7 @@
     gear.type = 'button';
     gear.className = 'icon-btn gear-btn';
     gear.dataset.table = t.id;
-    gear.textContent = '⚙';
+    gear.innerHTML = GEAR_SVG;
     gear.title = 'Table options';
     gear.setAttribute('aria-label', 'Table options');
     gear.setAttribute('aria-expanded', optsOpen === t.id ? 'true' : 'false');
@@ -948,17 +969,159 @@
     requestAnimationFrame(mountOpenPopovers);
   }
 
-  // ——— Talk ———
-  function bump(kind) {
-    if ($(`tab-${kind}`).classList.contains('active')) return;
-    unread[kind] += 1;
-    const b = $(`badge-${kind}`);
-    b.hidden = unread[kind] <= 0;
-    b.textContent = unread[kind];
+  // ——— Ranks (lifetime team-score avg from UserStore) ———
+  function formatRankAvg(r) {
+    const a = Number(r && r.avg);
+    if (!Number.isFinite(a)) return '—';
+    return String(Math.round(a));
   }
-  function clearUnread(kind) {
-    unread[kind] = 0;
-    $(`badge-${kind}`).hidden = true;
+  function renderRanks() {
+    const body = $('ranks-body');
+    const empty = $('ranks-empty');
+    const youMeta = $('ranks-you-meta');
+    if (!body) return;
+    const rows = ranksState.rows || [];
+    if (empty) empty.hidden = rows.length > 0;
+    const frag = document.createDocumentFragment();
+    for (const r of rows) {
+      const tr = document.createElement('tr');
+      if (me && sameName(r.name, me)) tr.classList.add('me');
+      const tdRk = document.createElement('td');
+      tdRk.className = 'rk';
+      tdRk.textContent = r.rank != null ? String(r.rank) : '—';
+      const tdNm = document.createElement('td');
+      tdNm.className = 'nm';
+      tdNm.textContent = r.name || '?';
+      const tdAvg = document.createElement('td');
+      tdAvg.className = 'avg';
+      tdAvg.textContent = formatRankAvg(r);
+      const tdN = document.createElement('td');
+      tdN.className = 'n';
+      tdN.textContent = r.games != null ? String(r.games) : '—';
+      tr.append(tdRk, tdNm, tdAvg, tdN);
+      frag.appendChild(tr);
+    }
+    body.replaceChildren(frag);
+    if (youMeta) {
+      if (!authenticated || !me) {
+        youMeta.textContent = 'Sign in to see your rank';
+      } else if (ranksState.you) {
+        const y = ranksState.you;
+        const g = y.games || 0;
+        if (y.rank != null) {
+          youMeta.textContent = `#${y.rank} · avg ${formatRankAvg(y)} · ${g} series`;
+        } else if (g < 10) {
+          const left = Math.max(0, 10 - g);
+          youMeta.textContent =
+            g === 0
+              ? 'play 10 series to rank'
+              : `${g}/10 series · ${left} more to rank`;
+        } else {
+          youMeta.textContent = `avg ${formatRankAvg(y)} · ${g} series`;
+        }
+      } else {
+        youMeta.textContent = 'play 10 series to rank';
+      }
+    }
+  }
+
+  // ——— Talk (durable unread via prefs.talk_read watermarks) ———
+  function isPaneVisible(paneId) {
+    const pane = $(paneId);
+    return !!(pane && !pane.hidden);
+  }
+  function talkRead() {
+    return normalizeTalkRead(myPrefs && myPrefs.talk_read);
+  }
+  // itemIso is strictly after watermark (missing watermark → all count).
+  function isoAfter(watermark, itemIso) {
+    if (!itemIso) return false;
+    if (!watermark) return true;
+    const a = Date.parse(watermark);
+    const b = Date.parse(itemIso);
+    if (Number.isNaN(b)) return false;
+    if (Number.isNaN(a)) return true;
+    return b > a;
+  }
+  function countNewsUnread() {
+    const wm = talkRead().news_at;
+    let n = 0;
+    for (const it of news) {
+      if (sameName(it.author, me)) continue;
+      if (isoAfter(wm, it.created_at)) n += 1;
+    }
+    return n;
+  }
+  // +1 per new topic + +1 per reply after feedback_at (not self).
+  function countFeedbackUnread() {
+    const wm = talkRead().feedback_at;
+    let n = 0;
+    for (const it of feedback) {
+      if (!sameName(it.author, me) && isoAfter(wm, it.created_at)) n += 1;
+      for (const r of it.replies || []) {
+        if (!sameName(r.author, me) && isoAfter(wm, r.created_at)) n += 1;
+      }
+    }
+    return n;
+  }
+  function countChatUnread() {
+    const wm = talkRead().chat_at;
+    let n = 0;
+    for (const m of chatMessages) {
+      if (sameName(m.from, me)) continue;
+      if (isoAfter(wm, m.at)) n += 1;
+    }
+    return n;
+  }
+  function setUnreadCount(kind, n) {
+    if (!(kind in unread)) return;
+    unread[kind] = Math.min(99, Math.max(0, n | 0));
+    const el = $(`badge-${kind}`);
+    if (!el) return;
+    if (unread[kind] > 0) {
+      el.hidden = false;
+      el.textContent = unread[kind] > 99 ? '99+' : String(unread[kind]);
+    } else {
+      el.hidden = true;
+      el.textContent = '0';
+    }
+  }
+  function clearAllUnread() {
+    setUnreadCount('news', 0);
+    setUnreadCount('feedback', 0);
+    setUnreadCount('chat', 0);
+  }
+  // Recompute badge from data + talk_read (skip if pane open — treat as reading).
+  function recomputeUnread(kind) {
+    const paneId =
+      kind === 'news' ? 'pane-news' : kind === 'feedback' ? 'pane-feedback' : 'pane-chat';
+    if (isPaneVisible(paneId)) {
+      setUnreadCount(kind, 0);
+      return;
+    }
+    let n = 0;
+    if (kind === 'news') n = countNewsUnread();
+    else if (kind === 'feedback') n = countFeedbackUnread();
+    else if (kind === 'chat') n = countChatUnread();
+    setUnreadCount(kind, n);
+  }
+  function recomputeAllUnread() {
+    recomputeUnread('news');
+    recomputeUnread('feedback');
+    recomputeUnread('chat');
+  }
+  // Persist talk_read watermark (now) to server prefs; clear local badge.
+  function markTalkRead(kind) {
+    if (!authenticated || !me) {
+      setUnreadCount(kind, 0);
+      return;
+    }
+    const field =
+      kind === 'news' ? 'news_at' : kind === 'feedback' ? 'feedback_at' : 'chat_at';
+    const now = new Date().toISOString();
+    myPrefs.talk_read = { ...talkRead(), [field]: now };
+    setUnreadCount(kind, 0);
+    A.send(ws, { action: 'setprefs', talk_read: { [field]: now } });
   }
   function bindTabs(panel) {
     const tabs = [...panel.querySelectorAll(':scope > .side-tabs [role="tab"]')];
@@ -972,12 +1135,14 @@
           if (pane) pane.hidden = !on;
         });
         const id = tab.id.replace('tab-', '');
-        if (unread[id] != null) clearUnread(id);
+        if (id === 'news' || id === 'feedback' || id === 'chat') markTalkRead(id);
       });
     });
   }
 
-  function addChat(from, text) {
+  function addChat(from, text, at) {
+    const when = at || new Date().toISOString();
+    chatMessages.push({ from, text, at: when });
     const ul = $('chat-log');
     const li = document.createElement('li');
     li.innerHTML = `<b>${esc(from)}</b> ${esc(text)}`;
@@ -1105,7 +1270,13 @@
     }
     if (j.action === 'prefs') {
       myPrefs = normalizePrefs(j.prefs);
+      recomputeAllUnread();
       renderTables();
+      return;
+    }
+    if (j.action === 'ranks') {
+      ranksState = { rows: j.rows || [], you: j.you || null };
+      renderRanks();
       return;
     }
     if (j.action === 'users') {
@@ -1122,27 +1293,37 @@
     }
     if (j.action === 'chathistory') {
       $('chat-log').innerHTML = '';
-      (j.messages || []).forEach((m) => addChat(m.from, m.text));
+      chatMessages = [];
+      (j.messages || []).forEach((m) => addChat(m.from, m.text, m.at));
+      if (isPaneVisible('pane-chat')) setUnreadCount('chat', 0);
+      else recomputeUnread('chat');
       return;
     }
     if (j.action === 'chat') {
-      addChat(j.from, j.text);
-      if (seenTalk) bump('chat');
+      // Live Chat has no `at` on the wire — synthesize so watermark recompute works.
+      addChat(j.from, j.text, new Date().toISOString());
+      if (isPaneVisible('pane-chat')) setUnreadCount('chat', 0);
+      else recomputeUnread('chat');
       return;
     }
     if (j.action === 'news') {
-      const n = (j.items || []).length;
-      if (seenTalk && n !== news.length) bump('news');
       news = j.items || [];
       renderNews();
-      seenTalk = true;
+      // Default Talk tab is News: first snapshot while open advances watermark (join).
+      if (isPaneVisible('pane-news')) {
+        if (!talkBootstrapped) markTalkRead('news');
+        else setUnreadCount('news', 0);
+      } else {
+        recomputeUnread('news');
+      }
+      talkBootstrapped = true;
       return;
     }
     if (j.action === 'feedback') {
-      const n = (j.items || []).length;
-      if (seenTalk && n !== feedback.length) bump('feedback');
       feedback = j.items || [];
       renderFeedback();
+      if (isPaneVisible('pane-feedback')) setUnreadCount('feedback', 0);
+      else recomputeUnread('feedback');
       return;
     }
     if (j.action === 'err') {

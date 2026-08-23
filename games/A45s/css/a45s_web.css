@@ -181,6 +181,14 @@ body.felt-page .wrap { display: none; }
   border: 0;
   font-size: 1.45em;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.felt .rank-gear .gear-icon {
+  width: 1.05em;
+  height: 1.05em;
+  display: block;
 }
 .felt .rank-gear:hover { color: #fff; }
 .rank-gear.open,

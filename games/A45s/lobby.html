@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Auction 45s — Lobby</title>
   <link rel="stylesheet" href="css/a45s_web.css">
-  <link rel="stylesheet" href="css/lobby.css?v=20260822c">
+  <link rel="stylesheet" href="css/lobby.css?v=20260823c">
 </head>
 <body class="lobby-page">
   <header class="app-header">
@@ -18,7 +18,7 @@
     <span class="spacer"></span>
     <nav class="hdr-links">
       <a href="rules.html">Rules</a>
-      <a href="help.html">Help</a>
+      <a href="help_r.html">Help</a>
     </nav>
     <div class="profile-wrap" id="profile-wrap">
       <button type="button" class="profile-btn" id="btn-profile"
@@ -87,7 +87,7 @@
           <li>Everyone discards, fills back to five, then plays <strong>five tricks</strong>.</li>
           <li>Make your bid or go set. Click past-trick piles to review. Tables can opt in to <strong>Replay this deal</strong> (same hands, bidding starts over).</li>
         </ol>
-        <p class="hint">Full rules and card ranks are linked in the header. After trump is named, a rank strip sits above your hand (⚙ menu toggles it).</p>
+        <p class="hint">Full rules and card ranks are linked in the header. After trump is named, a rank strip sits above your hand (<svg class="inline-gear" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.07 7.07 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 1h-3.8a.5.5 0 0 0-.5.42l-.36 2.54c-.59.24-1.13.55-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 7.48a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.58a.5.5 0 0 0-.12.64l1.92 3.32c.14.24.43.34.68.22l2.39-.96c.5.39 1.04.7 1.63.94l.36 2.54c.05.24.26.42.5.42h3.8c.24 0 .45-.18.5-.42l.36-2.54c.59-.24 1.13-.55 1.63-.94l2.39.96c.25.1.54 0 .68-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/></svg> gear menu toggles it).</p>
       </div>
     </div>
 
@@ -118,7 +118,20 @@
           <ul class="player-list" id="online-list"></ul>
         </div>
         <div class="side-pane" role="tabpanel" id="pane-ranks" aria-labelledby="tab-ranks" hidden>
-          <p class="empty-state">Ranks will land here later. Lifetime stats are not imported yet.</p>
+          <p class="pane-note">Team-score avg · 10+ series</p>
+          <div class="ranks-scroll">
+            <table class="ranks-table" id="ranks-table">
+              <thead>
+                <tr><th class="rk">#</th><th class="nm">Player</th><th class="avg">Avg</th><th class="n">G</th></tr>
+              </thead>
+              <tbody id="ranks-body"></tbody>
+            </table>
+            <p class="empty-state" id="ranks-empty">No ranked players yet (need 10+ series).</p>
+          </div>
+          <div class="ranks-you" id="ranks-you">
+            <span class="ranks-you-label">You</span>
+            <span class="ranks-you-meta" id="ranks-you-meta">Sign in to see your rank</span>
+          </div>
         </div>
       </section>
 
@@ -201,6 +214,6 @@
     </p>
   </footer>
   <script src="js/a45s_web.js?v=20260817"></script>
-  <script src="js/lobby.js?v=20260821a"></script>
+  <script src="js/lobby.js?v=20260823c"></script>
 </body>
 </html>

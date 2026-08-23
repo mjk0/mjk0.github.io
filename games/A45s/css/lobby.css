@@ -583,8 +583,23 @@ html:has(.lobby-page), html:has(.doc-page) {
   border-color: #7a7048;
   color: #3e3424;
   opacity: 0.88;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.lobby-page .table-card .gear-btn .gear-icon {
+  width: 1.05em;
+  height: 1.05em;
+  display: block;
 }
 .lobby-page .table-card .gear-btn:hover { opacity: 1; background: #fff; }
+.inline-gear {
+  width: 1.05em;
+  height: 1.05em;
+  vertical-align: -0.18em;
+  display: inline-block;
+  fill: currentColor;
+}
 .opts-popover {
   position: fixed;
   left: 0;
@@ -1042,10 +1057,23 @@ html:has(.lobby-page), html:has(.doc-page) {
 .lobby-page .news-compose button,
 .lobby-page .fb-new-actions button,
 .lobby-page .fb-reply-form button,
-.lobby-page .feedback-new {
+.lobby-page .feedback-new,
+.lobby-page .news-archive,
+.lobby-page .fb-dev-row button {
   background: #fff;
   color: #3d4f1c;
   border-color: #fff;
+}
+.lobby-page .chat-form button:hover,
+.lobby-page .news-compose button:hover,
+.lobby-page .fb-new-actions button:hover,
+.lobby-page .fb-reply-form button:hover,
+.lobby-page .feedback-new:hover,
+.lobby-page .news-archive:hover,
+.lobby-page .fb-dev-row button:hover {
+  background: #eef5e0;
+  border-color: #fff59d;
+  color: #3d4f1c;
 }
 
 .news-item, .fb-item { padding: 0.5rem 0; border-bottom: 1px solid rgba(255, 255, 255, 0.18); }
@@ -1095,6 +1123,14 @@ html:has(.lobby-page), html:has(.doc-page) {
   gap: 0.35rem;
 }
 .fb-summary { cursor: pointer; }
+.fb-reply-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.15rem;
+}
+.fb-reply-form textarea { width: 100%; resize: vertical; min-height: 2.4em; }
+.fb-reply-form button { align-self: flex-end; }
 .fb-dev-row { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.3rem; }
 .fb-dev-row button { font-size: 0.72rem; padding: 0.15em 0.4em; }
 
@@ -1159,6 +1195,52 @@ html:has(.lobby-page), html:has(.doc-page) {
 .rank-table th { background: #ee6e73; color: #fff; font-weight: 650; }
 .rank-table tr:nth-child(even) td { background: #f3e5e4; }
 .suit-red { color: #c62828; }
+
+/* Lobby Ranks tab (darkolivegreen people panel) */
+.ranks-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+.ranks-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.ranks-table th,
+.ranks-table td {
+  padding: 0.22rem 0.35rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+.ranks-table th {
+  background: rgba(0, 0, 0, 0.28);
+  color: #d7e8c8;
+  font-weight: 650;
+  position: sticky;
+  top: 0;
+}
+.ranks-table td { color: #e8f5e9; }
+.ranks-table .rk { width: 1.6rem; opacity: 0.75; }
+.ranks-table .avg,
+.ranks-table .n { text-align: right; font-variant-numeric: tabular-nums; }
+.ranks-table .n { width: 2.2rem; opacity: 0.8; }
+.ranks-table .nm { min-width: 0; }
+.ranks-table tr.me td { font-weight: 650; }
+.ranks-table tr.me .nm { color: #fff59d; }
+.ranks-you {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  margin-top: 0.4rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: 0.8rem;
+  color: #e8f5e9;
+}
+.ranks-you-label { font-weight: 700; color: #fff59d; }
+.ranks-you-meta { opacity: 0.85; font-size: 0.78rem; }
 
 @media (max-width: 720px) {
   .lobby-page { height: auto; max-height: none; overflow: auto; }
