@@ -1076,6 +1076,20 @@ html:has(.lobby-page), html:has(.doc-page) {
 .player-list li.inviteable { cursor: pointer; }
 .player-list li.inviteable:hover { color: #fff; }
 .player-status { font-size: 0.78rem; color: #c8e6c9; margin-left: auto; }
+.player-list .player-row.offline { opacity: 0.48; }
+.player-list .player-row.offline .player-status { opacity: 0.9; }
+.badge-dev {
+  display: inline-block;
+  margin-left: 0.25em;
+  padding: 0.05em 0.35em;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: rgba(255, 245, 157, 0.25);
+  color: #fff59d;
+  vertical-align: middle;
+}
 .player-list .player-dev-delete {
   flex: 0 0 auto;
   min-width: 1.6rem;
@@ -1085,6 +1099,7 @@ html:has(.lobby-page), html:has(.doc-page) {
   opacity: 0.75;
 }
 .player-list .player-dev-delete:hover { opacity: 1; }
+.player-list .player-row.offline .player-dev-delete { opacity: 0.9; }
 
 .chat-log li { padding: 0.25rem 0; color: #c8e6c9; }
 .chat-log li b { color: #fff; font-weight: 600; }

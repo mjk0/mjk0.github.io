@@ -82,6 +82,25 @@
   function isOpenTable(id) {
     return /^Open\d+$/i.test(String(id || ''));
   }
+  function isPresenceOnline(p) {
+    const w = (p && p.where) || '';
+    return w === 'lobby' || w === 'table' || w === 'playing';
+  }
+  // Coarse offline buckets (no exact disconnect time) — match Yoyo.
+  function formatOfflineSeen(iso) {
+    if (!iso || iso === 'now') return 'offline';
+    const t = Date.parse(iso);
+    if (Number.isNaN(t)) return 'offline';
+    const now = new Date();
+    const then = new Date(t);
+    const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const startThen = new Date(then.getFullYear(), then.getMonth(), then.getDate()).getTime();
+    const dayDiff = Math.round((startToday - startThen) / 86400000);
+    if (dayDiff <= 0) return 'earlier today';
+    if (dayDiff === 1) return 'yesterday';
+    if (dayDiff < 14) return dayDiff + ' days ago';
+    return 'a while ago';
+  }
   function formatPresenceStatus(p) {
     const w = p && p.where;
     if (w === 'table') {
@@ -90,13 +109,25 @@
     if (w === 'playing') {
       return isOpenTable(p.table) ? displayTableName(p.table) + ' · playing' : 'playing';
     }
+    if (w === 'offline') return formatOfflineSeen(p.last_seen);
     return 'lobby';
   }
+  function presenceBand(p) {
+    switch (p && p.where) {
+      case 'lobby': return 0;
+      case 'table': return 1;
+      case 'playing': return 2;
+      default: return 3;
+    }
+  }
   function sortPeople(list) {
-    const rank = (w) => (w === 'playing' ? 2 : w === 'table' ? 1 : 0);
     return (list || []).slice().sort((a, b) => {
-      const d = rank(a.where) - rank(b.where);
-      if (d) return d;
+      const ba = presenceBand(a);
+      const bb = presenceBand(b);
+      if (ba !== bb) return ba - bb;
+      if (ba === 3) {
+        return String(b.last_seen || '').localeCompare(String(a.last_seen || ''));
+      }
       return String(a.name || '').localeCompare(String(b.name || ''));
     });
   }
@@ -640,16 +671,26 @@
     const ul = $('online-list');
     ul.innerHTML = '';
     const canInvite = !!(minePriv() && !minePriv().started);
-    const people = sortPeople(online);
+    const OFFLINE_CAP = 15;
+    let offlineN = 0;
+    const people = [];
+    for (const p of sortPeople(online)) {
+      if (!isPresenceOnline(p)) {
+        offlineN += 1;
+        if (offlineN > OFFLINE_CAP) continue;
+      }
+      people.push(p);
+    }
     if (!people.length) {
       ul.innerHTML = '<li class="empty-state">No one signed in.</li>';
       return;
     }
     people.forEach((p) => {
       const n = p.name;
+      const offline = !isPresenceOnline(p);
       const li = document.createElement('li');
-      if (sameName(n, me)) li.classList.add('me');
-      if (canInvite && !sameName(n, me)) {
+      li.className = 'player-row' + (offline ? ' offline' : '') + (sameName(n, me) ? ' me' : '');
+      if (canInvite && !offline && !sameName(n, me)) {
         li.classList.add('inviteable');
         li.title = 'Invite to your private table';
         li.addEventListener('click', () => inviteAdd(n));
@@ -657,6 +698,12 @@
       const nameEl = document.createElement('span');
       nameEl.className = 'player-name';
       nameEl.textContent = n;
+      if (p.is_dev) {
+        const badge = document.createElement('span');
+        badge.className = 'badge-dev';
+        badge.textContent = 'Dev';
+        nameEl.append(' ', badge);
+      }
       const st = document.createElement('span');
       st.className = 'player-status';
       st.textContent = formatPresenceStatus(p);
@@ -931,7 +978,9 @@
     pop.appendChild(section('Invited (' + inv.length + ')', cur));
 
     const others = sortPeople(
-      online.filter((p) => !sameName(p.name, me) && !nameInList(inv, p.name)),
+      online.filter(
+        (p) => isPresenceOnline(p) && !sameName(p.name, me) && !nameInList(inv, p.name),
+      ),
     );
     const inLobby = others.filter((p) => p.where !== 'playing');
     const inGame = others.filter((p) => p.where === 'playing');

@@ -3,153 +3,399 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Games — Marcel and Jane's Page</title>
+  <title>Games — pizzamonster.org</title>
   <style>
     :root {
       --bg: #a8b4d4;
-      --link: #0b3d91;
+      --ink: #1a1a1a;
       --muted: #445;
-      --dep-bg: #e4e4e8;
-      --dep-border: #9a9aa8;
-      --dep-text: #555;
+      --link: #0b3d91;
+      --card: #f0f1f5;
+      --shadow: 0 2px 10px rgba(40, 50, 80, 0.12);
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       min-height: 100vh;
       font: 16px/1.5 system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      color: #1a1a1a;
+      color: var(--ink);
       background: var(--bg);
-      text-align: left;
     }
     a { color: var(--link); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
     .wrap {
-      max-width: none;
-      margin: 0;
-      padding: 0.85rem 1rem 2rem;
+      max-width: 52rem;
+      margin: 0 auto;
+      padding: 1rem 1.1rem 2.5rem;
+    }
+    header {
+      margin-bottom: 1.1rem;
     }
     header h1 {
-      margin: 0 0 0.75rem;
-      font-size: 1.35rem;
+      margin: 0 0 0.2rem;
+      font-size: 1.45rem;
+      letter-spacing: 0.01em;
+    }
+    header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
     }
 
-    .list {
+    .grid {
+      display: grid;
+      gap: 0.85rem;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 700px) {
+      .grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    .family {
       display: flex;
       flex-direction: column;
-      gap: 0.55rem;
-      max-width: 36rem;
-    }
-
-    .card {
-      display: block;
-      padding: 0.75rem 0.9rem 0.75rem 0.95rem;
+      gap: 0.65rem;
+      padding: 0.85rem 0.9rem 0.9rem;
       border: 2px solid;
-      border-radius: 6px;
+      border-radius: 10px;
       border-left-width: 6px;
-      color: inherit;
-      text-decoration: none;
-      background: #f0f1f5;
+      background: var(--card);
+      box-shadow: var(--shadow);
     }
-    .card:hover { text-decoration: none; filter: brightness(0.98); }
-    .card h2 {
-      margin: 0 0 0.2rem;
-      font-size: 1.05rem;
+    .family-head {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      min-height: 3.4rem;
     }
-    .card p {
+    .mark {
+      flex: 0 0 auto;
+      width: 5.2rem;
+      height: 3.6rem;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+    .mark svg,
+    .mark img {
+      max-width: 100%;
+      max-height: 100%;
+      display: block;
+    }
+    /* Classic Node landing cue: green oval behind the 45s fan */
+    .mark-a45s {
+      width: 5.6rem;
+      height: 3.4rem;
+      border-radius: 50%;
+      background: green;
+    }
+    .mark-a45s svg {
+      width: 5.1rem;
+      height: 2.35rem;
+      margin-top: 0.15rem;
+    }
+    .mark-mj {
+      width: 2.75rem;
+      height: 3.5rem;
+      border-radius: 6px;
+      background: transparent;
+    }
+    .mark-mj img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    /* Height is the budget; width follows the jester's aspect ratio */
+    .mark-yoyo {
+      width: auto;
+      height: 3.5rem;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.55);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+    }
+    .mark-yoyo img {
+      height: 3.5rem;   /* fill the mark vertically */
+      width: auto;      /* width adapts from intrinsic aspect ratio */
+      max-width: none;
+      max-height: none;
+    }
+    .mark-jigsaw {
+      width: 3.4rem;
+      height: 3.4rem;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.72);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+    }
+    .family-head h2 {
       margin: 0;
-      font-size: 0.9rem;
+      font-size: 1.12rem;
+      line-height: 1.2;
+    }
+    .family-head .blurb {
+      margin: 0.15rem 0 0;
+      font-size: 0.86rem;
       color: var(--muted);
     }
 
-    /* Subtle cues from each game's lobby palette */
-    .card-mj {
-      background: #eef1f4;
-      border-color: #7a8a9a;
-      border-left-color: #ee6e73; /* mj03 / materialize coral accent */
+    .variants {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
     }
-    .card-mj h2 { color: #3d5a6c; }
-
-    .card-a45s {
-      background: #e8f2ea;
-      border-color: #6a9070;
-      border-left-color: #228b22; /* forest / felt green */
+    .variant {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.55rem 0.7rem;
+      border-radius: 7px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.55);
+      color: inherit;
+      text-decoration: none;
+      transition: filter 0.12s ease, background 0.12s ease;
     }
-    .card-a45s h2 { color: #1b5e20; }
-
-    .card-yoyo {
-      background: #e6efe6;
-      border-color: #5a7a5a;
-      border-left-color: #c9a227; /* yoyo rank gold */
+    .variant:hover {
+      text-decoration: none;
+      filter: brightness(0.985);
+      background: rgba(255, 255, 255, 0.85);
     }
-    .card-yoyo h2 { color: #1e5c32; }
-
-    .card-jigsaw {
-      background: #f7ecec;
-      border-color: #b08890;
-      border-left-color: #ee6e73; /* jigsaw nav coral */
+    .variant-main {
+      min-width: 0;
     }
-    .card-jigsaw h2 { color: #a03338; }
-
-    /* Legacy — soft orange/peru (old mj private-table cue), still de-emphasized */
-    .card.deprecated {
-      background: #f3ebe3;
-      border-color: #c4a882;
-      border-left-color: #cd853f; /* peru / warm orange */
-      border-style: dashed;
-      border-left-style: solid;
-      opacity: 0.92;
-    }
-    .card.deprecated:hover { opacity: 1; filter: none; }
-    .card.deprecated h2 {
-      color: #8a5a2b;
-      font-weight: 600;
+    .variant-title {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.3rem 0.4rem;
       font-size: 0.98rem;
+      font-weight: 700;
+      line-height: 1.25;
     }
-    .card.deprecated .badge {
+    .variant-main .desc {
+      display: block;
+      margin-top: 0.12rem;
+      font-size: 0.8rem;
+      font-weight: 400;
+      color: var(--muted);
+    }
+    .variant-go {
+      flex: 0 0 auto;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--link);
+      white-space: nowrap;
+    }
+    .badge {
       display: inline-block;
-      margin-left: 0.4rem;
       padding: 0.05rem 0.4rem;
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 700;
       letter-spacing: 0.03em;
       text-transform: uppercase;
-      color: #7a4e24;
-      background: #e8d0b0;
       border-radius: 3px;
       vertical-align: middle;
+    }
+    .badge-live {
+      color: #14532d;
+      background: #bbf7d0;
+    }
+    .badge-test {
+      color: #1e3a5f;
+      background: #c7dbf5;
+    }
+    .badge-legacy {
+      color: #7a4e24;
+      background: #e8d0b0;
+    }
+
+    /* Palette cues from each game */
+    .family-a45s {
+      background: #e8f2ea;
+      border-color: #6a9070;
+      border-left-color: #228b22;
+    }
+    .family-a45s h2 { color: #1b5e20; }
+
+    .family-mj {
+      background: #eef1f4;
+      border-color: #7a8a9a;
+      border-left-color: #ee6e73;
+    }
+    .family-mj h2 { color: #3d5a6c; }
+
+    .family-yoyo {
+      background: #e6efe6;
+      border-color: #5a7a5a;
+      border-left-color: #c9a227;
+    }
+    .family-yoyo h2 { color: #1e5c32; }
+
+    .family-jigsaw {
+      background: #f7ecec;
+      border-color: #b08890;
+      border-left-color: #ee6e73;
+    }
+    .family-jigsaw h2 { color: #a03338; }
+
+    .family-mj .variant.legacy,
+    .family-a45s .variant.secondary {
+      border-style: dashed;
+      opacity: 0.95;
+    }
+    .family-mj .variant.legacy {
+      background: #f3ebe3;
+      border-color: #c4a882;
+    }
+
+    footer {
+      margin-top: 1.5rem;
+      text-align: center;
+    }
+    footer .mascot {
+      display: block;
+      width: min(100%, 28rem);
+      height: auto;
+      margin: 0 auto;
     }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <h1>Games</h1>
+      <h1>Pizzamonster Games</h1>
+      <p>Variants for the same game are grouped together.</p>
     </header>
 
-    <div class="list">
-      <a class="card card-mj" href="/games/mj03/">
-        <h2>Mahjong</h2>
-        <p>Four-player Shanghai-style multiplayer mahjong.</p>
-      </a>
-      <a class="card card-a45s" href="/games/A45s/">
-        <h2>Auction 45s</h2>
-        <p>Trick-taking card game with bidding — multiplayer tables.</p>
-      </a>
-      <a class="card card-yoyo" href="/games/yoyo/">
-        <h2>Yoyo</h2>
-        <p>Shedding card game (President / Asshole style) with lobby and ranks.</p>
-      </a>
-      <a class="card card-jigsaw" href="/games/jigsaw/">
-        <h2>Jigsaw</h2>
-        <p>Cooperative or solo jigsaw puzzles in the browser.</p>
-      </a>
-      <a class="card deprecated" href="http://pizzamonster.org:8080/mjServer0-1.0-SNAPSHOT/">
-        <h2>Old Mahjong Table <span class="badge">legacy</span></h2>
-        <p>Earlier mahjong client — still available; prefer Mahjong (mj03) for new play.</p>
-      </a>
+    <div class="grid">
+      <!-- Auction 45s: classic Node + new a45r -->
+      <section class="family family-a45s" aria-labelledby="a45s-title">
+        <div class="family-head">
+          <div class="mark mark-a45s" aria-hidden="true">
+            <svg viewBox="0 4 200 90" role="img">
+              <title>Auction 45s card fan</title>
+              <use href="A45s/cards0.svg#xfan5s"></use>
+            </svg>
+          </div>
+          <div>
+            <h2 id="a45s-title">Auction 45s</h2>
+            <p class="blurb">Bidding &amp; trick-taking — partnership tables.</p>
+          </div>
+        </div>
+        <div class="variants">
+          <a class="variant" href="/games/A45s/lobby.html">
+            <div class="variant-main">
+              <div class="variant-title">Auction 45s <span class="badge badge-test">testing</span></div>
+              <span class="desc">New server (a45r)</span>
+            </div>
+            <span class="variant-go">Enter →</span>
+          </a>
+          <a class="variant secondary" href="/games/A45s/">
+            <div class="variant-main">
+              <div class="variant-title">Auction 45s Classic <span class="badge badge-live">live</span></div>
+              <span class="desc">Original Node lobby</span>
+            </div>
+            <span class="variant-go">Enter →</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- Mahjong: mj03 + legacy war -->
+      <section class="family family-mj" aria-labelledby="mj-title">
+        <div class="family-head">
+          <div class="mark mark-mj" aria-hidden="true">
+            <img src="mj03/media/dragred.svg" alt="" width="40" height="50" decoding="async">
+          </div>
+          <div>
+            <h2 id="mj-title">Mahjong</h2>
+            <p class="blurb">Four-player Shanghai-style multiplayer.</p>
+          </div>
+        </div>
+        <div class="variants">
+          <a class="variant" href="/games/mj03/">
+            <div class="variant-main">
+              <div class="variant-title">Mahjong <span class="badge badge-live">live</span></div>
+              <span class="desc">Current client (mj03)</span>
+            </div>
+            <span class="variant-go">Enter →</span>
+          </a>
+          <a class="variant legacy" href="http://pizzamonster.org:8080/mjServer0-1.0-SNAPSHOT/">
+            <div class="variant-main">
+              <div class="variant-title">Old Mahjong Table <span class="badge badge-legacy">legacy</span></div>
+              <span class="desc">Earlier client — prefer mj03</span>
+            </div>
+            <span class="variant-go">Enter →</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- Yoyo -->
+      <section class="family family-yoyo" aria-labelledby="yoyo-title">
+        <div class="family-head">
+          <div class="mark mark-yoyo" aria-hidden="true">
+            <img src="yoyo/media/yoyo_jester_mark.jpg" alt="" width="160" height="238" decoding="async">
+          </div>
+          <div>
+            <h2 id="yoyo-title">Yoyo</h2>
+            <p class="blurb">Shedding card game with lobby ranks.</p>
+          </div>
+        </div>
+        <div class="variants">
+          <a class="variant" href="/games/yoyo/">
+            <div class="variant-main">
+              <div class="variant-title">Yoyo <span class="badge badge-live">live</span></div>
+              <span class="desc">President / Asshole-style shedding</span>
+            </div>
+            <span class="variant-go">Enter →</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- Jigsaw -->
+      <section class="family family-jigsaw" aria-labelledby="jigsaw-title">
+        <div class="family-head">
+          <div class="mark mark-jigsaw" aria-hidden="true">
+            <svg viewBox="0 0 64 64" width="48" height="48" role="img">
+              <title>Jigsaw piece</title>
+              <path
+                d="M10 22 h14 a8 8 0 1 0 0 16 a8 8 0 1 1 0 16 H10
+                   V42 a8 8 0 1 1 0 -16 V22 Z
+                   M38 22 h16 v12 a8 8 0 1 1 0 16 V54 H38
+                   a8 8 0 1 1 0 -16 a8 8 0 1 0 0 -16 Z"
+                fill="#ee6e73"
+                stroke="#a03338"
+                stroke-width="1.5"
+                stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div>
+            <h2 id="jigsaw-title">Jigsaw</h2>
+            <p class="blurb">Solo or shared browser puzzles.</p>
+          </div>
+        </div>
+        <div class="variants">
+          <a class="variant" href="/games/jigsaw/">
+            <div class="variant-main">
+              <div class="variant-title">Jigsaw <span class="badge badge-live">live</span></div>
+              <span class="desc">Bring your own images</span>
+            </div>
+            <span class="variant-go">Enter →</span>
+          </a>
+        </div>
+      </section>
     </div>
+
+    <footer>
+      <img
+        class="mascot"
+        src="media/pizzamonster_napping.png"
+        alt="Pizzamonster napping"
+        width="900"
+        height="141"
+        decoding="async"
+      >
+    </footer>
   </div>
 </body>
 </html>

@@ -5,11 +5,18 @@
   const SIGNOUT_KEY = 'a45s.signout';
   const PROFILE_CAP = 10;
 
-  function wsUrl(kind) {
+  // Prod WSS edge (a45s_web TLS on :3041). ?ws= overrides origin only.
+  const PROD_WS_ORIGIN = 'wss://www.pizzamonster.org:3041';
+
+  function wsOrigin() {
     const q = new URLSearchParams(location.search).get('ws');
-    if (q) return q;
-    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    return `${proto}://${location.host}/games/A45s/${kind}/ws`;
+    if (q) return q.replace(/\/$/, '');
+    if (location.protocol === 'https:') return PROD_WS_ORIGIN;
+    return `ws://${location.host}`;
+  }
+
+  function wsUrl(kind) {
+    return `${wsOrigin()}/games/A45s/${kind}/ws`;
   }
 
   function loadProfiles() {
