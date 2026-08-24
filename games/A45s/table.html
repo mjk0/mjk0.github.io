@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Auction 45s — Table</title>
-  <link rel="stylesheet" href="css/a45s_web.css?v=20260823c">
+  <link rel="stylesheet" href="css/a45s_web.css?v=20260823h">
 </head>
 <body class="felt-page">
   <div class="felt">
@@ -143,10 +143,7 @@
     <div class="felt-acts">
       <div id="acts" class="acts-bar"></div>
     </div>
-    <div class="felt-foot">
-      <p id="paused" class="sub" style="margin:0.2rem 0"></p>
-      <p id="status" class="status" style="margin:0.2rem 0"></p>
-    </div>
+    <p id="status" class="felt-toast" hidden role="status"></p>
   </div>
 
   <div id="panel-idle-warn" class="inspect idle-warn" hidden>
@@ -233,10 +230,22 @@
     let playHintKey = '';
     let playHintDismissed = '';
 
+    let statusClear = null;
+    // Overlay toast — does not reserve felt height (namebars cover pause).
     function setStatus(msg, kind) {
       const el = $('status');
-      el.textContent = msg || '';
-      el.className = 'status' + (kind ? ' ' + kind : '');
+      if (statusClear) { clearTimeout(statusClear); statusClear = null; }
+      if (!msg) {
+        el.hidden = true;
+        el.textContent = '';
+        el.className = 'felt-toast';
+        return;
+      }
+      el.hidden = false;
+      el.textContent = msg;
+      el.className = 'felt-toast' + (kind ? ' ' + kind : '');
+      const ms = kind === 'err' ? 6000 : 3500;
+      statusClear = setTimeout(() => setStatus(''), ms);
     }
 
     function rel(abs) {
@@ -1401,13 +1410,6 @@
       A.send(ws, { action: 'replaydeal' });
     }
 
-    function renderPaused() {
-      const seats = Object.keys(paused);
-      $('paused').textContent = seats.length
-        ? 'Paused: ' + seats.map((s) => paused[s] || who(+s)).join(', ')
-        : '';
-    }
-
     function histWinCells(tr, a, b) {
       const ea = document.createElement('td');
       const eb = document.createElement('td');
@@ -1663,21 +1665,18 @@
         }
         if (j.action === 'paused') {
           paused[j.seat] = j.username;
-          renderPaused();
           setStatus(j.username + ' disconnected — offer robot or wait', 'err');
           if (lastState) renderState(lastState);
           return;
         }
         if (j.action === 'resumed') {
           delete paused[j.seat];
-          renderPaused();
           setStatus(j.username + ' back', 'ok');
           if (lastState) renderState(lastState);
           return;
         }
         if (j.action === 'robottookover') {
           delete paused[j.seat];
-          renderPaused();
           setStatus(who(j.seat) + ' is now ' + j.name, 'ok');
           if (lastState) renderState(lastState);
           return;
