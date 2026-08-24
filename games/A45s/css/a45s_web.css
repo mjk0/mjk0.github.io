@@ -96,8 +96,17 @@ nav.bar { font-size: 0.9rem; margin-bottom: 1rem; }
 code { font-size: 0.85rem; }
 
 /* —— table felt (step 7) —— */
+html:has(body.felt-page) {
+  height: 100%;
+  overflow: hidden;
+}
 body.felt-page {
   background: #1c6840;
+  /* System sans (no webfont). Namebars, ovals, score, +N inherit. */
+  font-family: system-ui, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-weight: normal;
+  height: 100%;
+  overflow: hidden;
   /* On body so #inspect (outside .felt) can size the overlap stack.
      Slightly larger after dropping the felt-foot status row. */
   --card-w: clamp(2.5rem, min(9.9vh, 11vw), 15vh);
@@ -119,16 +128,21 @@ body.felt-page .wrap { display: none; }
   --fan-h: calc(var(--fan-w) * 0.5);
   --pile-w: calc(var(--card-w) * 0.62);
   --pile-h: calc(var(--card-h) * 0.62);
-  --name-fs: clamp(0.88rem, min(2.6vh, 2.4vw), 2.4vh);
+  /* Middle ground vs Node (namebar 3vh / playEnd 2.8vmax): a bit under old. */
+  --name-fs: clamp(0.95rem, min(2.8vh, 2.8vw), 2.8vh);
   font-size: clamp(0.88rem, min(2.2vh, 2vw), 2.1vh);
   position: relative;
-  min-height: 100vh;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   grid-template-rows: auto auto 1fr auto auto;
   gap: 0.4em 0.55em;
   padding: 0.4em 0.6em 0.55em;
   width: 100%;
+  overflow: hidden;
 }
 .felt button {
   font-size: 1em;
@@ -162,7 +176,7 @@ body.felt-page .wrap { display: none; }
 .felt .fill-btn {
   min-width: 0;
   font-weight: bold;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: inherit;
   padding: 0.22em 0.4em;
   font-size: 0.95em;
   letter-spacing: 0.02em;
@@ -359,14 +373,16 @@ body.felt-page .wrap { display: none; }
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.3em;
+  gap: 0.25em;
   background: var(--steel);
   color: #111;
   border: 3px solid transparent;
   box-shadow: 0 0 0 1px #222;
-  padding: 0.12em 0.5em;
+  /* Keep larger --name-fs; tight pad like Node play.css (padding: 0). */
+  padding: 0 0.35em;
   font-size: var(--name-fs);
-  min-height: 1.55em;
+  line-height: 1.15;
+  min-height: 0;
   min-width: var(--fan-w);
   box-sizing: border-box;
   position: relative;
@@ -397,26 +413,27 @@ body.felt-page .wrap { display: none; }
   opacity: 0.85;
   flex-shrink: 0;
 }
-.robot-offer {
+/* Beat `.felt button` padding/font — ~2/3 the default felt-button height. */
+.felt button.robot-offer {
   display: inline-block;
-  margin: 0.28em auto 0;
-  padding: 0.2em 0.75em;
+  margin: 0.18em auto 0;
+  padding: 0.12em 0.7em;
   font-size: 0.82em;
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.1;
   white-space: nowrap;
   color: #111;
   background: var(--steel);
   border: 2px solid #333;
   border-radius: 999px;
-  box-shadow: 0 0.1em 0 0 #333, 0 0.18em 0.3em rgba(0, 0, 0, 0.22);
+  box-shadow: 0 0.06em 0 0 #333, 0 0.12em 0.22em rgba(0, 0, 0, 0.22);
   animation: bid-wait 1.15s ease-in-out infinite;
   cursor: pointer;
 }
-.robot-offer:hover {
+.felt button.robot-offer:hover {
   filter: brightness(1.06);
 }
-.robot-offer[hidden] { display: none !important; }
+.felt button.robot-offer[hidden] { display: none !important; }
 .seatbox > .robot-offer { display: block; }
 .fan svg, .fan-back {
   width: var(--fan-w);
@@ -811,7 +828,7 @@ body.felt-page .wrap { display: none; }
   border-radius: 50%;
   text-align: center;
   font-weight: bold;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: inherit;
   pointer-events: none;
   z-index: 2;
   transform: translateY(var(--oval-ty));
@@ -1038,9 +1055,10 @@ body.felt-page .wrap { display: none; }
   position: absolute;
   z-index: 3;
   pointer-events: none;
-  font-family: Georgia, "Times New Roman", serif;
-  font-weight: bold;
-  font-size: clamp(1.2rem, min(4.2vh, 4vw), 3.2vh);
+  /* Node .anim-plus: inherit Materialize sans, weight normal (~4vh). */
+  font-family: inherit;
+  font-weight: normal;
+  font-size: clamp(1.2rem, min(4vh, 4vw), 4vh);
   line-height: 1;
   color: #fff8e7;
   text-shadow: 0 0 0.12em #111, 0 0.05em 0.2em #000, 0 0 0.35em #1c6840;
@@ -1147,15 +1165,25 @@ body.felt-page .wrap { display: none; }
   border-collapse: separate;
   border-spacing: 0;
   margin: 0.1em 0;
-  font-size: clamp(0.95rem, min(2.6vh, 2.4vw), 2.2vh);
+  font-size: clamp(1rem, min(2.6vh, 2.6vw), 2.6vh);
 }
 .scorecard-inner col.scorecard-team { width: 5.5em; }
 .scorecard-inner th,
 .scorecard-inner td {
-  padding: 0.22em 0.55em;
+  /* Node playEnd used 0 5px — keep bigger type, less cell air. */
+  padding: 0 0.4em;
   text-align: center;
   min-width: 2.4em;
+  line-height: 1.2;
   overflow: visible;
+}
+/* Title: New game + White/Red — a touch smaller; Hand/Series get the air. */
+.scorecard-inner tr:first-child th {
+  font-size: 0.88em;
+}
+.scorecard-inner tr:nth-child(2) td,
+.scorecard-inner tr:nth-child(3) td {
+  padding: 0.22em 0.4em;
 }
 .scorecard-inner .pair-ew,
 .scorecard-inner .pair-ns,

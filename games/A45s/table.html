@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Auction 45s — Table</title>
-  <link rel="stylesheet" href="css/a45s_web.css?v=20260823h">
+  <link rel="stylesheet" href="css/a45s_web.css?v=20260824h">
 </head>
 <body class="felt-page">
   <div class="felt">
@@ -491,8 +491,13 @@
       return btn;
     }
 
+    // Take over only while the series is live (hide after series end).
+    function handoffOk(st) {
+      return !!(st && !st.series_over);
+    }
+
     function syncRobotOffer(btn, seat) {
-      if (paused[seat] == null) {
+      if (paused[seat] == null || !handoffOk(lastState)) {
         btn.hidden = true;
         btn.removeAttribute('title');
         btn.removeAttribute('aria-label');
@@ -853,7 +858,8 @@
           keep.add(c);
           renderState(st);
         });
-      } else if (st.why === 'play') {
+      } else if (st.why === 'play' && isActor(st, me)) {
+        // Dim illegal cards only on our turn — keep the hand full opacity while waiting.
         svg.classList.add('dim');
       }
       return svg;
