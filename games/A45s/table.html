@@ -4,9 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Auction 45s — Table</title>
-  <link rel="stylesheet" href="css/a45s_web.css?v=20260824h">
+  <link rel="stylesheet" href="css/a45s_web.css?v=20260824t">
 </head>
 <body class="felt-page">
+  <div class="felt-shell">
   <div class="felt">
     <header class="felt-head">
       <div class="head-left">
@@ -25,6 +26,7 @@
       </div>
       <div class="head-right">
         <button id="fill-btn" class="ghost fill-btn" type="button" hidden title="Show fill-in counts" aria-label="Show fill-in counts" aria-pressed="false">+N</button>
+        <button id="lobby-btn" class="ghost lobby-btn" type="button" title="Lobby panel" aria-label="Open lobby panel" aria-expanded="false" aria-controls="lobby-drawer">Lobby</button>
         <button id="leavegame" class="ghost" type="button">Leave</button>
         <div class="gear-wrap">
           <button id="rank-gear" class="rank-gear" type="button" title="Table options" aria-label="Table options" aria-haspopup="true" aria-expanded="false" aria-controls="gear-pop"><svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.07 7.07 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 1h-3.8a.5.5 0 0 0-.5.42l-.36 2.54c-.59.24-1.13.55-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 7.48a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.58a.5.5 0 0 0-.12.64l1.92 3.32c.14.24.43.34.68.22l2.39-.96c.5.39 1.04.7 1.63.94l.36 2.54c.05.24.26.42.5.42h3.8c.24 0 .45-.18.5-.42l.36-2.54c.59-.24 1.13-.55 1.63-.94l2.39.96c.25.1.54 0 .68-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/></svg></button>
@@ -146,6 +148,22 @@
     <p id="status" class="felt-toast" hidden role="status"></p>
   </div>
 
+  <aside id="lobby-drawer" class="lobby-drawer" hidden aria-hidden="true" aria-label="Lobby panel">
+    <header class="lobby-drawer-head">
+      <h2 class="lobby-drawer-title">Lobby</h2>
+      <span class="lobby-drawer-conn" data-el="conn" role="status" aria-live="polite">…</span>
+      <button type="button" id="lobby-drawer-close" class="lobby-drawer-close" aria-label="Close lobby panel">✕</button>
+    </header>
+    <div class="lobby-drawer-body">
+      <p id="lobby-drawer-note" class="lobby-drawer-note" data-el="note" hidden></p>
+      <section class="lobby-drawer-invite" data-el="invite-strip" hidden aria-label="Invite"></section>
+      <div class="lobby-drawer-social lobby-side" id="lobby-drawer-social"></div>
+    </div>
+  </aside>
+  </div><!-- .felt-shell -->
+
+  <div id="lobby-drawer-scrim" class="lobby-drawer-scrim" hidden></div>
+
   <div id="panel-idle-warn" class="inspect idle-warn" hidden>
     <div class="panel" role="alertdialog" aria-labelledby="idle-warn-title" aria-describedby="idle-warn-desc">
       <p id="idle-warn-title" class="sub">Table idle</p>
@@ -178,6 +196,8 @@
   </div>
 
   <script src="js/a45s_web.js?v=20260823e"></script>
+  <script src="js/lobby_social.js?v=20260824c"></script>
+  <script src="js/table_lobby.js?v=20260824e"></script>
   <script>
     const $ = (id) => document.getElementById(id);
     const A = A45sWeb;
@@ -320,6 +340,7 @@
         el.textContent = '';
         el.appendChild(A.suitSvg(mark.trump, 'oval-suit'));
         const num = document.createElement('span');
+        num.className = 'contract-amt';
         num.textContent = String(mark.amount);
         el.appendChild(num);
       } else {
@@ -774,6 +795,148 @@
       }
       pocket.style.left = Math.round(mx - f.left - padL - pocket.offsetWidth / 2) + 'px';
       pocket.style.top = Math.round(my - f.top - padT - pocket.offsetHeight / 2) + 'px';
+    }
+
+    // Lobby-from-table: dock/overlay + lobby WS (allowlisted cmds in table_lobby.js).
+    const LOBBY_DRAWER_W_REM = 19;
+    const LOBBY_MIN_FELT_PX = 640;
+    let lobbyPanelOpen = false;
+    const tableLobby = A45sTableLobby.create({
+      rootEl: $('lobby-drawer-social'),
+      connEl: document.querySelector('#lobby-drawer [data-el="conn"]'),
+      noteEl: document.querySelector('#lobby-drawer [data-el="note"]'),
+      inviteEl: document.querySelector('#lobby-drawer [data-el="invite-strip"]'),
+      A,
+      getSession: () => A.getSession() || sess,
+      onFeltToast: (text, kind) => setStatus(text, kind),
+    });
+
+    function lobbyPreferDock() {
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      return window.innerWidth - LOBBY_DRAWER_W_REM * rem >= LOBBY_MIN_FELT_PX;
+    }
+
+    /** Overlay focus trap: drawer + portaled invite popover. */
+    function lobbyFocusables() {
+      const roots = [$('lobby-drawer')];
+      document.querySelectorAll('.invite-panel[data-portal]').forEach((el) => roots.push(el));
+      const sel = [
+        'a[href]',
+        'button:not([disabled])',
+        'input:not([disabled])',
+        'select:not([disabled])',
+        'textarea:not([disabled])',
+        '[tabindex]:not([tabindex="-1"])',
+      ].join(',');
+      const list = [];
+      for (const root of roots) {
+        if (!root || root.hidden) continue;
+        root.querySelectorAll(sel).forEach((el) => {
+          if (el.getAttribute('aria-hidden') === 'true') return;
+          if (el.closest('[hidden]')) return;
+          list.push(el);
+        });
+      }
+      return list;
+    }
+
+    function onLobbyFocusTrap(ev) {
+      if (ev.key !== 'Tab') return;
+      if (!lobbyPanelOpen || !document.body.classList.contains('lobby-overlay')) return;
+      const list = lobbyFocusables();
+      if (!list.length) return;
+      const first = list[0];
+      const last = list[list.length - 1];
+      const active = document.activeElement;
+      if (ev.shiftKey) {
+        if (active === first || !list.includes(active)) {
+          ev.preventDefault();
+          last.focus();
+        }
+      } else if (active === last || !list.includes(active)) {
+        ev.preventDefault();
+        first.focus();
+      }
+    }
+
+    /** When docked, --card-w must track .felt box — viewport vw ignores the drawer. */
+    function syncLobbyCardSize() {
+      const body = document.body;
+      const felt = document.querySelector('.felt');
+      if (!body.classList.contains('lobby-dock') || !felt) {
+        body.style.removeProperty('--card-w');
+        return;
+      }
+      const w = felt.clientWidth;
+      const h = felt.clientHeight || window.innerHeight;
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      const min = 2.5 * rem;
+      const max = h * 0.15;
+      const mid = Math.min(h * 0.099, w * 0.11);
+      body.style.setProperty('--card-w', Math.min(max, Math.max(min, mid)) + 'px');
+    }
+
+    function afterLobbyLayout() {
+      syncLobbyCardSize();
+      requestAnimationFrame(() => {
+        placeSidePocket();
+        syncLobbyCardSize();
+      });
+    }
+
+    function syncLobbyPanelMode() {
+      const body = document.body;
+      const drawer = $('lobby-drawer');
+      const scrim = $('lobby-drawer-scrim');
+      const btn = $('lobby-btn');
+      body.classList.remove('lobby-dock', 'lobby-overlay');
+      if (!lobbyPanelOpen) {
+        if (drawer) {
+          drawer.hidden = true;
+          drawer.setAttribute('aria-hidden', 'true');
+        }
+        if (scrim) scrim.hidden = true;
+        if (btn) {
+          btn.setAttribute('aria-expanded', 'false');
+          btn.title = 'Lobby panel';
+          btn.setAttribute('aria-label', 'Open lobby panel');
+        }
+        afterLobbyLayout();
+        return;
+      }
+      const dock = lobbyPreferDock();
+      body.classList.add(dock ? 'lobby-dock' : 'lobby-overlay');
+      if (drawer) {
+        drawer.hidden = false;
+        drawer.setAttribute('aria-hidden', 'false');
+      }
+      if (scrim) scrim.hidden = dock;
+      if (btn) {
+        btn.setAttribute('aria-expanded', 'true');
+        btn.title = 'Close lobby panel';
+        btn.setAttribute('aria-label', 'Close lobby panel');
+      }
+      afterLobbyLayout();
+    }
+
+    function setLobbyPanelOpen(open) {
+      const wasOpen = lobbyPanelOpen;
+      lobbyPanelOpen = !!open;
+      syncLobbyPanelMode();
+      if (lobbyPanelOpen) {
+        tableLobby.attach();
+        // Overlay: move focus into the panel; dock leaves felt focus alone for play.
+        if (!wasOpen && document.body.classList.contains('lobby-overlay')) {
+          requestAnimationFrame(() => $('lobby-drawer-close')?.focus());
+        }
+      } else {
+        tableLobby.detach();
+        if (wasOpen) $('lobby-btn')?.focus();
+      }
+    }
+
+    function toggleLobbyPanel() {
+      setLobbyPanelOpen(!lobbyPanelOpen);
     }
 
     function renderSidePocket(st) {
@@ -1550,10 +1713,19 @@
       me = j.seat;
     }
 
-    window.addEventListener('resize', () => requestAnimationFrame(placeSidePocket));
+    window.addEventListener('resize', () => requestAnimationFrame(() => {
+      if (lobbyPanelOpen) syncLobbyPanelMode();
+      else {
+        placeSidePocket();
+        syncLobbyCardSize();
+      }
+    }));
     if (window.matchMedia) {
       window.matchMedia('(max-width: 700px)').addEventListener('change', () => {
-        requestAnimationFrame(placeSidePocket);
+        requestAnimationFrame(() => {
+          if (lobbyPanelOpen) syncLobbyPanelMode();
+          else placeSidePocket();
+        });
       });
     }
 
@@ -1589,6 +1761,18 @@
         setHistOpen(false);
         return;
       }
+      // Invite popover first (toggle / Escape); then overlay close.
+      if (ev.key === 'Escape' && tableLobby.closeInviteIfOpen()) {
+        ev.preventDefault();
+        return;
+      }
+      // Overlay only — dock stays open until Lobby / ✕ (plan Phase 1).
+      if (ev.key === 'Escape' && lobbyPanelOpen && document.body.classList.contains('lobby-overlay')) {
+        ev.preventDefault();
+        setLobbyPanelOpen(false);
+        return;
+      }
+      onLobbyFocusTrap(ev);
       if (!lastState || lastState.phase !== 'handend') return;
       const n = (lastState.past_tricks || []).length;
       if (!n) return;
@@ -1601,6 +1785,9 @@
       try { localStorage.setItem(FILL_PREF, fillLatch ? '1' : '0'); } catch (e) {}
       if (lastState) renderState(lastState);
     });
+    $('lobby-btn').addEventListener('click', () => toggleLobbyPanel());
+    $('lobby-drawer-close').addEventListener('click', () => setLobbyPanelOpen(false));
+    $('lobby-drawer-scrim').addEventListener('click', () => setLobbyPanelOpen(false));
     $('rank-gear').addEventListener('click', (ev) => {
       ev.stopPropagation();
       if (histOpen) setHistOpen(false);
@@ -1766,6 +1953,7 @@
       $('btn-idle-leave').addEventListener('click', () => $('leavegame').click());
       $('leavegame').addEventListener('click', () => {
         leaving = true;
+        tableLobby.detachNow();
         const s = A.getSession() || {};
         delete s.table;
         delete s.seat;

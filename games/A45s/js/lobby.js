@@ -20,16 +20,8 @@
   let pendingDevDelete = '';
   let tables = [];
   let online = [];
-  let news = [];
-  let feedback = [];
-  let chatMessages = []; // { from, text, at } for durable unread recompute
-  let fbExpanded = '';
-  let unread = { news: 0, chat: 0, feedback: 0 };
-  let talkBootstrapped = false; // first News snapshot while News open → mark read
   let optsOpen = '';
-  let inviteOpen = '';
   let myPrefs = { robots: 'random', replay: false, friends: [], talk_read: {} };
-  let ranksState = { rows: [], you: null };
   // Same path as table.html rank-gear — crisp at small size vs Unicode ⚙.
   const GEAR_SVG = '<svg class="gear-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.07 7.07 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 1h-3.8a.5.5 0 0 0-.5.42l-.36 2.54c-.59.24-1.13.55-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.7 7.48a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.82 14.58a.5.5 0 0 0-.12.64l1.92 3.32c.14.24.43.34.68.22l2.39-.96c.5.39 1.04.7 1.63.94l.36 2.54c.05.24.26.42.5.42h3.8c.24 0 .45-.18.5-.42l.36-2.54c.59-.24 1.13-.55 1.63-.94l2.39.96c.25.1.54 0 .68-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/></svg>';
 
@@ -75,62 +67,6 @@
   function sameName(a, b) {
     return String(a || '').toLowerCase() === String(b || '').toLowerCase();
   }
-  function displayTableName(id) {
-    const m = /^Open(\d+)$/i.exec(String(id || ''));
-    return m ? 'Table #' + m[1] : String(id || '');
-  }
-  function isOpenTable(id) {
-    return /^Open\d+$/i.test(String(id || ''));
-  }
-  function isPresenceOnline(p) {
-    const w = (p && p.where) || '';
-    return w === 'lobby' || w === 'table' || w === 'playing';
-  }
-  // Coarse offline buckets (no exact disconnect time) — match Yoyo.
-  function formatOfflineSeen(iso) {
-    if (!iso || iso === 'now') return 'offline';
-    const t = Date.parse(iso);
-    if (Number.isNaN(t)) return 'offline';
-    const now = new Date();
-    const then = new Date(t);
-    const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    const startThen = new Date(then.getFullYear(), then.getMonth(), then.getDate()).getTime();
-    const dayDiff = Math.round((startToday - startThen) / 86400000);
-    if (dayDiff <= 0) return 'earlier today';
-    if (dayDiff === 1) return 'yesterday';
-    if (dayDiff < 14) return dayDiff + ' days ago';
-    return 'a while ago';
-  }
-  function formatPresenceStatus(p) {
-    const w = p && p.where;
-    if (w === 'table') {
-      return isOpenTable(p.table) ? displayTableName(p.table) : 'waiting';
-    }
-    if (w === 'playing') {
-      return isOpenTable(p.table) ? displayTableName(p.table) + ' · playing' : 'playing';
-    }
-    if (w === 'offline') return formatOfflineSeen(p.last_seen);
-    return 'lobby';
-  }
-  function presenceBand(p) {
-    switch (p && p.where) {
-      case 'lobby': return 0;
-      case 'table': return 1;
-      case 'playing': return 2;
-      default: return 3;
-    }
-  }
-  function sortPeople(list) {
-    return (list || []).slice().sort((a, b) => {
-      const ba = presenceBand(a);
-      const bb = presenceBand(b);
-      if (ba !== bb) return ba - bb;
-      if (ba === 3) {
-        return String(b.last_seen || '').localeCompare(String(a.last_seen || ''));
-      }
-      return String(a.name || '').localeCompare(String(b.name || ''));
-    });
-  }
   function isBot(n) { return /^B\./.test(String(n || '')); }
   function ghostTitle(t, i) {
     const g = t.last && t.last[i];
@@ -163,6 +99,26 @@
   function minePriv() {
     return tables.find((t) => t.private && sameName(t.id, me));
   }
+
+  const social = A45sLobbySocial.mount(document.querySelector('.lobby-side'), {
+    mode: 'page',
+    wsSend: (msg) => A.send(ws, msg),
+    getMe: () => me,
+    getIsDev: () => isDev,
+    getAuthenticated: () => authenticated,
+    getPrefs: () => myPrefs,
+    patchPrefs: (partial) => {
+      if (partial.friends) myPrefs.friends = partial.friends;
+      if (partial.talk_read) myPrefs.talk_read = normalizeTalkRead(partial.talk_read);
+    },
+    getOnline: () => online,
+    getMinePriv: () => minePriv(),
+    getTable: (id) => tables.find((t) => t.id === id) || null,
+    onDevDeleteUser: (n) => requestDevDeleteUser(n),
+    onBanner: (text, kind) => setBanner(text, kind),
+    onInviteUiChange: () => renderTables(),
+    canInviteAfterStart: true,
+  });
   function persistSeat() {
     const sess = A.getSession() || {};
     const mine = mySeat();
@@ -457,7 +413,7 @@
     authPanel = A.loadProfiles().length ? 'gate' : 'first';
     setStatus('sign in');
     renderTables();
-    renderOnline();
+    social.renderPlayers();
     renderAuth();
     setBanner('Username deleted on the server.', 'ok');
   }
@@ -528,11 +484,7 @@
     $('btn-profile').disabled = !live;
     if (!live) closeMenu();
     $('btn-create').disabled = !authenticated;
-    const chatOn = authenticated;
-    $('chat-text').disabled = !chatOn;
-    $('chat-form').querySelector('button').disabled = !chatOn;
-    $('btn-feedback-new').disabled = !authenticated;
-    $('news-compose').hidden = !isDev;
+    social.syncAuthControls();
     syncBanner();
   }
 
@@ -561,18 +513,11 @@
     if (ws) { try { ws.close(); } catch (_) {} ws = null; }
     tables = [];
     online = [];
-    news = [];
-    feedback = [];
-    chatMessages = [];
-    talkBootstrapped = false;
     myPrefs = normalizePrefs(null);
-    ranksState = { rows: [], you: null };
-    clearAllUnread();
+    social.reset();
     authPanel = A.loadProfiles().length ? 'gate' : 'first';
     setStatus('sign in');
     renderTables();
-    renderOnline();
-    renderRanks();
     renderAuth();
   }
 
@@ -620,110 +565,6 @@
       'prompt',
       { html: true },
     );
-  }
-
-  function invitedList(t) {
-    return (t && t.invited || []).filter((n) => String(n || '').trim());
-  }
-  function nameInList(list, name) {
-    return (list || []).some((n) => sameName(n, name));
-  }
-  function sendInviteList(list) {
-    A.send(ws, { action: 'invite', list: list.slice() });
-  }
-  function inviteAdd(name, asFriend) {
-    const t = minePriv();
-    if (!t || sameName(name, me)) return;
-    const n = String(name || '').trim();
-    if (!n) return;
-    const list = invitedList(t);
-    if (!nameInList(list, n)) list.push(n);
-    sendInviteList(list);
-    if (asFriend && !nameInList(myPrefs.friends, n)) {
-      const friends = myPrefs.friends.concat([n]);
-      myPrefs.friends = friends;
-      A.send(ws, { action: 'setprefs', friends });
-    }
-  }
-  function inviteRemove(name) {
-    const t = minePriv();
-    if (!t) return;
-    sendInviteList(invitedList(t).filter((n) => !sameName(n, name)));
-  }
-  function unfriend(name) {
-    const friends = myPrefs.friends.filter((n) => !sameName(n, name));
-    myPrefs.friends = friends;
-    A.send(ws, { action: 'setprefs', friends });
-  }
-  function mergeFriendsIntoInvited(t) {
-    if (!t || !myPrefs.friends.length) return;
-    const list = invitedList(t);
-    let changed = false;
-    myPrefs.friends.forEach((f) => {
-      if (sameName(f, me) || nameInList(list, f)) return;
-      list.push(f);
-      changed = true;
-    });
-    if (changed) sendInviteList(list);
-  }
-
-  function renderOnline() {
-    const ul = $('online-list');
-    ul.innerHTML = '';
-    const canInvite = !!(minePriv() && !minePriv().started);
-    const OFFLINE_CAP = 15;
-    let offlineN = 0;
-    const people = [];
-    for (const p of sortPeople(online)) {
-      if (!isPresenceOnline(p)) {
-        offlineN += 1;
-        if (offlineN > OFFLINE_CAP) continue;
-      }
-      people.push(p);
-    }
-    if (!people.length) {
-      ul.innerHTML = '<li class="empty-state">No one signed in.</li>';
-      return;
-    }
-    people.forEach((p) => {
-      const n = p.name;
-      const offline = !isPresenceOnline(p);
-      const li = document.createElement('li');
-      li.className = 'player-row' + (offline ? ' offline' : '') + (sameName(n, me) ? ' me' : '');
-      if (canInvite && !offline && !sameName(n, me)) {
-        li.classList.add('inviteable');
-        li.title = 'Invite to your private table';
-        li.addEventListener('click', () => inviteAdd(n));
-      }
-      const nameEl = document.createElement('span');
-      nameEl.className = 'player-name';
-      nameEl.textContent = n;
-      if (p.is_dev) {
-        const badge = document.createElement('span');
-        badge.className = 'badge-dev';
-        badge.textContent = 'Dev';
-        nameEl.append(' ', badge);
-      }
-      const st = document.createElement('span');
-      st.className = 'player-status';
-      st.textContent = formatPresenceStatus(p);
-      li.append(nameEl, st);
-      // I3: Dev may delete another username (not self — use Manage for that).
-      if (isDev && me && !sameName(n, me)) {
-        const del = document.createElement('button');
-        del.type = 'button';
-        del.className = 'icon-btn danger trash-btn player-dev-delete';
-        del.textContent = '🗑';
-        del.title = 'Dev: delete this username on the server';
-        del.setAttribute('aria-label', del.title);
-        del.addEventListener('click', (ev) => {
-          ev.stopPropagation();
-          requestDevDeleteUser(n);
-        });
-        li.appendChild(del);
-      }
-      ul.appendChild(li);
-    });
   }
 
   function seatSlot(t, i) {
@@ -801,11 +642,6 @@
     optsOpen = '';
     document.querySelectorAll('.opts-popover[data-portal]').forEach((el) => el.remove());
   }
-  function closeInvite() {
-    inviteOpen = '';
-    document.querySelectorAll('.invite-panel[data-portal]').forEach((el) => el.remove());
-  }
-
   function placePopover(anchor, pop) {
     const r = anchor.getBoundingClientRect();
     const w = pop.offsetWidth || 208;
@@ -889,7 +725,7 @@
   }
 
   function mountOpenPopovers() {
-    document.querySelectorAll('.opts-popover[data-portal], .invite-panel[data-portal]').forEach((el) => el.remove());
+    document.querySelectorAll('.opts-popover[data-portal]').forEach((el) => el.remove());
     if (optsOpen) {
       const t = tables.find((x) => x.id === optsOpen);
       const btn = document.querySelector(`.gear-btn[data-table="${CSS.escape(optsOpen)}"]`);
@@ -900,16 +736,7 @@
         placePopover(btn, pop);
       }
     }
-    if (inviteOpen) {
-      const t = tables.find((x) => x.id === inviteOpen);
-      const btn = document.querySelector(`.invite-summary-btn[data-table="${CSS.escape(inviteOpen)}"]`);
-      if (!t || !btn) inviteOpen = '';
-      else {
-        const pop = renderInvitePanel(t);
-        document.body.appendChild(pop);
-        placePopover(btn, pop);
-      }
-    }
+    social.remountInvitePopover();
   }
 
   function gearBtn(t) {
@@ -925,190 +752,12 @@
     gear.setAttribute('aria-expanded', optsOpen === t.id ? 'true' : 'false');
     gear.addEventListener('click', (e) => {
       e.stopPropagation();
-      closeInvite();
+      social.closeInvite();
       optsOpen = optsOpen === t.id ? '' : t.id;
       renderTables();
     });
     wrap.appendChild(gear);
     return wrap;
-  }
-
-  function renderInvitePanel(t) {
-    const pop = document.createElement('div');
-    pop.className = 'invite-panel';
-    pop.dataset.portal = '1';
-    pop.setAttribute('role', 'dialog');
-    pop.setAttribute('aria-label', 'Invite players');
-    pop.addEventListener('click', (e) => e.stopPropagation());
-    const inv = invitedList(t);
-    const friends = myPrefs.friends;
-    const section = (title, child) => {
-      const sec = document.createElement('div');
-      sec.className = 'invite-section';
-      const lab = document.createElement('div');
-      lab.className = 'invite-sec-label';
-      lab.textContent = title;
-      sec.appendChild(lab);
-      sec.appendChild(child);
-      return sec;
-    };
-
-    const cur = document.createElement('div');
-    cur.className = 'invite-chips';
-    if (!inv.length) {
-      const empty = document.createElement('span');
-      empty.className = 'invite-empty';
-      empty.textContent = 'No one invited yet';
-      cur.appendChild(empty);
-    } else {
-      inv.forEach((name) => {
-        const chip = document.createElement('span');
-        chip.className = 'invite-chip' + (nameInList(friends, name) ? ' friend' : '');
-        chip.appendChild(document.createTextNode(name + (nameInList(friends, name) ? ' ★' : '')));
-        const x = document.createElement('button');
-        x.type = 'button';
-        x.className = 'invite-x';
-        x.textContent = '×';
-        x.title = 'Remove invite';
-        x.addEventListener('click', () => inviteRemove(name));
-        chip.appendChild(x);
-        cur.appendChild(chip);
-      });
-    }
-    pop.appendChild(section('Invited (' + inv.length + ')', cur));
-
-    const others = sortPeople(
-      online.filter(
-        (p) => isPresenceOnline(p) && !sameName(p.name, me) && !nameInList(inv, p.name),
-      ),
-    );
-    const inLobby = others.filter((p) => p.where !== 'playing');
-    const inGame = others.filter((p) => p.where === 'playing');
-    const addRow = (name, playing) => {
-      const row = document.createElement('span');
-      row.className = 'invite-add-row' + (playing ? ' in-game' : '');
-      const add = document.createElement('button');
-      add.type = 'button';
-      add.className = 'invite-plus';
-      add.textContent = '+ ' + name;
-      add.title = playing
-        ? "In a game — they'll see this table when they return."
-        : 'Invite';
-      add.addEventListener('click', () => inviteAdd(name, false));
-      const star = document.createElement('button');
-      star.type = 'button';
-      star.className = 'icon-btn invite-star';
-      star.textContent = '★';
-      star.title = 'Invite and mark as friend (always invited)';
-      star.addEventListener('click', () => inviteAdd(name, true));
-      row.appendChild(add);
-      row.appendChild(star);
-      return row;
-    };
-
-    const lobbyHost = document.createElement('div');
-    lobbyHost.className = 'invite-chips';
-    if (!inLobby.length) {
-      if (!inGame.length) {
-        const empty = document.createElement('span');
-        empty.className = 'invite-empty';
-        empty.textContent = 'No other players online';
-        lobbyHost.appendChild(empty);
-        pop.appendChild(section('In lobby', lobbyHost));
-      }
-    } else {
-      inLobby.forEach((p) => lobbyHost.appendChild(addRow(p.name, false)));
-      pop.appendChild(section('In lobby', lobbyHost));
-    }
-    if (inGame.length) {
-      const gameHost = document.createElement('div');
-      gameHost.className = 'invite-chips';
-      inGame.forEach((p) => gameHost.appendChild(addRow(p.name, true)));
-      pop.appendChild(section('In a game', gameHost));
-    }
-
-    const frHost = document.createElement('div');
-    frHost.className = 'invite-chips';
-    if (!friends.length) {
-      const empty = document.createElement('span');
-      empty.className = 'invite-empty';
-      empty.textContent = 'No friends yet — use ★ when inviting';
-      frHost.appendChild(empty);
-    } else {
-      friends.forEach((name) => {
-        const chip = document.createElement('span');
-        chip.className = 'invite-chip friend';
-        chip.appendChild(document.createTextNode(name));
-        if (!nameInList(inv, name)) {
-          const add = document.createElement('button');
-          add.type = 'button';
-          add.className = 'invite-mini';
-          add.textContent = '+';
-          add.title = 'Invite now';
-          add.addEventListener('click', () => inviteAdd(name, false));
-          chip.appendChild(add);
-        }
-        const x = document.createElement('button');
-        x.type = 'button';
-        x.className = 'invite-x';
-        x.textContent = '×';
-        x.title = 'Unfriend';
-        x.addEventListener('click', () => unfriend(name));
-        chip.appendChild(x);
-        frHost.appendChild(chip);
-      });
-    }
-    pop.appendChild(section('Friends (auto-invited)', frHost));
-
-    const type = document.createElement('form');
-    type.className = 'invite-type';
-    type.innerHTML = '<input type="text" maxlength="32" placeholder="Invite by name…">';
-    type.addEventListener('submit', (ev) => {
-      ev.preventDefault();
-      const inp = type.querySelector('input');
-      const n = inp.value.trim();
-      if (n) { inviteAdd(n, false); inp.value = ''; }
-    });
-    pop.appendChild(type);
-    return pop;
-  }
-
-  function renderInviteRow(t) {
-    const row = document.createElement('div');
-    row.className = 'invite-row';
-    const inv = invitedList(t);
-    const owner = t.private && sameName(t.id, me);
-    if (owner) {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'invite-summary-btn';
-      btn.dataset.table = t.id;
-      btn.setAttribute('aria-expanded', inviteOpen === t.id ? 'true' : 'false');
-      btn.textContent = inv.length ? '👤 Invited: ' + inv.length : '👤 Invite';
-      btn.title = inv.length ? inv.join(', ') : 'Invite players';
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        closeOpts();
-        if (inviteOpen === t.id) {
-          inviteOpen = '';
-        } else {
-          inviteOpen = t.id;
-          mergeFriendsIntoInvited(t);
-        }
-        renderTables();
-      });
-      row.appendChild(btn);
-    }
-    if (inv.length) {
-      const names = document.createElement('span');
-      names.className = 'invite-names';
-      names.textContent = (owner ? '' : 'Invited: ') + inv.join(', ');
-      names.title = inv.join(', ');
-      row.appendChild(names);
-    } else if (!owner) {
-      return null;
-    }
-    return row;
   }
 
   function renderTable(t) {
@@ -1215,7 +864,7 @@
     card.appendChild(seatPairs(t));
 
     if (t.private) {
-      const extras = renderInviteRow(t);
+      const extras = social.renderInviteRow(t, { closeOpts });
       if (extras) card.appendChild(extras);
     }
     return card;
@@ -1227,7 +876,7 @@
       root.innerHTML = authenticated
         ? '<p class="hint">No tables — create a private table or wait for opens.</p>'
         : '<p class="hint">Sign in to see live tables.</p>';
-      renderOnline();
+      social.renderPlayers();
       syncBanner();
       mountOpenPopovers();
       return;
@@ -1250,277 +899,9 @@
       open.forEach((t) => frag.appendChild(renderTable(t)));
     }
     root.replaceChildren(frag);
-    renderOnline();
+    social.renderPlayers();
     syncBanner();
     requestAnimationFrame(mountOpenPopovers);
-  }
-
-  // ——— Ranks (lifetime team-score avg from UserStore) ———
-  function formatRankAvg(r) {
-    const a = Number(r && r.avg);
-    if (!Number.isFinite(a)) return '—';
-    return String(Math.round(a));
-  }
-  function renderRanks() {
-    const body = $('ranks-body');
-    const empty = $('ranks-empty');
-    const youMeta = $('ranks-you-meta');
-    if (!body) return;
-    const rows = ranksState.rows || [];
-    if (empty) empty.hidden = rows.length > 0;
-    const frag = document.createDocumentFragment();
-    for (const r of rows) {
-      const tr = document.createElement('tr');
-      if (me && sameName(r.name, me)) tr.classList.add('me');
-      const tdRk = document.createElement('td');
-      tdRk.className = 'rk';
-      tdRk.textContent = r.rank != null ? String(r.rank) : '—';
-      const tdNm = document.createElement('td');
-      tdNm.className = 'nm';
-      tdNm.textContent = r.name || '?';
-      const tdAvg = document.createElement('td');
-      tdAvg.className = 'avg';
-      tdAvg.textContent = formatRankAvg(r);
-      const tdN = document.createElement('td');
-      tdN.className = 'n';
-      tdN.textContent = r.games != null ? String(r.games) : '—';
-      tr.append(tdRk, tdNm, tdAvg, tdN);
-      frag.appendChild(tr);
-    }
-    body.replaceChildren(frag);
-    if (youMeta) {
-      if (!authenticated || !me) {
-        youMeta.textContent = 'Sign in to see your rank';
-      } else if (ranksState.you) {
-        const y = ranksState.you;
-        const g = y.games || 0;
-        if (y.rank != null) {
-          youMeta.textContent = `#${y.rank} · avg ${formatRankAvg(y)} · ${g} series`;
-        } else if (g < 10) {
-          const left = Math.max(0, 10 - g);
-          youMeta.textContent =
-            g === 0
-              ? 'play 10 series to rank'
-              : `${g}/10 series · ${left} more to rank`;
-        } else {
-          youMeta.textContent = `avg ${formatRankAvg(y)} · ${g} series`;
-        }
-      } else {
-        youMeta.textContent = 'play 10 series to rank';
-      }
-    }
-  }
-
-  // ——— Talk (durable unread via prefs.talk_read watermarks) ———
-  function isPaneVisible(paneId) {
-    const pane = $(paneId);
-    return !!(pane && !pane.hidden);
-  }
-  function talkRead() {
-    return normalizeTalkRead(myPrefs && myPrefs.talk_read);
-  }
-  // itemIso is strictly after watermark (missing watermark → all count).
-  function isoAfter(watermark, itemIso) {
-    if (!itemIso) return false;
-    if (!watermark) return true;
-    const a = Date.parse(watermark);
-    const b = Date.parse(itemIso);
-    if (Number.isNaN(b)) return false;
-    if (Number.isNaN(a)) return true;
-    return b > a;
-  }
-  function countNewsUnread() {
-    const wm = talkRead().news_at;
-    let n = 0;
-    for (const it of news) {
-      if (sameName(it.author, me)) continue;
-      if (isoAfter(wm, it.created_at)) n += 1;
-    }
-    return n;
-  }
-  // +1 per new topic + +1 per reply after feedback_at (not self).
-  function countFeedbackUnread() {
-    const wm = talkRead().feedback_at;
-    let n = 0;
-    for (const it of feedback) {
-      if (!sameName(it.author, me) && isoAfter(wm, it.created_at)) n += 1;
-      for (const r of it.replies || []) {
-        if (!sameName(r.author, me) && isoAfter(wm, r.created_at)) n += 1;
-      }
-    }
-    return n;
-  }
-  function countChatUnread() {
-    const wm = talkRead().chat_at;
-    let n = 0;
-    for (const m of chatMessages) {
-      if (sameName(m.from, me)) continue;
-      if (isoAfter(wm, m.at)) n += 1;
-    }
-    return n;
-  }
-  function setUnreadCount(kind, n) {
-    if (!(kind in unread)) return;
-    unread[kind] = Math.min(99, Math.max(0, n | 0));
-    const el = $(`badge-${kind}`);
-    if (!el) return;
-    if (unread[kind] > 0) {
-      el.hidden = false;
-      el.textContent = unread[kind] > 99 ? '99+' : String(unread[kind]);
-    } else {
-      el.hidden = true;
-      el.textContent = '0';
-    }
-  }
-  function clearAllUnread() {
-    setUnreadCount('news', 0);
-    setUnreadCount('feedback', 0);
-    setUnreadCount('chat', 0);
-  }
-  // Recompute badge from data + talk_read (skip if pane open — treat as reading).
-  function recomputeUnread(kind) {
-    const paneId =
-      kind === 'news' ? 'pane-news' : kind === 'feedback' ? 'pane-feedback' : 'pane-chat';
-    if (isPaneVisible(paneId)) {
-      setUnreadCount(kind, 0);
-      return;
-    }
-    let n = 0;
-    if (kind === 'news') n = countNewsUnread();
-    else if (kind === 'feedback') n = countFeedbackUnread();
-    else if (kind === 'chat') n = countChatUnread();
-    setUnreadCount(kind, n);
-  }
-  function recomputeAllUnread() {
-    recomputeUnread('news');
-    recomputeUnread('feedback');
-    recomputeUnread('chat');
-  }
-  // Persist talk_read watermark (now) to server prefs; clear local badge.
-  function markTalkRead(kind) {
-    if (!authenticated || !me) {
-      setUnreadCount(kind, 0);
-      return;
-    }
-    const field =
-      kind === 'news' ? 'news_at' : kind === 'feedback' ? 'feedback_at' : 'chat_at';
-    const now = new Date().toISOString();
-    myPrefs.talk_read = { ...talkRead(), [field]: now };
-    setUnreadCount(kind, 0);
-    A.send(ws, { action: 'setprefs', talk_read: { [field]: now } });
-  }
-  function bindTabs(panel) {
-    const tabs = [...panel.querySelectorAll(':scope > .side-tabs [role="tab"]')];
-    tabs.forEach((tab) => {
-      tab.addEventListener('click', () => {
-        tabs.forEach((t) => {
-          const on = t === tab;
-          t.classList.toggle('active', on);
-          t.setAttribute('aria-selected', on ? 'true' : 'false');
-          const pane = $(t.getAttribute('aria-controls'));
-          if (pane) pane.hidden = !on;
-        });
-        const id = tab.id.replace('tab-', '');
-        if (id === 'news' || id === 'feedback' || id === 'chat') markTalkRead(id);
-      });
-    });
-  }
-
-  function addChat(from, text, at) {
-    const when = at || new Date().toISOString();
-    chatMessages.push({ from, text, at: when });
-    const ul = $('chat-log');
-    const li = document.createElement('li');
-    li.innerHTML = `<b>${esc(from)}</b> ${esc(text)}`;
-    ul.appendChild(li);
-    ul.scrollTop = ul.scrollHeight;
-  }
-
-  function whenShort(iso) {
-    if (!iso) return '';
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return '';
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  }
-
-  function renderNews() {
-    const ul = $('news-list');
-    ul.innerHTML = '';
-    $('news-empty').hidden = news.length > 0;
-    news.forEach((n) => {
-      const li = document.createElement('li');
-      li.className = 'news-item';
-      li.innerHTML = `<div class="news-head"><span>${esc(n.author)}</span><span class="fb-when">${esc(whenShort(n.created_at))}</span></div>
-        <p class="news-body">${esc(n.body)}</p>`;
-      if (isDev) {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'news-archive';
-        b.textContent = 'archive';
-        b.addEventListener('click', () => A.send(ws, { action: 'newsarchive', id: n.id }));
-        li.appendChild(b);
-      }
-      ul.appendChild(li);
-    });
-  }
-
-  function renderFeedback() {
-    const ul = $('feedback-list');
-    ul.innerHTML = '';
-    $('feedback-empty').hidden = feedback.length > 0;
-    feedback.forEach((f) => {
-      const li = document.createElement('li');
-      li.className = 'fb-item ' + (f.status || 'open') + ' ' + (f.kind || '');
-      const open = fbExpanded === f.id;
-      li.innerHTML = `<div class="fb-summary">
-        <div class="fb-head">
-          <span class="fb-status">${esc(f.status || 'open')}</span>
-          <span class="fb-type">${esc(f.kind || '')}</span>
-          <span class="fb-when">${esc(whenShort(f.created_at))}</span>
-        </div>
-        <p class="fb-title">${esc(f.title || f.body)}</p>
-        <p class="fb-meta">${esc(f.author)}</p>
-      </div>`;
-      li.querySelector('.fb-summary').addEventListener('click', () => {
-        fbExpanded = open ? '' : f.id;
-        renderFeedback();
-      });
-      if (open) {
-        const th = document.createElement('div');
-        th.className = 'fb-thread';
-        const body = document.createElement('p');
-        body.textContent = f.body;
-        th.appendChild(body);
-        (f.replies || []).forEach((r) => {
-          const p = document.createElement('p');
-          p.innerHTML = `<b>${esc(r.author)}</b> ${esc(r.body)}`;
-          th.appendChild(p);
-        });
-        const reply = document.createElement('form');
-        reply.className = 'fb-reply-form';
-        reply.innerHTML = '<textarea rows="2" maxlength="2000" placeholder="Reply"></textarea><button type="submit">Reply</button>';
-        reply.addEventListener('submit', (ev) => {
-          ev.preventDefault();
-          const text = reply.querySelector('textarea').value.trim();
-          if (text) A.send(ws, { action: 'feedbackreply', id: f.id, body: text });
-        });
-        th.appendChild(reply);
-        if (isDev) {
-          const row = document.createElement('div');
-          row.className = 'fb-dev-row';
-          ['open', 'planned', 'done', 'wontfix'].forEach((st) => {
-            const b = document.createElement('button');
-            b.type = 'button';
-            b.textContent = st;
-            b.addEventListener('click', () => A.send(ws, { action: 'feedbacksetstatus', id: f.id, status: st }));
-            row.appendChild(b);
-          });
-          th.appendChild(row);
-        }
-        li.appendChild(th);
-      }
-      ul.appendChild(li);
-    });
   }
 
   // ——— Wire ———
@@ -1556,15 +937,11 @@
     }
     if (j.action === 'prefs') {
       myPrefs = normalizePrefs(j.prefs);
-      recomputeAllUnread();
+      social.recomputeAllUnread();
       renderTables();
       return;
     }
-    if (j.action === 'ranks') {
-      ranksState = { rows: j.rows || [], you: j.you || null };
-      renderRanks();
-      return;
-    }
+    if (social.handleMsg(j)) return;
     if (j.action === 'users') {
       online = Array.isArray(j.people) ? j.people : [];
       if (pendingDevDelete) {
@@ -1574,49 +951,14 @@
           pendingDevDelete = '';
         }
       }
-      renderOnline();
-      if (inviteOpen) requestAnimationFrame(mountOpenPopovers);
+      social.renderPlayers();
+      if (social.getInviteOpen()) requestAnimationFrame(mountOpenPopovers);
       return;
     }
     if (j.action === 'started') {
       if (sessionStorage.getItem('a45s.justLeft')) return;
       persistSeat();
       goTable(j.table, j.seat);
-      return;
-    }
-    if (j.action === 'chathistory') {
-      $('chat-log').innerHTML = '';
-      chatMessages = [];
-      (j.messages || []).forEach((m) => addChat(m.from, m.text, m.at));
-      if (isPaneVisible('pane-chat')) setUnreadCount('chat', 0);
-      else recomputeUnread('chat');
-      return;
-    }
-    if (j.action === 'chat') {
-      // Live Chat has no `at` on the wire — synthesize so watermark recompute works.
-      addChat(j.from, j.text, new Date().toISOString());
-      if (isPaneVisible('pane-chat')) setUnreadCount('chat', 0);
-      else recomputeUnread('chat');
-      return;
-    }
-    if (j.action === 'news') {
-      news = j.items || [];
-      renderNews();
-      // Default Talk tab is News: first snapshot while open advances watermark (join).
-      if (isPaneVisible('pane-news')) {
-        if (!talkBootstrapped) markTalkRead('news');
-        else setUnreadCount('news', 0);
-      } else {
-        recomputeUnread('news');
-      }
-      talkBootstrapped = true;
-      return;
-    }
-    if (j.action === 'feedback') {
-      feedback = j.items || [];
-      renderFeedback();
-      if (isPaneVisible('pane-feedback')) setUnreadCount('feedback', 0);
-      else recomputeUnread('feedback');
       return;
     }
     if (j.action === 'emailchanged') {
@@ -1695,9 +1037,6 @@
   }
 
   // ——— Bind ———
-  bindTabs(document.querySelector('.people-panel'));
-  bindTabs(document.querySelector('.talk-panel'));
-
   $('btn-login').addEventListener('click', () => {
     const name = $('in-user').value.trim();
     if (!name) { setBanner('name required', 'err'); return; }
@@ -1725,42 +1064,9 @@
       if (optsOpen) closeOpts();
     }
     if (!e.target.closest?.('.invite-row') && !e.target.closest?.('.invite-panel')) {
-      if (inviteOpen) closeInvite();
+      if (social.getInviteOpen()) social.closeInvite();
     }
   });
-  $('chat-form').addEventListener('submit', (ev) => {
-    ev.preventDefault();
-    const text = $('chat-text').value.trim();
-    if (!text) return;
-    A.send(ws, { action: 'chat', text });
-    $('chat-text').value = '';
-  });
-  $('news-compose').addEventListener('submit', (ev) => {
-    ev.preventDefault();
-    const body = $('news-body').value.trim();
-    if (!body) return;
-    A.send(ws, { action: 'newspost', body });
-    $('news-body').value = '';
-  });
-  $('btn-feedback-new').addEventListener('click', () => {
-    $('fb-new-form').hidden = !$('fb-new-form').hidden;
-  });
-  $('fb-new-cancel').addEventListener('click', () => { $('fb-new-form').hidden = true; });
-  $('fb-new-form').addEventListener('submit', (ev) => {
-    ev.preventDefault();
-    const body = $('fb-new-body').value.trim();
-    if (!body) { setBanner('feedback needs a description', 'err'); return; }
-    A.send(ws, {
-      action: 'feedbacknew',
-      kind: $('fb-new-kind').value,
-      title: $('fb-new-title').value.trim() || null,
-      body,
-    });
-    $('fb-new-body').value = '';
-    $('fb-new-title').value = '';
-    $('fb-new-form').hidden = true;
-  });
-
   const sess = A.getSession();
   if (A.isSignOutGate()) {
     authPanel = A.loadProfiles().length ? 'gate' : 'first';
