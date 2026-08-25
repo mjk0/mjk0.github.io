@@ -788,9 +788,6 @@
       hint.classList.toggle('is-paused', inspectOpen);
       hint.classList.add('is-on');
       hint.setAttribute('aria-hidden', inspectOpen ? 'true' : 'false');
-      if (!lastPtr) return;
-      const hit = document.elementFromPoint(lastPtr.x, lastPtr.y);
-      if (hit && hit.closest && hit.closest('#you-hand .card.legal')) dismissPlayHint();
     }
 
     function hideInspect() {
@@ -1071,7 +1068,10 @@
       svg.dataset.card = c;
       if (st.why === 'play' && opts.legal && opts.legal.has(c)) {
         svg.classList.add('legal');
-        svg.addEventListener('click', () => A.send(ws, { action: 'play', card: c }));
+        svg.addEventListener('click', () => {
+          dismissPlayHint();
+          A.send(ws, { action: 'play', card: c });
+        });
       } else if (opts.move === 'discard') {
         svg.classList.add('legal');
         svg.addEventListener('click', () => {
@@ -1862,8 +1862,8 @@
     });
     $('rank-check').addEventListener('change', () => setRankLatch($('rank-check').checked));
     $('rank-hide').addEventListener('click', () => setRankLatch(false));
+    // Play-hint dismisses only on click/play — not on hover (hover killed the 4s cue).
     $('you-hand').addEventListener('pointerover', (ev) => {
-      if (ev.target.closest && ev.target.closest('.card.legal')) dismissPlayHint();
       if (!fineHover(ev) || !canHoverLead(lastState)) return;
       lastPtr = { x: ev.clientX, y: ev.clientY };
       const card = cardFromNode(ev.target);
