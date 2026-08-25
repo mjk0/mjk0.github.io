@@ -214,6 +214,10 @@
     let ws = null;
     let paused = {};
     let leaving = false;
+    let joined = false;
+    let takenOver = false;
+    let reconnectTimer = null;
+    let joinRedirectTimer = null;
     let names = ['?', '?', '?', '?'];
     let me = 0;
     let lastState = null;
@@ -266,6 +270,69 @@
       el.className = 'felt-toast' + (kind ? ' ' + kind : '');
       const ms = kind === 'err' ? 6000 : 3500;
       statusClear = setTimeout(() => setStatus(''), ms);
+    }
+
+    function clearReconnect() {
+      if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+    }
+
+    // Drop table/seat so lobby will not re-open a dead game.
+    function clearSeatMemory() {
+      const s = A.getSession() || {};
+      delete s.table;
+      delete s.seat;
+      A.setSession(s);
+      if (sess) { delete sess.table; delete sess.seat; }
+      sessionStorage.setItem('a45s.justLeft', '1');
+    }
+
+    function goLobby() {
+      leaving = true;
+      clearReconnect();
+      if (joinRedirectTimer) { clearTimeout(joinRedirectTimer); joinRedirectTimer = null; }
+      try { tableLobby.detachNow(); } catch (e) {}
+      if (ws) { try { ws.close(); } catch (e) {} }
+      const wsQ = new URLSearchParams(location.search).get('ws');
+      location.href = wsQ ? `lobby.html?ws=${encodeURIComponent(wsQ)}` : 'lobby.html';
+    }
+
+    function scheduleReconnect() {
+      if (reconnectTimer || leaving || takenOver) return;
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = null;
+        if (!leaving && !takenOver) connectGame();
+      }, 1500);
+    }
+
+    // Join/auth failures that mean this seat/session is gone (Yoyo + A45r aliases).
+    function isJoinGoneErr(err) {
+      return err === 'authenticate' ||
+        err === 'seat_mismatch' ||
+        err === 'seat_taken' ||
+        err === 'not_invited' ||
+        err === 'not_started' ||
+        err === 'no_table' ||
+        err === 'bad_seat' ||
+        err === 'no_session' ||
+        err === 'session_dead' ||
+        err === 'no_game' ||
+        err === 'session_gone' ||
+        err === 'bad_join' ||
+        err === 'bad_table';
+    }
+
+    function shouldClearSeatOnErr(err) {
+      return err === 'not_started' ||
+        err === 'no_table' ||
+        err === 'seat_taken' ||
+        err === 'seat_mismatch' ||
+        err === 'bad_seat' ||
+        err === 'no_session' ||
+        err === 'session_dead' ||
+        err === 'no_game' ||
+        err === 'session_gone' ||
+        err === 'bad_join' ||
+        err === 'bad_table';
     }
 
     function rel(abs) {
@@ -1832,109 +1899,144 @@
       renderState(lastState);
     });
 
-    if (!sess || !sess.uuid || !sess.username) {
-      setStatus('No lobby session — open the lobby to sit.', 'err');
-    } else {
-      const table = sess.table || '1';
-      const hint = sess.seat != null ? sess.seat : 0;
-      me = hint;
-      ws = A.connect('game', (j) => {
-        if (j.action === 'loggedin') {
-          setStatus(sess.seat != null ? 'rejoining' : 'joining…', 'ok');
-          A.send(ws, { action: 'joinseat', table, seat: hint });
-          return;
-        }
-        if (j.action === 'joined') {
-          persistJoined(j);
-          setStatus('joined', 'ok');
-          replayOn = !!j.replay;
-          renderPlayReplay();
-          return;
-        }
-        if (j.action === 'players') {
-          names = j.seats;
-          if (lastState) renderState(lastState);
-          return;
-        }
-        if (j.action === 'paused') {
-          paused[j.seat] = j.username;
-          setStatus(j.username + ' disconnected — offer robot or wait', 'err');
-          if (lastState) renderState(lastState);
-          return;
-        }
-        if (j.action === 'resumed') {
-          delete paused[j.seat];
-          setStatus(j.username + ' back', 'ok');
-          if (lastState) renderState(lastState);
-          return;
-        }
-        if (j.action === 'robottookover') {
-          delete paused[j.seat];
-          setStatus(who(j.seat) + ' is now ' + j.name, 'ok');
-          if (lastState) renderState(lastState);
-          return;
-        }
-        if (j.action === 'scorehistory') {
-          renderHist(j);
-          return;
-        }
-        if (j.action === 'state') {
-          const pool = (j.legal_cards || '').split(',').filter(Boolean).sort().join(',');
-          if (pool !== keepPool) {
-            keep = new Set();
-            keepPool = pool;
-            handMerged = false;
-            trump = null;
-            const hand = (j.hand || '').split(',').filter(Boolean);
-            const kit = (j.kitty || '').split(',').filter(Boolean);
-            if (j.why === 'trumpselect') {
-              handOrder = A.sortCards(hand, null).concat(A.sortCards(kit, null));
-            } else if (j.why === 'discard') {
-              handOrder = [];
-              if (j.trump != null) trump = j.trump;
-              keep = defaultKeepFor(j);
-            } else {
-              handOrder = [];
-            }
+    function onGameMsg(j) {
+      if (j.action === 'loggedin') {
+        takenOver = false;
+        const table = (sess && sess.table) || '1';
+        const hint = sess && sess.seat != null ? sess.seat : 0;
+        me = hint;
+        setStatus(sess && sess.seat != null ? 'rejoining' : 'joining…', 'ok');
+        A.send(ws, { action: 'joinseat', table, seat: hint });
+        return;
+      }
+      if (j.action === 'joined') {
+        joined = true;
+        takenOver = false;
+        persistJoined(j);
+        setStatus('joined', 'ok');
+        replayOn = !!j.replay;
+        renderPlayReplay();
+        return;
+      }
+      if (j.action === 'players') {
+        names = j.seats;
+        if (lastState) renderState(lastState);
+        return;
+      }
+      if (j.action === 'paused') {
+        paused[j.seat] = j.username;
+        setStatus(j.username + ' disconnected — offer robot or wait', 'err');
+        if (lastState) renderState(lastState);
+        return;
+      }
+      if (j.action === 'resumed') {
+        delete paused[j.seat];
+        setStatus(j.username + ' back', 'ok');
+        if (lastState) renderState(lastState);
+        return;
+      }
+      if (j.action === 'robottookover') {
+        delete paused[j.seat];
+        setStatus(who(j.seat) + ' is now ' + j.name, 'ok');
+        if (lastState) renderState(lastState);
+        return;
+      }
+      if (j.action === 'scorehistory') {
+        renderHist(j);
+        return;
+      }
+      if (j.action === 'state') {
+        const pool = (j.legal_cards || '').split(',').filter(Boolean).sort().join(',');
+        if (pool !== keepPool) {
+          keep = new Set();
+          keepPool = pool;
+          handMerged = false;
+          trump = null;
+          const hand = (j.hand || '').split(',').filter(Boolean);
+          const kit = (j.kitty || '').split(',').filter(Boolean);
+          if (j.why === 'trumpselect') {
+            handOrder = A.sortCards(hand, null).concat(A.sortCards(kit, null));
+          } else if (j.why === 'discard') {
+            handOrder = [];
+            if (j.trump != null) trump = j.trump;
+            keep = defaultKeepFor(j);
+          } else {
+            handOrder = [];
           }
-          renderState(j);
+        }
+        renderState(j);
+        return;
+      }
+      if (j.action === 'summary') {
+        lastSummary = j;
+        if (lastState) renderScorecard(lastState);
+        return;
+      }
+      if (j.action === 'idlewarning') {
+        showIdleWarn(j.ends_at, j.seconds_left);
+        return;
+      }
+      if (j.action === 'idlewarningcancel') {
+        hideIdleWarn();
+        return;
+      }
+      if (j.action === 'shutdown') {
+        clearSeatMemory();
+        setStatus('Session ended', 'err');
+        joinRedirectTimer = setTimeout(goLobby, 1200);
+        return;
+      }
+      if (j.action === 'err') {
+        if (j.err === 'duplicate_login') {
+          takenOver = true;
+          clearReconnect();
+          joined = false;
+          setStatus('signed in elsewhere', 'err');
           return;
         }
-        if (j.action === 'summary') {
-          lastSummary = j;
-          if (lastState) renderScorecard(lastState);
-          return;
-        }
-        if (j.action === 'idlewarning') {
-          showIdleWarn(j.ends_at, j.seconds_left);
-          return;
-        }
-        if (j.action === 'idlewarningcancel') {
-          hideIdleWarn();
-          return;
-        }
-        if (j.action === 'shutdown') {
-          const s = A.getSession() || {};
-          delete s.table;
-          delete s.seat;
-          A.setSession(s);
-          sessionStorage.setItem('a45s.justLeft', '1');
-          location.href = 'lobby.html';
-          return;
-        }
-        if (j.action === 'err') {
-          if (j.err === 'duplicate_login') {
-            setStatus('signed in elsewhere', 'err');
-            return;
+        if (isJoinGoneErr(j.err)) {
+          if (shouldClearSeatOnErr(j.err)) clearSeatMemory();
+          setStatus('No live hand at this seat — back to the lobby.', 'err');
+          // Only bounce before a successful join (mid-hand play rejects stay put).
+          if (!joined && !joinRedirectTimer) {
+            clearReconnect();
+            leaving = true; // stop reconnect while the lobby redirect timer runs
+            joinRedirectTimer = setTimeout(goLobby, 2000);
           }
-          if (j.err === 'no_game' || j.err === 'bad_join' || j.err === 'bad_table') {
-            setStatus('No live hand at this seat — back to the lobby.', 'err');
-            return;
-          }
-          setStatus(j.err || 'error', 'err');
+          return;
         }
-      }, () => {
-        if (!leaving) setStatus('game socket closed', 'err');
+        setStatus(j.err || 'error', 'err');
+      }
+    }
+
+    function connectGame() {
+      if (!sess || !sess.uuid || !sess.username) {
+        setStatus('No lobby session — open the lobby to sit.', 'err');
+        joinRedirectTimer = setTimeout(goLobby, 1500);
+        return;
+      }
+      if (!sess.table) {
+        setStatus('No table — return to lobby.', 'err');
+        joinRedirectTimer = setTimeout(goLobby, 1500);
+        return;
+      }
+      if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) {
+        return;
+      }
+      clearReconnect();
+      joined = false;
+      me = sess.seat != null ? sess.seat : 0;
+      setStatus('Connecting to game…');
+      ws = A.connect('game', onGameMsg, () => {
+        ws = null;
+        joined = false;
+        if (leaving) return;
+        if (takenOver) {
+          setStatus('signed in elsewhere', 'err');
+          return;
+        }
+        setStatus('Disconnected — reconnecting…', 'err');
+        scheduleReconnect();
       });
       ws.onopen = () => {
         A.send(ws, {
@@ -1944,26 +2046,25 @@
           uuid: sess.uuid,
         });
       };
-      $('replay').addEventListener('click', sendReplay);
-      $('next-hand').addEventListener('click', () => A.send(ws, { action: 'nexthand' }));
-      $('btn-idle-stay').addEventListener('click', () => {
-        A.send(ws, { action: 'idlestay' });
-        setStatus('Staying…');
-      });
-      $('btn-idle-leave').addEventListener('click', () => $('leavegame').click());
-      $('leavegame').addEventListener('click', () => {
-        leaving = true;
-        tableLobby.detachNow();
-        const s = A.getSession() || {};
-        delete s.table;
-        delete s.seat;
-        A.setSession(s);
-        sessionStorage.setItem('a45s.justLeft', '1');
-        A.send(ws, { action: 'leavegame' });
-        // Let leavegame land before lobby login would rejoin this started table.
-        setTimeout(() => { location.href = 'lobby.html'; }, 350);
-      });
     }
+
+    $('replay').addEventListener('click', sendReplay);
+    $('next-hand').addEventListener('click', () => A.send(ws, { action: 'nexthand' }));
+    $('btn-idle-stay').addEventListener('click', () => {
+      A.send(ws, { action: 'idlestay' });
+      setStatus('Staying…');
+    });
+    $('btn-idle-leave').addEventListener('click', () => $('leavegame').click());
+    $('leavegame').addEventListener('click', () => {
+      leaving = true;
+      clearReconnect();
+      tableLobby.detachNow();
+      clearSeatMemory();
+      A.send(ws, { action: 'leavegame' });
+      // Let leavegame land before lobby login would rejoin this started table.
+      setTimeout(goLobby, 350);
+    });
+    connectGame();
   </script>
 </body>
 </html>
