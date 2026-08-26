@@ -13,7 +13,7 @@
           <ul class="player-list" data-el="online-list"></ul>
         </div>
         <div class="side-pane" role="tabpanel" id="pane-ranks" data-pane="ranks" hidden>
-          <p class="pane-note">Team-score avg · 10+ series</p>
+          <p class="pane-note">Avg margin · 10+ series</p>
           <div class="ranks-scroll">
             <table class="ranks-table">
               <thead>
@@ -182,7 +182,7 @@
   function formatRankAvg(r) {
     const a = Number(r && r.avg);
     if (!Number.isFinite(a)) return '—';
-    return String(Math.round(a));
+    return a.toFixed(1);
   }
   function placePopover(anchor, pop) {
     const r = anchor.getBoundingClientRect();
