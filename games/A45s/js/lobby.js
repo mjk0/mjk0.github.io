@@ -990,6 +990,16 @@
         $('in-email').focus();
         return;
       }
+      if (j.err === 'reserved_username') {
+        authRejected = true;
+        authenticated = false;
+        setStatus('sign-in failed', 'err');
+        setBanner('Names starting with B. are reserved for robots.', 'err');
+        authPanel = A.loadProfiles().length ? 'create' : 'first';
+        renderAuth();
+        $('in-user').focus();
+        return;
+      }
       if (j.err === 'email_mismatch') {
         setBanner('Current email does not match. Re-enter the email that locked this name.', 'err');
         return;
@@ -1040,6 +1050,12 @@
   $('btn-login').addEventListener('click', () => {
     const name = $('in-user').value.trim();
     if (!name) { setBanner('name required', 'err'); return; }
+    // Mirror server `is_bot_name` (robot namespace); server still authoritative.
+    if (name.length >= 2 && name.slice(0, 2).toLowerCase() === 'b.') {
+      setBanner('Names starting with B. are reserved for robots.', 'err');
+      $('in-user').focus();
+      return;
+    }
     startLogin(name, $('in-email').value.trim());
   });
   $('in-user').addEventListener('keydown', (ev) => { if (ev.key === 'Enter') $('btn-login').click(); });

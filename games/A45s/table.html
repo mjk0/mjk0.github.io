@@ -579,9 +579,9 @@
       return btn;
     }
 
-    // Take over only while the series is live (hide after series end).
+    // Take over only mid-hand while the series is live (summary auto-bots on disconnect).
     function handoffOk(st) {
-      return !!(st && !st.series_over);
+      return !!(st && st.phase !== 'handend' && !seriesOver(st));
     }
 
     function syncRobotOffer(btn, seat) {
@@ -1937,7 +1937,9 @@
       }
       if (j.action === 'robottookover') {
         delete paused[j.seat];
-        setStatus(who(j.seat) + ' is now ' + j.name, 'ok');
+        // names[] may lag one tick behind Players; prefer the event's bot label.
+        if (j.name) names[j.seat] = j.name;
+        setStatus((j.name || who(j.seat)) + ' took the seat', 'ok');
         if (lastState) renderState(lastState);
         return;
       }
