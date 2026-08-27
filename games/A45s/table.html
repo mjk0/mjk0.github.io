@@ -218,6 +218,10 @@
     let takenOver = false;
     let reconnectTimer = null;
     let joinRedirectTimer = null;
+    // Ignore onclose from a socket we are intentionally replacing.
+    let expectClose = false;
+    let pingTimer = null;
+    let pongWait = null;
     let names = ['?', '?', '?', '?'];
     let me = 0;
     let lastState = null;
@@ -276,6 +280,23 @@
       if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
     }
 
+    function clearPongWait() {
+      if (pongWait) { clearTimeout(pongWait); pongWait = null; }
+    }
+
+    function stopPing() {
+      if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
+      clearPongWait();
+    }
+
+    function startPing() {
+      stopPing();
+      pingTimer = setInterval(() => {
+        if (leaving || takenOver || document.hidden || !joined) return;
+        sendPing();
+      }, 25000);
+    }
+
     // Drop table/seat so lobby will not re-open a dead game.
     function clearSeatMemory() {
       const s = A.getSession() || {};
@@ -288,10 +309,15 @@
 
     function goLobby() {
       leaving = true;
+      stopPing();
       clearReconnect();
       if (joinRedirectTimer) { clearTimeout(joinRedirectTimer); joinRedirectTimer = null; }
       try { tableLobby.detachNow(); } catch (e) {}
-      if (ws) { try { ws.close(); } catch (e) {} }
+      if (ws) {
+        expectClose = true;
+        try { ws.close(); } catch (e) {}
+        ws = null;
+      }
       const wsQ = new URLSearchParams(location.search).get('ws');
       location.href = wsQ ? `lobby.html?ws=${encodeURIComponent(wsQ)}` : 'lobby.html';
     }
@@ -302,6 +328,52 @@
         reconnectTimer = null;
         if (!leaving && !takenOver) connectGame();
       }, 1500);
+    }
+
+    // Close any prior socket (including OPEN zombies) and retry on this page.
+    function forceReconnect(msg) {
+      if (leaving || takenOver) return;
+      stopPing();
+      setStatus(msg || 'Disconnected — reconnecting…', 'err');
+      if (ws) {
+        expectClose = true;
+        const old = ws;
+        ws = null;
+        try { old.close(); } catch (e) {}
+      }
+      joined = false;
+      scheduleReconnect();
+    }
+
+    // User actions: failed send means the socket is dead — stay and reconnect.
+    function safeSend(obj) {
+      if (A.send(ws, obj)) return true;
+      if (leaving || takenOver) return false;
+      forceReconnect('Connection lost — reconnecting…');
+      return false;
+    }
+
+    function sendPing() {
+      if (!A.send(ws, { action: 'ping' })) {
+        forceReconnect('Connection lost — reconnecting…');
+        return;
+      }
+      if (pongWait) return;
+      pongWait = setTimeout(() => {
+        pongWait = null;
+        if (!leaving && !takenOver) forceReconnect('Connection lost — reconnecting…');
+      }, 8000);
+    }
+
+    // Tab focus / network back: replace a dead socket; ping if it still looks open.
+    function probeConn() {
+      if (leaving || takenOver || !sess || !sess.table) return;
+      if (!ws || ws.readyState === WebSocket.CLOSING || ws.readyState === WebSocket.CLOSED) {
+        forceReconnect('Disconnected — reconnecting…');
+        return;
+      }
+      if (ws.readyState === WebSocket.CONNECTING) return;
+      if (joined) sendPing();
     }
 
     // Join/auth failures that mean this seat/session is gone (Yoyo + A45r aliases).
@@ -598,7 +670,7 @@
       btn.title = tip;
       btn.setAttribute('aria-label', tip);
       btn.hidden = false;
-      btn.onclick = () => A.send(ws, { action: 'handoffrobot', seat: +seat });
+      btn.onclick = () => safeSend({ action: 'handoffrobot', seat: +seat });
     }
 
     function reduceMotion() {
@@ -1070,7 +1142,7 @@
         svg.classList.add('legal');
         svg.addEventListener('click', () => {
           dismissPlayHint();
-          A.send(ws, { action: 'play', card: c });
+          safeSend({ action: 'play', card: c });
         });
       } else if (opts.move === 'discard') {
         svg.classList.add('legal');
@@ -1486,7 +1558,7 @@
           btn.type = 'button';
           btn.className = spec.cls;
           btn.textContent = spec.text;
-          btn.addEventListener('click', () => A.send(ws, { action: 'bid', bid: b }));
+          btn.addEventListener('click', () => safeSend({ action: 'bid', bid: b }));
           bidActs.appendChild(btn);
         });
         bidOn = true;
@@ -1523,7 +1595,7 @@
           go.addEventListener('click', () => {
             const msg = { action: 'selecthand', cards: [...keep].join(',') };
             if (st.why === 'trumpselect') msg.trump = SUITS[trump];
-            A.send(ws, msg);
+            safeSend(msg);
             keep = new Set();
           });
           keepGo.appendChild(go);
@@ -1643,7 +1715,7 @@
     }
 
     function sendReplay() {
-      A.send(ws, { action: 'replaydeal' });
+      safeSend({ action: 'replaydeal' });
     }
 
     function histWinCells(tr, a, b) {
@@ -1728,7 +1800,7 @@
       $('score-caret').textContent = histOpen ? '\u25B4' : '\u25BE';
       if (!histOpen) return;
       if (!box.childElementCount) renderHist({ hands: [], past_games: [] });
-      if (ws && ws.readyState === 1) A.send(ws, { action: 'getscorehistory' });
+      if (ws && ws.readyState === 1) safeSend({ action: 'getscorehistory' });
     }
 
     function formatIdleCountdown(sec) {
@@ -1900,13 +1972,15 @@
     });
 
     function onGameMsg(j) {
+      clearPongWait();
+      if (j.action === 'pong') return;
       if (j.action === 'loggedin') {
         takenOver = false;
         const table = (sess && sess.table) || '1';
         const hint = sess && sess.seat != null ? sess.seat : 0;
         me = hint;
         setStatus(sess && sess.seat != null ? 'rejoining' : 'joining…', 'ok');
-        A.send(ws, { action: 'joinseat', table, seat: hint });
+        safeSend({ action: 'joinseat', table, seat: hint });
         return;
       }
       if (j.action === 'joined') {
@@ -1916,6 +1990,7 @@
         setStatus('joined', 'ok');
         replayOn = !!j.replay;
         renderPlayReplay();
+        startPing();
         return;
       }
       if (j.action === 'players') {
@@ -1983,6 +2058,7 @@
         return;
       }
       if (j.action === 'shutdown') {
+        stopPing();
         clearSeatMemory();
         setStatus('Session ended', 'err');
         joinRedirectTimer = setTimeout(goLobby, 1200);
@@ -1991,6 +2067,7 @@
       if (j.action === 'err') {
         if (j.err === 'duplicate_login') {
           takenOver = true;
+          stopPing();
           clearReconnect();
           joined = false;
           setStatus('signed in elsewhere', 'err');
@@ -2001,6 +2078,7 @@
           setStatus('No live hand at this seat — back to the lobby.', 'err');
           // Only bounce before a successful join (mid-hand play rejects stay put).
           if (!joined && !joinRedirectTimer) {
+            stopPing();
             clearReconnect();
             leaving = true; // stop reconnect while the lobby redirect timer runs
             joinRedirectTimer = setTimeout(goLobby, 2000);
@@ -2022,17 +2100,25 @@
         joinRedirectTimer = setTimeout(goLobby, 1500);
         return;
       }
-      if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) {
-        return;
+      // Drop any prior socket (OPEN zombies used to block retry via early return).
+      if (ws) {
+        expectClose = true;
+        const old = ws;
+        ws = null;
+        try { old.close(); } catch (e) {}
       }
       clearReconnect();
+      clearPongWait();
       joined = false;
       me = sess.seat != null ? sess.seat : 0;
       setStatus('Connecting to game…');
-      ws = A.connect('game', onGameMsg, () => {
+      const sock = A.connect('game', onGameMsg, () => {
+        if (ws !== sock) return; // stale close from a replaced socket
         ws = null;
         joined = false;
+        stopPing();
         if (leaving) return;
+        if (expectClose) { expectClose = false; return; }
         if (takenOver) {
           setStatus('signed in elsewhere', 'err');
           return;
@@ -2040,25 +2126,35 @@
         setStatus('Disconnected — reconnecting…', 'err');
         scheduleReconnect();
       });
-      ws.onopen = () => {
-        A.send(ws, {
+      ws = sock;
+      expectClose = false;
+      sock.onopen = () => {
+        if (ws !== sock) return;
+        if (!A.send(sock, {
           action: 'login',
           username: sess.username,
           email: sess.email || '',
           uuid: sess.uuid,
-        });
+        })) {
+          forceReconnect('Connection lost — reconnecting…');
+        }
       };
     }
 
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') probeConn();
+    });
+    window.addEventListener('online', probeConn);
+
     $('replay').addEventListener('click', sendReplay);
-    $('next-hand').addEventListener('click', () => A.send(ws, { action: 'nexthand' }));
+    $('next-hand').addEventListener('click', () => safeSend({ action: 'nexthand' }));
     $('btn-idle-stay').addEventListener('click', () => {
-      A.send(ws, { action: 'idlestay' });
-      setStatus('Staying…');
+      if (safeSend({ action: 'idlestay' })) setStatus('Staying…');
     });
     $('btn-idle-leave').addEventListener('click', () => $('leavegame').click());
     $('leavegame').addEventListener('click', () => {
       leaving = true;
+      stopPing();
       clearReconnect();
       tableLobby.detachNow();
       clearSeatMemory();

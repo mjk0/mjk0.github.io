@@ -427,6 +427,12 @@
 .strip-ico span:nth-child(3) { opacity: 0.55; }
 .strip-ico span:nth-child(4) { opacity: 0.4; }
 .strip-ico span:nth-child(5) { opacity: 0.3; }
+.icon-grid .replay-ico {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1565c0;
+  line-height: 1;
+}
 .icon-grid strong {
   font-size: 0.82rem;
   color: var(--card-ink);
