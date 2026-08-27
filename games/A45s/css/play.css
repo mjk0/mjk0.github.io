@@ -83,6 +83,30 @@ div.contract-online.nearbar, .nearbar { bottom: -0.5em; }
     height: fit-content; background-color: bisque;
 }
 .modal0 h4 { margin-top: 0px; }
+#login .login-preview-note {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 1.1rem 0 0;
+    padding: 0.65rem 0.75rem;
+    font-size: 0.98rem;
+    font-weight: 500;
+    color: #3e2723;
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    border-radius: 6px;
+    line-height: 1.35;
+}
+#login .login-preview-note .material-icons {
+    flex: none;
+    font-size: 1.45rem;
+    color: #f57c00;
+}
+#login .login-preview-note a {
+    font-weight: 700;
+    color: #e65100;
+    text-decoration: underline;
+}
 /* https://blog.prototypr.io/align-svg-icons-to-text-and-say-goodbye-to-font-icons-d44b3d7b26b4 */
 .svg-icon { display: inline-block; }
 .svg-icon svg, svg.svg-icon { height:1em; width:1em; top: .125em; position: relative; }
