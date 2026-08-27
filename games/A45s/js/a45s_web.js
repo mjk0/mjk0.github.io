@@ -6,7 +6,7 @@
   const PROFILE_CAP = 10;
 
   // Prod WSS edge (a45s_web TLS on :3041). ?ws= overrides origin only.
-  const PROD_WS_ORIGIN = 'wss://www.pizzamonster.org:3041';
+  const PROD_WS_ORIGIN = 'wss://pizzamonster.org:3041';
 
   function wsOrigin() {
     const q = new URLSearchParams(location.search).get('ws');

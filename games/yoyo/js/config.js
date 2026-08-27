@@ -5,7 +5,7 @@ export const BASE = '/games/yoyo/';
 export const CARDS_SVG = '/games/A45s/cards0.svg';
 
 /** Prod game edge: router → tv (yoyo_web TLS). Overridable via ?ws= */
-export const PROD_WS_ORIGIN = 'wss://www.pizzamonster.org:3040';
+export const PROD_WS_ORIGIN = 'wss://pizzamonster.org:3040';
 
 // ?ws= first; https → prod WSS; else same-host ws (local/LAN http).
 export function wsOrigin() {
