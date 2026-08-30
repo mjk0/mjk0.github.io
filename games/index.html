@@ -180,12 +180,32 @@
       font-weight: 400;
       color: var(--muted);
     }
+    /* Match .variant-go so What's new reads as a link before hover (beats .variant-main .desc). */
+    .variant-main a.desc {
+      font-weight: 700;
+      color: var(--link);
+      text-decoration: none;
+    }
+    .variant-main a.desc:hover {
+      text-decoration: underline;
+    }
+    .variant-title-link {
+      color: inherit;
+      text-decoration: none;
+    }
+    .variant-title-link:hover {
+      text-decoration: none;
+    }
     .variant-go {
       flex: 0 0 auto;
       font-size: 0.82rem;
       font-weight: 700;
       color: var(--link);
       white-space: nowrap;
+      text-decoration: none;
+    }
+    .variant-go:hover {
+      text-decoration: underline;
     }
     .badge {
       display: inline-block;
@@ -201,9 +221,9 @@
       color: #14532d;
       background: #bbf7d0;
     }
-    .badge-test {
-      color: #1e3a5f;
-      background: #c7dbf5;
+    .badge-new {
+      color: #78350f;
+      background: #fbbf24;
     }
     .badge-legacy {
       color: #7a4e24;
@@ -284,13 +304,15 @@
           </div>
         </div>
         <div class="variants">
-          <a class="variant" href="/games/A45s/lobby.html">
+          <div class="variant">
             <div class="variant-main">
-              <div class="variant-title">Auction 45s <span class="badge badge-test">testing</span></div>
-              <span class="desc">New server (a45r)</span>
+              <a class="variant-title variant-title-link" href="/games/A45s/lobby.html">
+                Auction 45s <span class="badge badge-new">new!</span>
+              </a>
+              <a class="desc" href="/games/A45s/whats_new.html">What's new — migrate from Classic</a>
             </div>
-            <span class="variant-go">Enter →</span>
-          </a>
+            <a class="variant-go" href="/games/A45s/lobby.html">Enter →</a>
+          </div>
           <a class="variant secondary" href="/games/A45s/">
             <div class="variant-main">
               <div class="variant-title">Auction 45s Classic <span class="badge badge-live">live</span></div>

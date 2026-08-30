@@ -85,7 +85,8 @@ div.contract-online.nearbar, .nearbar { bottom: -0.5em; }
 .modal0 h4 { margin-top: 0px; }
 #login .login-preview-note {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
     gap: 0.45rem;
     margin: 1.1rem 0 0;
     padding: 0.65rem 0.75rem;

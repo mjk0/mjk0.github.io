@@ -9,4 +9,5 @@ tux/**
 .htaccess
 .picasa.ini
 Thumbs.db
+.playwright-mcp/
 games/mj03/media/test.svg
