@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Auction 45s — Table</title>
-  <link rel="stylesheet" href="css/a45s_web.css?v=20260824t">
+  <link rel="stylesheet" href="css/a45s_web.css?v=20260829d">
 </head>
 <body class="felt-page">
   <div class="felt-shell">
@@ -451,6 +451,16 @@
       return null;
     }
 
+    // High bid only on the declarer while naming trump (auction style; suit TBD).
+    function winningBidMarkFor(st, seat) {
+      if (st.why !== 'trumpselect') return null;
+      if (st.declarer == null || st.declarer !== seat) return null;
+      if (st.trump != null) return null;
+      const amt = st.contract_bid || 0;
+      if (amt < 15) return null;
+      return { kind: 'bid', amount: amt };
+    }
+
     // Suit + amount on the declarer once trump is named. Auction ovals are gone.
     function contractMarkFor(st, seat) {
       if (st.declarer == null || st.declarer !== seat) return null;
@@ -608,7 +618,8 @@
       else wrap.insertBefore(nextFan, wrap.firstChild);
       const oldOv = wrap.querySelector(':scope > .bid-oval');
       if (oldOv) oldOv.remove();
-      const bidOv = makeOval(bidMarkFor(st, seat));
+      // Fan-side: auction marks, or winning bid while that seat names trump.
+      const bidOv = makeOval(bidMarkFor(st, seat) || winningBidMarkFor(st, seat));
       if (bidOv) wrap.appendChild(bidOv);
       let bar = box.querySelector(':scope > .namebar');
       if (!bar) {
@@ -1582,6 +1593,9 @@
             btn.addEventListener('click', () => applyTrumpPick(st, i));
             bidActs.appendChild(btn);
           });
+          // Absolute child — does not shift the centered trump bar.
+          const winOv = makeOval(winningBidMarkFor(st, me));
+          if (winOv) bidActs.appendChild(winOv);
           bidOn = true;
         }
         if (shouldSplitKeep(st) && keepGo) {

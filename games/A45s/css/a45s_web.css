@@ -469,7 +469,7 @@ body.felt-page .wrap { display: none; }
 .hand-sort {
   position: absolute;
   right: -0.4em;
-  top: -0.45em;
+  top: -1.4em;
   z-index: 4;
   background: #c62828;
   color: #fff;
@@ -930,6 +930,7 @@ body.felt-page .wrap { display: none; }
   width: 100%;
   margin: 0 auto 0.35em;
   min-height: 3.8em;
+  overflow: visible;
 }
 .you-chrome > #bid-acts,
 .you-chrome > #rank-strip {
@@ -1401,8 +1402,20 @@ body.felt-page .wrap { display: none; }
   cursor: default;
 }
 .bid-self.trump-bar {
+  position: relative;
   gap: 0.4em;
   padding: 0.4em 0.65em;
+  overflow: visible;
+}
+/* Winning bid just past the trump bar’s right edge — clear of the suit buttons; bar stays centered. */
+.bid-self.trump-bar > .bid-oval {
+  --oval-ty: 0;
+  left: auto;
+  right: -3.15em;
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
+  z-index: 4;
 }
 .bid-self .trump-q {
   font-weight: bold;
@@ -1595,7 +1608,7 @@ body.felt-page .wrap { display: none; }
   .you-hand-wrap { padding-bottom: 1.7em; }
   .rank-cell { min-width: 1em; padding: 0.04em 0.1em; }
   .rank-run.pips .rank-cell { font-size: 0.75em; }
-  .hand-sort { right: 0.15em; top: -0.2em; }
+  .hand-sort { right: 0.15em; top: -1.3em; }
   #you-bid-oval { right: 0.1em; top: auto; bottom: 0; }
 }
 
