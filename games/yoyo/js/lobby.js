@@ -245,10 +245,41 @@ function handleAuthRejected(errCode) {
   });
 }
 
+// Outbound send failed: socket not OPEN (or send threw) — stay and reconnect.
+function forceReconnect(msg) {
+  if (intentionalClose || takenOver || authRejected || isSignOutGate()) return;
+  if (!loadIdentity().username) return;
+  setStatus(msg || 'reconnecting', 'err');
+  setActionBanner('');
+  authenticated = false;
+  if (ws) {
+    intentionalClose = true; // suppress onclose's parallel schedule
+    const old = ws;
+    ws = null;
+    try {
+      old.close();
+    } catch (_) {
+      /* ignore */
+    }
+    intentionalClose = false;
+  }
+  renderHeader();
+  scheduleReconnect();
+}
+
 function send(obj) {
-  if (!ws || ws.readyState !== WebSocket.OPEN) return false;
-  ws.send(JSON.stringify(obj));
-  return true;
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    try {
+      ws.send(JSON.stringify(obj));
+      return true;
+    } catch (_) {
+      /* fall through — treat as dead socket */
+    }
+  }
+  if (!intentionalClose && !takenOver && !authRejected && !isSignOutGate()) {
+    forceReconnect('Connection lost — reconnecting');
+  }
+  return false;
 }
 
 // CONNECTING or OPEN — avoid double connect / reconnect storm.

@@ -3059,6 +3059,11 @@ button:focus-visible {
 #panel-play-again .play-again-waiting {
   color: #c8d4e0;
 }
+/* Score+Δ column wash — continuous from header through last row */
+#panel-play-again .fin-stats {
+  background: rgba(20, 28, 36, 0.55);
+  border-color: rgba(200, 212, 224, 0.22);
+}
 #panel-play-again .fin-name {
   color: #f7fafc;
 }
@@ -3097,27 +3102,26 @@ button:focus-visible {
   font-size: 1rem;
   color: var(--accent-hi);
 }
-/* Game summary: title + muted session hand count (right) */
-.summary-title-row {
+/* Game summary: title; muted session hand count on the next line */
+.summary-title-block {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
   margin: 0 0 0.65rem;
 }
-.summary-title-row h3 {
+.summary-title-block h3 {
   margin: 0;
-  flex: 1 1 auto;
   min-width: 0;
 }
 .summary-games {
-  flex: 0 0 auto;
   font-size: 0.78rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--muted);
   letter-spacing: 0.02em;
   white-space: nowrap;
+  line-height: 1.2;
 }
 .summary-games[hidden] {
   display: none !important;
@@ -3260,7 +3264,7 @@ button:focus-visible {
   .seat-reel-strip.rolling { filter: none; transition: none !important; }
   .seat-fanfare-role { animation: none; }
 }
-/* Finish order board (E4.1): rank · name/role · score · Δ · vote */
+/* Finish order board (E4.1): rank · name/role · [score Δ] · vote */
 .finish-board {
   list-style: none;
   margin: 0 0 0.65rem;
@@ -3269,13 +3273,37 @@ button:focus-visible {
 }
 .finish-board li {
   display: grid;
-  grid-template-columns: 1.6rem minmax(0, 1fr) auto auto auto;
+  grid-template-columns: 1.6rem minmax(0, 1fr) auto;
   gap: 0.4rem;
   align-items: center;
   padding: 0.35rem 0.25rem;
   border-bottom: 1px solid #2a3a2a;
   font-size: 0.9rem;
   min-width: 0;
+}
+/* Summary vote board: tighter name; score+Δ grouped away from ready.
+   Fixed stats track so header “Score Δ” matches player-row band width. */
+#panel-play-again .finish-board li {
+  grid-template-columns: 1.35rem minmax(0, 8.25rem) 4.7rem auto;
+  column-gap: 0.4rem;
+}
+#panel-play-again .finish-board .fin-vote {
+  margin-left: 0.55rem; /* extra air between Score+Δ band and Ready */
+  padding-left: 0;
+}
+#panel-play-again .finish-board .fin-avg {
+  min-width: 2.35em; /* room to center digits away from Δ */
+}
+#panel-play-again .finish-board li:not(.fin-head) .fin-avg {
+  text-align: center;
+}
+#panel-play-again .finish-board .fin-delta {
+  min-width: 1.55em;
+}
+/* Row rules cut through Score+Δ; keep them on the you-row too */
+#panel-play-again .finish-board li.fin-you {
+  border-bottom-color: rgba(232, 240, 248, 0.14);
+  border-radius: 6px 0 0 6px; /* leave Score+Δ band’s right edge clean */
 }
 .finish-board li.fin-head {
   font-size: 0.72rem;
@@ -3327,20 +3355,9 @@ button:focus-visible {
   background: linear-gradient(160deg, var(--rank-silver-hi), var(--rank-silver));
   color: #1a1a1c;
 }
-.finish-board li.fin-prez {
-  background: var(--rank-gold-bg);
-  border-radius: 6px;
-  border-bottom-color: transparent;
-  margin-bottom: 2px;
-}
-.finish-board li.fin-vp {
-  background: var(--rank-silver-bg);
-  border-radius: 6px;
-  border-bottom-color: transparent;
-  margin-bottom: 2px;
-}
-/* Local row: thin blue rim + “you” chip after name */
+/* Local row is the highlight (no podium wash on 1st/2nd) */
 .finish-board li.fin-you {
+  background: rgba(61, 107, 154, 0.2);
   box-shadow: 0 0 0 1px var(--seat-you);
   border-radius: 6px;
   border-bottom-color: transparent;
@@ -3373,9 +3390,9 @@ button:focus-visible {
   font-weight: 800;
   letter-spacing: 0.02em;
   text-transform: lowercase;
-  color: #c8dcf0;
-  background: rgba(61, 107, 154, 0.55);
-  border: 1px solid var(--seat-you);
+  color: #1a1a10;
+  background: linear-gradient(160deg, #ffe08a, var(--rank-gold));
+  border: 1px solid var(--rank-gold-hi);
   border-radius: 4px;
   padding: 0.08em 0.35em 0.08em 0.2em;
   line-height: 1.15;
@@ -3388,7 +3405,7 @@ button:focus-visible {
   height: 0;
   border-top: 0.28em solid transparent;
   border-bottom: 0.28em solid transparent;
-  border-right: 0.35em solid #c8dcf0;
+  border-right: 0.35em solid #1a1a10;
   flex-shrink: 0;
 }
 .finish-board .fin-role {
@@ -3408,6 +3425,48 @@ button:focus-visible {
 .finish-board li.fin-vp .fin-role { color: var(--rank-silver-hi); }
 .finish-board li.fin-prez .fin-role-arrow,
 .finish-board li.fin-vp .fin-role-arrow { color: inherit; opacity: 0.7; }
+.finish-board .fin-stats {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  padding: 0.12em 0.4em;
+  border-radius: 5px;
+  background: rgba(12, 18, 14, 0.45);
+  border: 1px solid rgba(160, 175, 170, 0.28);
+  min-width: 0;
+}
+/* Summary: one vertical band for Score+Δ (header → last player) */
+#panel-play-again .finish-board .fin-stats {
+  align-self: stretch;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  margin-block: -0.35rem;
+  padding: 0.35rem 0.28em;
+  border-radius: 0;
+  border-style: solid;
+  border-width: 0 1px;
+  border-color: rgba(200, 212, 224, 0.22);
+  background: rgba(20, 28, 36, 0.55);
+}
+#panel-play-again .finish-board li.fin-head .fin-stats {
+  margin-top: -0.15rem;
+  margin-bottom: -0.35rem;
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+  border-top-width: 1px;
+  border-radius: 6px 6px 0 0;
+}
+#panel-play-again .finish-board li:last-child .fin-stats {
+  margin-bottom: 0;
+  padding-bottom: 0.4rem;
+  border-bottom-width: 1px;
+  border-radius: 0 0 6px 6px;
+}
 .finish-board .fin-avg {
   font-variant-numeric: tabular-nums;
   color: var(--muted);
@@ -3428,11 +3487,22 @@ button:focus-visible {
 .finish-board .fin-delta.na { color: var(--muted); }
 .finish-board .fin-vote {
   font-size: 0.82rem;
-  min-width: 4.5em;
+  min-width: 3.6em;
   text-align: right;
+  padding-left: 0.15rem;
 }
-.finish-board .fin-vote.ready { color: var(--ok); }
-.finish-board .fin-vote.wait { color: var(--muted); }
+.finish-board .fin-vote.ready { color: var(--ok); font-weight: 600; }
+.finish-board .fin-vote.wait {
+  color: var(--muted);
+  animation: fin-wait-pulse 1.25s ease-in-out infinite;
+}
+@keyframes fin-wait-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .finish-board .fin-vote.wait { animation: none; opacity: 0.8; }
+}
 .overlay-panel .tally {
   list-style: none;
   margin: 0 0 0.85rem;
@@ -4172,6 +4242,28 @@ button:focus-visible {
   color: rgba(232, 200, 74, 0.98);
 }
 .subset-lead-tile:focus-visible {
+  outline: 2px solid rgba(232, 200, 74, 0.95);
+  outline-offset: 2px;
+}
+.subset-lead-cancel {
+  margin-top: calc(0.15rem * var(--ui, 1));
+  padding: 0.28em 0.85em;
+  border-radius: 999px;
+  font-size: calc(0.78rem * var(--ui, 1));
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: #d8e0e6;
+  background: rgba(18, 26, 24, 0.82);
+  border: 1px solid rgba(170, 185, 180, 0.55);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+.subset-lead-cancel:hover {
+  color: #fff;
+  border-color: rgba(220, 230, 225, 0.75);
+  background: rgba(28, 36, 34, 0.9);
+}
+.subset-lead-cancel:focus-visible {
   outline: 2px solid rgba(232, 200, 74, 0.95);
   outline-offset: 2px;
 }

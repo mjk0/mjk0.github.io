@@ -975,10 +975,38 @@ function applyHistorySuits(state) {
   flushSuitErrors();
 }
 
+// User/outbound send failed: socket not OPEN (or send threw) — stay and reconnect.
+function forceReconnect(msg) {
+  if (intentionalClose || takenOver) return;
+  setStatus(msg || 'Disconnected — reconnecting…');
+  if (ws) {
+    intentionalClose = true; // suppress onclose's parallel schedule
+    const old = ws;
+    ws = null;
+    try {
+      old.close();
+    } catch (_) {
+      /* ignore */
+    }
+    intentionalClose = false;
+  }
+  joined = false;
+  scheduleReconnect();
+}
+
 function send(obj) {
-  if (!ws || ws.readyState !== WebSocket.OPEN) return false;
-  ws.send(JSON.stringify(obj));
-  return true;
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    try {
+      ws.send(JSON.stringify(obj));
+      return true;
+    } catch (_) {
+      /* fall through — treat as dead socket */
+    }
+  }
+  if (!intentionalClose && !takenOver) {
+    forceReconnect('Connection lost — reconnecting…');
+  }
+  return false;
 }
 
 function goLobby() {
@@ -3533,7 +3561,16 @@ function renderSubsetLeadPrompt() {
     makeSubsetLeadTile(kToks, leadSizeLabel(info.k), false),
     makeSubsetLeadTile(info.fullTokens, leadSizeLabel(info.n), true),
   );
-  host.replaceChildren(head, row);
+  const cancel = document.createElement('button');
+  cancel.type = 'button';
+  cancel.className = 'subset-lead-cancel';
+  cancel.textContent = 'Cancel';
+  cancel.title = 'Clear selection (Esc)';
+  cancel.addEventListener('click', (e) => {
+    e.stopPropagation();
+    clearSelection();
+  });
+  host.replaceChildren(head, row, cancel);
   host.hidden = false;
   layoutSubsetLeadPrompt();
   if (first) {
@@ -5373,7 +5410,7 @@ function updatePlayAgainFooter() {
   if (wait) wait.hidden = !amReady;
 }
 
-// Muted "N games" on Game summary title (session hands completed; max across players).
+// Muted "N games" under Game summary title (session hands completed; max across players).
 function updateSummaryGamesLabel() {
   const el = $('summary-games');
   if (!el) return;
@@ -5405,8 +5442,10 @@ function renderHandOverBoard() {
   head.innerHTML =
     '<span class="fin-rank"></span>' +
     '<span class="fin-name"></span>' +
+    '<span class="fin-stats">' +
     '<span class="fin-avg" title="Session average (0–100)">Score</span>' +
     '<span class="fin-delta" title="Change in session average this hand">Δ</span>' +
+    '</span>' +
     '<span class="fin-vote">Ready</span>';
   board.replaceChildren(
     head,
@@ -5431,7 +5470,7 @@ function renderHandOverBoard() {
       });
       const ok = isPlayAgainReady(name);
       const voteCls = ok ? 'ready' : 'wait';
-      const voteTxt = ok ? '✓ ready' : 'waiting…';
+      const voteTxt = ok ? 'ready' : 'waiting';
       const youChip = isYou
         ? '<span class="fin-you-chip" title="You"><span class="fin-you-caret" aria-hidden="true"></span>you</span>'
         : '';
@@ -5441,8 +5480,10 @@ function renderHandOverBoard() {
         `<span class="fin-pname" title="${escapeHtml(name)}">${escapeHtml(name)}</span>` +
         `${youChip}</span>` +
         `<span class="fin-role">${roleTransitionHtml(n, oldRank, nextRank)}</span></span>` +
+        `<span class="fin-stats">` +
         `<span class="fin-avg">${avgStr}</span>` +
         `<span class="fin-delta ${delta.cls}">${delta.text}</span>` +
+        `</span>` +
         `<span class="fin-vote ${voteCls}">${voteTxt}</span>`;
       return li;
     }),
