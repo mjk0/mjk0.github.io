@@ -52,7 +52,6 @@ import {
 } from './trick.js';
 import {
   offerCount,
-  responseLockedSize,
   enumerateSetUnits,
   responseEligibility,
   subsetLeadInfo,
@@ -3611,35 +3610,28 @@ function selectionMatchesTokens(tokens) {
   return tokens.every((t) => selected.has(t));
 }
 
-function isJokerToken(t) {
-  return !!parseWireCard(t)?.joker;
+// Trick LEAD/PLAY: card click is exclusive single (multi only via set chips).
+function isTrickSelectStep() {
+  return lastState?.step === STEP.LEAD || lastState?.step === STEP.PLAY;
 }
 
-function dropJokersFromSelection() {
-  for (const t of [...selected]) {
-    if (isJokerToken(t)) selected.delete(t);
-  }
-}
-
-// Toggle one card on click; respects response/exchange caps.
+// Toggle one card on click; trick = replace/single; exchange keeps multi caps.
 function toggleCardSelection(wire) {
   const elig = currentResponseEligibility();
   if (elig && !elig.live.has(wire)) return;
+  if (isTrickSelectStep()) {
+    // Re-click sole selected → clear; otherwise replace with this card only.
+    if (selected.has(wire) && selected.size === 1) selected.clear();
+    else {
+      selected.clear();
+      selected.add(wire);
+    }
+    refreshSelectionUi();
+    return;
+  }
   if (selected.has(wire)) {
     selected.delete(wire);
   } else {
-    // Trick play: joker is a singleton. Exchange may offer both JKs.
-    const trick =
-      lastState?.step === STEP.LEAD || lastState?.step === STEP.PLAY;
-    if (trick) {
-      if (isJokerToken(wire)) selected.clear();
-      else dropJokersFromSelection();
-    }
-    if (lastState?.step === STEP.PLAY) {
-      const lock = responseLockedSize(lastState.legal, currentLeadSize());
-      if (lock === 1) selected.clear();
-      else if (lock > 1 && selected.size >= lock) return;
-    }
     if (canPresidentOffer() || lastState?.step === STEP.EXCHANGE || lastState?.step === STEP.YOYO_SELECT) {
       // Surplus multi: 1 at a time; else up to room (EXCH2 exact need)
       const room = offerRoom() || offerNeed();
@@ -3651,21 +3643,17 @@ function toggleCardSelection(wire) {
   refreshSelectionUi();
 }
 
-// On drag threshold from an unselected card: include it (option B).
+// Drag from unselected card: trick replaces with that single; exchange may append.
+// Already-selected (incl. chip multi) stays so the unit drags intact.
 function ensureCardSelectedForDrag(wire) {
   if (selected.has(wire)) return;
   const elig = currentResponseEligibility();
   if (elig && !elig.live.has(wire)) return;
-  const trick =
-    lastState?.step === STEP.LEAD || lastState?.step === STEP.PLAY;
-  if (trick) {
-    if (isJokerToken(wire)) selected.clear();
-    else dropJokersFromSelection();
-  }
-  if (lastState?.step === STEP.PLAY) {
-    const lock = responseLockedSize(lastState.legal, currentLeadSize());
-    if (lock === 1) selected.clear();
-    else if (lock > 1 && selected.size >= lock) selected.clear(); // grab replaces full multi
+  if (isTrickSelectStep()) {
+    selected.clear();
+    selected.add(wire);
+    refreshSelectionUi();
+    return;
   }
   if (canPresidentOffer() || lastState?.step === STEP.EXCHANGE || lastState?.step === STEP.YOYO_SELECT) {
     const room = offerRoom() || 1;
@@ -4042,15 +4030,15 @@ function updatePlayButtons() {
       hint.textContent = 'Choose a lead on the table';
     } else if (lead) {
       hint.textContent = hasOpt(st.opts || 0, OPT.SEQ5)
-        ? 'Click cards · chips · flick 5 left or right to park · up to play'
-        : 'Click cards · set chips (2–5) · drag to table or Play · empty click clears';
+        ? 'Click a card · chips for sets · flick 5 left/right to park · up to play'
+        : 'Click a card · set chips (2–5) for multi · drag or Play · empty click clears';
     } else if (passOnly) {
       hint.textContent =
         'No legal play — Pass only · cool-rim chips = sets still in hand (hover)';
     } else if (resp) {
       hint.textContent = hasOpt(st.opts || 0, OPT.SEQ5)
-        ? 'Live cards · chips · flick 5 left or right to park · cool rim = structure'
-        : 'Click live cards · gold chips playable · drag or Play · cool rim = structure only';
+        ? 'Live card or gold chip · flick 5 left/right to park · cool rim = structure'
+        : 'Click a live card or gold chip · drag or Play · cool rim = structure only';
     } else if (exchangeActive() && exchPhase?.role === 'yoyo' && exchPhase.can_ack) {
       hint.textContent = offerHasSurplus()
         ? `Select ${offerNeed()} from offer · Take or drag to hand · extras return to ${placeLabels(st?.n || 4, 1)}`
