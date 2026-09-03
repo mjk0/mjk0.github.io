@@ -14,6 +14,8 @@
   let takenOver = false;
   let authRejected = false;
   let authPanel = 'hidden'; // hidden | first | create | gate | manage | howto
+  /** One-shot: prefill #in-user from classic mjk-username on empty-profile first panel. */
+  let classicPrefillDone = false;
   /** Username whose Change-email form is open in Manage profiles (or ''). */
   let emailEditFor = '';
   /** Target of a pending DevDeleteUser (wait for Users / err). */
@@ -460,6 +462,17 @@
 
     if (showLogin) {
       const isCreate = authPanel === 'create' || (profiles.length && authPanel !== 'first');
+      const classic = !profiles.length && authPanel === 'first' ? A.classicUsername() : '';
+      // Prefill once; do not rewrite if the player clears or edits the field.
+      if (classic && !classicPrefillDone) {
+        classicPrefillDone = true;
+        if (!$('in-user').value.trim()) {
+          $('in-user').value = classic.slice(0, 32);
+        }
+      }
+      const suggested =
+        classic &&
+        $('in-user').value.trim().toLowerCase() === classic.toLowerCase();
       $('login-title').textContent = authRejected
         ? 'Sign-in failed'
         : isCreate && profiles.length ? 'Create new profile' : 'Join the lobby';
@@ -467,7 +480,9 @@
         ? 'Name may be locked — enter the matching email, or pick another name.'
         : isCreate && profiles.length
           ? 'Add another display name on this browser.'
-          : 'Choose a display name. Optional email locks the name to you.';
+          : suggested
+            ? 'Suggested from classic play. Optional email locks the name to you.'
+            : 'Choose a display name. Optional email locks the name to you.';
       $('btn-login').textContent = isCreate && profiles.length ? 'Create & enter' : 'Enter lobby';
       $('btn-login-cancel').hidden = authPanel === 'first' && !profiles.length;
     }
@@ -1049,7 +1064,11 @@
   // ——— Bind ———
   $('btn-login').addEventListener('click', () => {
     const name = $('in-user').value.trim();
-    if (!name) { setBanner('name required', 'err'); return; }
+    if (!name) {
+      setBanner('name required', 'err');
+      renderAuth(); // refresh classic-suggest hint if the field was cleared
+      return;
+    }
     // Mirror server `is_bot_name` (robot namespace); server still authoritative.
     if (name.length >= 2 && name.slice(0, 2).toLowerCase() === 'b.') {
       setBanner('Names starting with B. are reserved for robots.', 'err');
@@ -1059,6 +1078,10 @@
     startLogin(name, $('in-email').value.trim());
   });
   $('in-user').addEventListener('keydown', (ev) => { if (ev.key === 'Enter') $('btn-login').click(); });
+  // Live-update hint when editing away from / back to the classic suggestion.
+  $('in-user').addEventListener('input', () => {
+    if (authPanel === 'first' && !A.loadProfiles().length) renderAuth();
+  });
   $('in-email').addEventListener('keydown', (ev) => { if (ev.key === 'Enter') $('btn-login').click(); });
   $('btn-login-cancel').addEventListener('click', closeOverlay);
   $('btn-another-name').addEventListener('click', openCreate);

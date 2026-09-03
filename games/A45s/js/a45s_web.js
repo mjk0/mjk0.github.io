@@ -52,6 +52,15 @@
     return list[0] || null;
   }
 
+  // Classic play.html stores a single name; same-origin as lobby so first-run can suggest it.
+  function classicUsername() {
+    try {
+      return String(localStorage.getItem('mjk-username') || '').trim();
+    } catch {
+      return '';
+    }
+  }
+
   function getSession() {
     try {
       const raw = sessionStorage.getItem(SESSION_KEY);
@@ -237,6 +246,7 @@
     upsertProfile,
     forgetProfile,
     lastProfile,
+    classicUsername,
     getSession,
     setSession,
     setSignOutGate,
